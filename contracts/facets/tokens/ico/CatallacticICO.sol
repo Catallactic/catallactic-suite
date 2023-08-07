@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "../../features/security/AntiWhale.sol";
 
-contract ICO is AntiWhale, ReentrancyGuard {
+contract CatallacticICO is AntiWhale, ReentrancyGuard {
 
 	using SafeERC20 for IERC20;
 

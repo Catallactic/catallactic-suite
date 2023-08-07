@@ -4,11 +4,11 @@ import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 // describe.skip
-describe("gasClickICO.1.Common.test", function () {
+describe("CatallacticICO.1.Common.test", function () {
 	const hre = require("hardhat");
 
-	let GasClickICO, ico: Contract;
-	let DemoToken, token: Contract;
+	let CatallacticICO, ico: Contract;
+	let CatallacticERC20Facet, token: Contract;
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
 
@@ -48,14 +48,14 @@ describe("gasClickICO.1.Common.test", function () {
 		//console.log('--------------------');
 		await hre.network.provider.send("hardhat_reset");
 
-		GasClickICO = await ethers.getContractFactory("GasClickICO");
-		ico = await GasClickICO.deploy();
+		CatallacticICO = await ethers.getContractFactory("CatallacticICO");
+		ico = await CatallacticICO.deploy();
 		await ico.deployed();
 		await ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
 		console.log("deployed ICO:" + ico.address);
 
-		DemoToken = await ethers.getContractFactory("DemoToken");
-		token = await DemoToken.deploy();
+		CatallacticERC20Facet = await ethers.getContractFactory("CatallacticERC20Facet");
+		token = await CatallacticERC20Facet.deploy();
 		await token.deployed();
 		console.log("deployed Token:" + token.address);
 
