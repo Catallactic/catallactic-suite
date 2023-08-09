@@ -4,7 +4,7 @@ import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 // describe.skip
-describe("ico-1-standalone-common-test", function () {
+describe("ico-1-mocked-common-test", function () {
 	const hre = require("hardhat");
 
 	let CatallacticICO, ico: Contract;

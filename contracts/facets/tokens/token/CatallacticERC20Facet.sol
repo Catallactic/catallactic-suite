@@ -27,7 +27,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 contract CatallacticERC20Facet is Initializable, ERC20Upgradeable, Ownable2StepUpgradeable { 
 
   function initialize() initializer public {
-    __ERC20_init("CryptoGas", "CYGAS");
+    __ERC20_init("CatallacticERC20", "CATA");
     __Ownable_init();
     _mint(msg.sender, 200_000_000 * 10**18); 
   }
