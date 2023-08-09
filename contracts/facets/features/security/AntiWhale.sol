@@ -20,9 +20,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.18;
 
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
+import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
-contract AntiWhale is Ownable2Step {
+contract AntiWhale is Ownable2StepUpgradeable {
 
 	/********************************************************************************************************/
 	/********************************************** WhiteLists **********************************************/

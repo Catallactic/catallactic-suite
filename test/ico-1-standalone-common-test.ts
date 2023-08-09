@@ -51,6 +51,7 @@ describe("ico-1-standalone-common-test", function () {
 		CatallacticICO = await ethers.getContractFactory("CatallacticICO");
 		ico = await CatallacticICO.deploy();
 		await ico.deployed();
+		ico.initialize();
 		await ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
 		console.log("deployed ICO:" + ico.address);
 

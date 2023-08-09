@@ -1,16 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "../../features/security/AntiWhale.sol";
+import "hardhat/console.sol";
 
-contract CatallacticICO is AntiWhale, ReentrancyGuard {
+contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable {
+	using SafeERC20Upgradeable for IERC20Upgradeable;
 
-	using SafeERC20 for IERC20;
+	function initialize() public initializer {
+    __Ownable_init();
+	}
 
 	/********************************************************************************************************/
 	/************************************************* Lifecycle ********************************************/
@@ -259,8 +265,8 @@ contract CatallacticICO is AntiWhale, ReentrancyGuard {
 
 		// move tokens if tokens investment
 		if (keccak256(bytes(symbol)) != COIN) {
-			require(IERC20(paymentTokens[symbol].ptTokenAddress).allowance(msg.sender, address(this)) >= rawAmountWitDecimals, "ERRD_ALLO_LOW");				// insuffient allowance
-			IERC20(paymentTokens[symbol].ptTokenAddress).safeTransferFrom(msg.sender, address(this), rawAmountWitDecimals);
+			require(IERC20Upgradeable(paymentTokens[symbol].ptTokenAddress).allowance(msg.sender, address(this)) >= rawAmountWitDecimals, "ERRD_ALLO_LOW");				// insuffient allowance
+			IERC20Upgradeable(paymentTokens[symbol].ptTokenAddress).safeTransferFrom(msg.sender, address(this), rawAmountWitDecimals);
 		}
 
 	}
@@ -295,7 +301,7 @@ contract CatallacticICO is AntiWhale, ReentrancyGuard {
 			require(success, "ERRR_WITH_REF");																																																			// Unable to refund
 
 		} else {
-			IERC20(paymentTokens[symbol].ptTokenAddress).safeTransfer(investor, rawAmount);
+			IERC20Upgradeable(paymentTokens[symbol].ptTokenAddress).safeTransfer(investor, rawAmount);
 		}
 
 	}
@@ -332,7 +338,7 @@ contract CatallacticICO is AntiWhale, ReentrancyGuard {
 		emit FundsClaimed(investor, claimed);
 
 		// do claim
-		IERC20(tokenAddress).safeTransferFrom(owner(), investor, claimed);
+		IERC20Upgradeable(tokenAddress).safeTransferFrom(owner(), investor, claimed);
 	}
 	event FundsClaimed(address backer, uint amount);
 
@@ -372,10 +378,10 @@ contract CatallacticICO is AntiWhale, ReentrancyGuard {
 
 		} else {
 			address paymentTokenAddress = paymentTokens[symbol].ptTokenAddress;
-			uint amount = IERC20(paymentTokenAddress).balanceOf(address(this));
+			uint amount = IERC20Upgradeable(paymentTokenAddress).balanceOf(address(this));
 			require(amount > 0, "ERRR_ZERO_WIT");																																																				// Nothing to withdraw
 
-			IERC20(paymentTokenAddress).safeTransfer(targetWalletAddress, amount * percentage / 100 );
+			IERC20Upgradeable(paymentTokenAddress).safeTransfer(targetWalletAddress, amount * percentage / 100 );
 			emit FundsWithdrawn(symbol, amount);
 		}
 	}

@@ -20,11 +20,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol"; 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract CatallacticERC20Facet is Ownable, ERC20 {
-    constructor() ERC20("CryptoGas", "CYGAS") {
-        _mint(msg.sender, 200_000_000 * 10**18);
-    }
-}
+contract CatallacticERC20Facet is Initializable, ERC20Upgradeable, Ownable2StepUpgradeable { 
+
+  function initialize() initializer public {
+    __ERC20_init("CryptoGas", "CYGAS");
+    __Ownable_init();
+    _mint(msg.sender, 200_000_000 * 10**18); 
+  }
+	
+} 
