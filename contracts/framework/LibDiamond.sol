@@ -15,23 +15,6 @@ error InitializationFunctionReverted(address _initializationContractAddress, byt
 
 library LibDiamond {
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    function setContractOwner(address _newOwner) internal {
-        LibDiamondStorage.DiamondStorage storage ds = LibDiamondStorage.diamondStorage();
-        address previousOwner = ds.contractOwner;
-        ds.contractOwner = _newOwner;
-        emit OwnershipTransferred(previousOwner, _newOwner);
-    }
-
-    function contractOwner() internal view returns (address contractOwner_) {
-        contractOwner_ = LibDiamondStorage.diamondStorage().contractOwner;
-    }
-
-    function enforceIsContractOwner() internal view {
-        require(msg.sender == LibDiamondStorage.diamondStorage().contractOwner, "LibDiamond: Must be contract owner");
-    }
-
     event DiamondCut(IDiamondCut.FacetCut[] _diamondCut, address _init, bytes _calldata);
 
     // Internal function version of diamondCut

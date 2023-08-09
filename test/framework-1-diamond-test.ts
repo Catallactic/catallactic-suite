@@ -7,8 +7,8 @@ import { Test1Facet, Test2Facet } from '../typechain';
 // describe.skip
 describe("framework-1-diamond-test", function () {
 	let owner: SignerWithAddress;
-  let diamondCutFacet: Contract, diamondLoupeFacet: Contract, ownershipFacet: Contract;
-  let diamondCutContract: Contract, diamondLoupeContract: Contract, ownershipContract: Contract;
+  let diamondCutFacet: Contract, diamondLoupeFacet: Contract;
+  let diamondCutContract: Contract, diamondLoupeContract: Contract;
   let diamond: Contract;
 
 	/********************************************************************************************************/
@@ -51,15 +51,9 @@ describe("framework-1-diamond-test", function () {
 		await diamondLoupeFacet.deployed()
 		console.log('DiamondLoupeFacet deployed:', diamondLoupeFacet.address)
 
-		// deploy OwnershipFacet
-		//const OwnershipFacet = await ethers.getContractFactory('OwnershipFacet')
-		//ownershipFacet = await OwnershipFacet.deploy()
-		//await ownershipFacet.deployed()
-		//console.log('OwnershipFacet deployed:', ownershipFacet.address)
-
 		// deploy Diamond
 		const Diamond = await ethers.getContractFactory('Diamond')
-		diamond = await Diamond.deploy(owner.address, diamondCutFacet.address)
+		diamond = await Diamond.deploy(diamondCutFacet.address)
 		await diamond.deployed()
 		console.log('Diamond deployed:', diamond.address)
 
@@ -70,14 +64,10 @@ describe("framework-1-diamond-test", function () {
 		console.log('DiamondInit deployed:', diamondInit.address)
 
 	  // attach facets to diamond
-		const cut = []
-		cut.push({ facetAddress: diamondLoupeFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(diamondLoupeFacet) })
-		//cut.push({ facetAddress: ownershipFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(ownershipFacet) })
-		console.log('')
-		console.log('Diamond Cut:', cut)
+		const _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(diamondLoupeFacet), }];
 		const diamondCut = await ethers.getContractAt('IDiamondCut', diamond.address)
 		let functionCall = diamondInit.interface.encodeFunctionData('init')
-		let tx = await diamondCut.diamondCut(cut, diamondInit.address, functionCall)
+		let tx = await diamondCut.diamondCut(_diamondCut, diamondInit.address, functionCall)
 		console.log('Diamond cut tx: ', tx.hash)
 		let receipt = await tx.wait()
 		if (!receipt.status) {
@@ -87,7 +77,6 @@ describe("framework-1-diamond-test", function () {
 
     diamondCutContract = await ethers.getContractAt('DiamondCutFacet', diamond.address)
     diamondLoupeContract = await ethers.getContractAt('DiamondLoupeFacet', diamond.address)
-    //ownershipContract = await ethers.getContractAt('OwnershipFacet', diamondAddress)
 	});
 
 	beforeEach(async() => {
@@ -122,9 +111,6 @@ describe("framework-1-diamond-test", function () {
 			selectors = getSelectors(diamondLoupeFacet);
 			console.log('selectors::', selectors);
 			expect(await diamondLoupeContract.facetFunctionSelectors(diamondLoupeFacet.address)).to.deep.equal(selectors);
-
-			//selectors = getSelectors(ownershipFacet);
-			//expect(await diamondLoupeContract.facetFunctionSelectors(ownershipFacet.address)).to.deep.equal(selectors);
 		});
 
 		it('associates selectors correctly to facets', async function () {
@@ -135,10 +121,6 @@ describe("framework-1-diamond-test", function () {
 			for (const sel of getSelectors(diamondCutFacet)) {
 					expect(await diamondLoupeContract.facetAddress(sel)).to.be.equal(diamondCutFacet.address);
 			}
-
-			//for (const sel of getSelectors(ownershipFacet)) {
-			//		expect(await diamondLoupeContract.facetAddress(sel)).to.be.equal(ownershipFacet.address);
-			//}
 		});
 
 		it('returns correct response when facets() is called', async function () {
@@ -149,9 +131,6 @@ describe("framework-1-diamond-test", function () {
 
 			expect(facets[1].facetAddress).to.equal(diamondLoupeFacet.address);
 			expect(facets[1].functionSelectors).to.eql(getSelectors(diamondLoupeFacet));
-
-			//expect(facets[2].facetAddress).to.equal(ownershipFacet.address);
-			//expect(facets[2].functionSelectors).to.eql(getSelectors(ownershipFacet));
 		});
 
 	});
@@ -182,16 +161,6 @@ describe("framework-1-diamond-test", function () {
 
 		afterEach(async function () {
 			await ethers.provider.send('evm_revert', [snapshotId]);
-		});
-
-		it('fails if not called by contract owner', async function () {
-			const facets = await diamondLoupeContract.facets();
-			console.log('facets:', facets)
-			const signers = await ethers.getSigners();
-			const acc = signers[1];
-
-			const _diamondCut = [{ facetAddress: test1Facet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(test1Facet), }];
-			await expect(diamondCutContract.connect(acc).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.be.revertedWith('Must be contract owner');
 		});
 
 		it('allows adding functions', async function () {

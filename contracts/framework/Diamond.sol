@@ -14,8 +14,7 @@ import { LibDiamondStorage } from "./LibDiamondStorage.sol";
 
 contract Diamond {    
 
-    constructor(address _contractOwner, address _diamondCutFacet) payable {        
-        LibDiamond.setContractOwner(_contractOwner);
+    constructor(address _diamondCutFacet) payable {        
 
         // Add the diamondCut external function from the diamondCutFacet
         IDiamondCut.FacetCut[] memory cut = new IDiamondCut.FacetCut[](1);

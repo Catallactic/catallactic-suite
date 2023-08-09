@@ -11,7 +11,6 @@ pragma solidity 0.8.18;
 import {LibDiamond} from "./LibDiamond.sol";
 import { IDiamondLoupe } from "./IDiamondLoupe.sol";
 import { IDiamondCut } from "./IDiamondCut.sol";
-import { IERC173 } from "../facets/features/access/IERC173.sol";
 import { IERC165 } from "./IERC165.sol";
 import { LibDiamondStorage } from "./LibDiamondStorage.sol";
 
@@ -28,7 +27,6 @@ contract DiamondInit {
         ds.supportedInterfaces[type(IERC165).interfaceId] = true;
         ds.supportedInterfaces[type(IDiamondCut).interfaceId] = true;
         ds.supportedInterfaces[type(IDiamondLoupe).interfaceId] = true;
-        ds.supportedInterfaces[type(IERC173).interfaceId] = true;
 
         // add your own state variables 
         // EIP-2535 specifies that the `diamondCut` function takes two optional 
