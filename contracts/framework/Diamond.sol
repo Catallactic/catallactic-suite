@@ -10,6 +10,7 @@ pragma solidity 0.8.18;
 
 import { LibDiamond } from "./LibDiamond.sol";
 import { IDiamondCut } from "./IDiamondCut.sol";
+import { LibDiamondStorage } from "./LibDiamondStorage.sol";
 
 contract Diamond {    
 
@@ -25,14 +26,14 @@ contract Diamond {
             action: IDiamondCut.FacetCutAction.Add, 
             functionSelectors: functionSelectors
         });
-        LibDiamond.diamondCut(cut, address(0), "");        
+        LibDiamond.executeDiamondCut(cut, address(0), "");        
     }
 
     // Find facet for function that is called and execute the
     // function if a facet is found and return any value.
     fallback() external payable {
-        LibDiamond.DiamondStorage storage ds;
-        bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
+        LibDiamondStorage.DiamondStorage storage ds;
+        bytes32 position = LibDiamondStorage.DIAMOND_STORAGE_POSITION;
         // get diamond storage
         assembly {
             ds.slot := position

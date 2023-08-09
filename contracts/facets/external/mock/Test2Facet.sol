@@ -2,6 +2,11 @@
 pragma solidity 0.8.18;
 
 contract Test2Facet {
+	
+		function test1Func1() external pure returns (uint256) {
+      return 1234;
+    }
+
     function test2Func1() external {}
 
     function test2Func2() external {}
@@ -41,4 +46,5 @@ contract Test2Facet {
     function test2Func19() external {}
 
     function test2Func20() external {}
+
 }

@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-describe("CatallacticICO.3.Tokens.test", function () {
+describe("ico-3-standalone-token-test", function () {
 	const hre = require("hardhat");
 
 	let CatallacticICO, ico: Contract;
