@@ -55,6 +55,8 @@ describe("framework-1-diamond-test", function () {
 		const Diamond = await ethers.getContractFactory('Diamond')
 		diamond = await Diamond.deploy(diamondCutFacet.address)
 		await diamond.deployed()
+		diamondCutContract = await ethers.getContractAt('DiamondCutFacet', diamond.address)
+    diamondLoupeContract = await ethers.getContractAt('DiamondLoupeFacet', diamond.address)
 		console.log('Diamond deployed:', diamond.address)
 
 		// deploy DiamondInit
@@ -63,20 +65,10 @@ describe("framework-1-diamond-test", function () {
 		await diamondInit.deployed()
 		console.log('DiamondInit deployed:', diamondInit.address)
 
-	  // attach facets to diamond
+	  // initialize to attach facets to diamond
 		const _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(diamondLoupeFacet), }];
-		const diamondCut = await ethers.getContractAt('IDiamondCut', diamond.address)
-		let functionCall = diamondInit.interface.encodeFunctionData('init')
-		let tx = await diamondCut.diamondCut(_diamondCut, diamondInit.address, functionCall)
-		console.log('Diamond cut tx: ', tx.hash)
-		let receipt = await tx.wait()
-		if (!receipt.status) {
-			throw Error(`Diamond upgrade failed: ${tx.hash}`)
-		}
-		console.log('Completed diamond cut')
-
-    diamondCutContract = await ethers.getContractAt('DiamondCutFacet', diamond.address)
-    diamondLoupeContract = await ethers.getContractAt('DiamondLoupeFacet', diamond.address)
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, diamondInit.address, diamondInit.interface.encodeFunctionData('init'))).to.not.be.reverted;
+		console.log('Diamond initialized:',)
 	});
 
 	beforeEach(async() => {
