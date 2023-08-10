@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "../../features/security/AntiWhale.sol";
+import "../../features/security/LibAntiWhaleStorage.sol";
 import "./LibCatallacticICOStorage.sol";
 import "hardhat/console.sol";
 
@@ -24,10 +25,16 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 		console.log('**************************************************');
 		console.log('**************** Initialize ICO ******************');
 		console.log('**************************************************');
+		
 		s.totaluUSDTInvested = 0;
 		s.hardCapuUSD = 300_000_000_000;
 		s.softCapuUSD = 50_000_000_000;
 		s.dynamicPrice = false;
+
+		w.whitelistuUSDThreshold = 1_000_000_000;
+		w.maxuUSDInvestment = 100_000_000_000;
+		w.maxuUSDTransfer = 100_000_000_000;
+		w.minuUSDTransfer = 9_999_999;
 	}
 
 	/********************************************************************************************************/
@@ -220,11 +227,11 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 	// receive contribution
 	function deposit(string memory symbol, uint256 rawAmountWitDecimals, uint uUSDAmount) internal {
 		require(stage == CrowdsaleStage.Ongoing, "ERRD_MUST_ONG");																																									// ICO must be ongoing
-		require(!useBlacklist || !blacklisted[msg.sender], 'ERRD_MUSN_BLK');																																				// must not be blacklisted
-		require(uUSDAmount >= minuUSDTransfer, "ERRD_TRAS_LOW");																																										// transfer amount too low
-		require(uUSDAmount <= maxuUSDTransfer, "ERRD_TRAS_HIG");																																										// transfer amount too high
-		require((s.contributions[msg.sender].uUSDToPay +uUSDAmount < whitelistuUSDThreshold) || whitelisted[msg.sender], 'ERRD_MUST_WHI');						// must be whitelisted
-		require(s.contributions[msg.sender].uUSDToPay +uUSDAmount <= maxuUSDInvestment, "ERRD_INVT_HIG");																							// total invested amount too high
+		require(!w.useBlacklist || !w.blacklisted[msg.sender], 'ERRD_MUSN_BLK');																																				// must not be blacklisted
+		require(uUSDAmount >= w.minuUSDTransfer, "ERRD_TRAS_LOW");																																										// transfer amount too low
+		require(uUSDAmount <= w.maxuUSDTransfer, "ERRD_TRAS_HIG");																																										// transfer amount too high
+		require((s.contributions[msg.sender].uUSDToPay +uUSDAmount < w.whitelistuUSDThreshold) || w.whitelisted[msg.sender], 'ERRD_MUST_WHI');						// must be whitelisted
+		require(s.contributions[msg.sender].uUSDToPay +uUSDAmount <= w.maxuUSDInvestment, "ERRD_INVT_HIG");																							// total invested amount too high
 		require(uUSDAmount + s.totaluUSDTInvested < s.hardCapuUSD, "ERRD_HARD_CAP");																																		// amount higher than available
 
 		// add investor
