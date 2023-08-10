@@ -58,6 +58,7 @@ describe("ico-1-standalone-ico2token-common-test", function () {
 		CatallacticERC20Facet = await ethers.getContractFactory("CatallacticERC20Facet");
 		token = await CatallacticERC20Facet.deploy();
 		await token.deployed();
+		token.initialize();
 		console.log("deployed Token:" + token.address);
 
 		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();

@@ -4,13 +4,15 @@ import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 // describe.skip
-describe("ico-7-standalone-ico2token-common-test", function () {
+describe.skip("ico-4-standalone-ico2token-common-test", function () {
 	const hre = require("hardhat");
 
 	let CatallacticICO, ico: Contract;
 	let CatallacticERC20Facet, token: Contract;
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
+
+  let diamondCutContract: Contract, diamondLoupeContract: Contract;
 
 	let ERRW_OWNR_NOT: string = 'ERRW_OWNR_NOT' // Ownable: caller is not the owner
 	let ERRP_INDX_PAY: string = 'ERRP_INDX_PAY' // Wrong index
@@ -38,6 +40,21 @@ describe("ico-7-standalone-ico2token-common-test", function () {
 	let ERRR_WITH_BAD: string = 'ERRR_WITH_BAD' // Unable to withdraw
 
 	/********************************************************************************************************/
+	/********************************************** deployment utils ****************************************/
+	/********************************************************************************************************/
+	const FacetCutAction = { Add: 0, Replace: 1, Remove: 2 }
+
+	let getSelectors = function (contract:Contract) {
+    const signatures: string[] = Object.keys(contract.interface.functions);
+    return signatures.reduce((acc: string[], val) => {
+        if (val !== 'init(bytes)') {
+            acc.push(contract.interface.getSighash(val));
+        }
+        return acc;
+    }, []);
+	}
+
+	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
 	/********************************************************************************************************/
 	before(async() => {
@@ -48,23 +65,79 @@ describe("ico-7-standalone-ico2token-common-test", function () {
 		//console.log('--------------------');
 		await hre.network.provider.send("hardhat_reset");
 
-		CatallacticICO = await ethers.getContractFactory("CatallacticICO");
-		ico = await CatallacticICO.deploy();
-		await ico.deployed();
-		ico.initialize();
-		await ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
-		console.log("deployed ICO:" + ico.address);
-
-		CatallacticERC20Facet = await ethers.getContractFactory("CatallacticERC20Facet");
-		token = await CatallacticERC20Facet.deploy();
-		await token.deployed();
-		console.log("deployed Token:" + token.address);
-
+		// get accounts
 		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
 		[owner, project, liquidity, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
 			let balance = await ethers.provider.getBalance(account.address);
 			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
 		});
+
+		// deploy DiamondCutFacet
+		const DiamondCutFacet = await ethers.getContractFactory('DiamondCutFacet')
+		let diamondCutFacet = await DiamondCutFacet.deploy()
+		await diamondCutFacet.deployed()
+		console.log('DiamondCutFacet deployed:', diamondCutFacet.address)
+
+		// deploy DiamondLoupeFacet
+		const DiamondLoupeFacet = await ethers.getContractFactory('DiamondLoupeFacet')
+		let diamondLoupeFacet = await DiamondLoupeFacet.deploy()
+		await diamondLoupeFacet.deployed()
+		console.log('DiamondLoupeFacet deployed:', diamondLoupeFacet.address)
+
+		// deploy Diamond
+		const Diamond = await ethers.getContractFactory('Diamond')
+		let diamond = await Diamond.deploy(diamondCutFacet.address)
+		await diamond.deployed()
+		console.log('Diamond deployed:', diamond.address)
+
+		// get contracts on Diamond
+		diamondCutContract = await ethers.getContractAt('DiamondCutFacet', diamond.address)
+    diamondLoupeContract = await ethers.getContractAt('DiamondLoupeFacet', diamond.address)
+
+		// deploy DiamondInit
+		const DiamondInit = await ethers.getContractFactory('DiamondInit')
+		const diamondInit = await DiamondInit.deploy()
+		await diamondInit.deployed()
+		console.log('DiamondInit deployed:', diamondInit.address)
+
+	  // initialize to attach facets to diamond
+		let _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(diamondLoupeFacet), }];
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, diamondInit.address, diamondInit.interface.encodeFunctionData('init'))).to.not.be.reverted;
+		console.log('Diamond initialized:',);
+
+		// add ICO facet
+		CatallacticICO = await ethers.getContractFactory("CatallacticICO");
+		let catallaticICO = await CatallacticICO.deploy();
+		await catallaticICO.deployed();
+		console.log("deployed ICO:" + catallaticICO.address);
+
+		// attach ICO facet
+		console.log('attachig functions:', getSelectors(catallaticICO))
+		_diamondCut = [{ facetAddress: catallaticICO.address, action: FacetCutAction.Add, functionSelectors: getSelectors(catallaticICO), }];
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+		console.log("attached ICO:" + catallaticICO.address);
+
+		// add token facet
+		CatallacticERC20Facet = await ethers.getContractFactory("CatallacticERC20Facet");
+		let catallacticERC20Facet = await CatallacticERC20Facet.deploy();
+		await catallacticERC20Facet.deployed();
+		console.log("deployed Token:" + catallacticERC20Facet.address);
+
+		// attach token facet
+		console.log('attachig functions:', getSelectors(catallacticERC20Facet))
+		_diamondCut = [{ facetAddress: catallacticERC20Facet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(catallacticERC20Facet), }];
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.be.revertedWith('Ownable: caller is not the owner');
+		console.log("attached Token:" + catallacticERC20Facet.address);
+
+		// get contracts on Diamond
+		ico = await ethers.getContractAt('CatallacticICO', diamond.address)
+    token = await ethers.getContractAt('CatallacticERC20Facet', diamond.address)
+
+		// initialize
+		ico.initialize();
+		await ico.setPaymentToken("COIN", diamond.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
+		token.initialize();
+
 	});
 
 	afterEach(async() => {

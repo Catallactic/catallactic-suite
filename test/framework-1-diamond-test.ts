@@ -55,9 +55,11 @@ describe("framework-1-diamond-test", function () {
 		const Diamond = await ethers.getContractFactory('Diamond')
 		diamond = await Diamond.deploy(diamondCutFacet.address)
 		await diamond.deployed()
+		console.log('Diamond deployed:', diamond.address)
+
+		// get contracts on Diamond
 		diamondCutContract = await ethers.getContractAt('DiamondCutFacet', diamond.address)
     diamondLoupeContract = await ethers.getContractAt('DiamondLoupeFacet', diamond.address)
-		console.log('Diamond deployed:', diamond.address)
 
 		// deploy DiamondInit
 		const DiamondInit = await ethers.getContractFactory('DiamondInit')

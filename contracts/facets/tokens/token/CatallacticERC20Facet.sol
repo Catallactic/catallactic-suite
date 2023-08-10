@@ -32,4 +32,4 @@ contract CatallacticERC20Facet is Initializable, ERC20Upgradeable, Ownable2StepU
     _mint(msg.sender, 200_000_000 * 10**18); 
   }
 	
-} 
+}
