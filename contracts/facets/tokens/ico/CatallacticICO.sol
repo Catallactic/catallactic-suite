@@ -9,13 +9,25 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "../../features/security/AntiWhale.sol";
+import "./LibCatallacticICOStorage.sol";
 import "hardhat/console.sol";
 
 contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
+	LibCatallacticICOStorage.MyStruct internal s;
+
 	function initialize() public initializer {
     __Ownable_init();
+
+		// initialization
+		console.log('**************************************************');
+		console.log('**************** Initialize ICO ******************');
+		console.log('**************************************************');
+		s.totaluUSDTInvested = 0;
+		s.hardCapuUSD = 300_000_000_000;
+		s.softCapuUSD = 50_000_000_000;
+		s.dynamicPrice = false;
 	}
 
 	/********************************************************************************************************/
@@ -50,9 +62,8 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 	/********************************************************************************************************/
 	/*********************************************** Invested ***********************************************/
 	/********************************************************************************************************/
-	uint256 private totaluUSDTInvested = 0;
 	function getTotaluUSDInvested() external view returns (uint256) {
-		return totaluUSDTInvested;
+		return s.totaluUSDTInvested;
 	}	
 
 	/**
@@ -61,12 +72,11 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 	 * and are impacted by transaction fees and VCs that are happy to invest in costly chains.
 	 * There is not a crosschain supply integrity solution in current state of arts
 	 */
-	uint256 private hardCapuUSD = 300_000_000_000;
 	function getHardCap() external view returns (uint256) {
-		return hardCapuUSD / 10**6;
+		return s.hardCapuUSD / 10**6;
 	}
 	function setHardCapuUSD(uint256 hardCap) external onlyOwner {
-		hardCapuUSD = hardCap;
+		s.hardCapuUSD = hardCap;
 		emit UpdatedHardCap(hardCap);
 	}
 	event UpdatedHardCap(uint256 hardCap);
@@ -77,12 +87,11 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 	 * and are impacted by transaction fees and VCs that are happy to invest in costly chains.
 	 * There is not a crosschain supply integrity solution in current state of arts
 	 */
-	uint256 private softCapuUSD = 50_000_000_000;
 	function getSoftCap() external view returns (uint256) {
-		return softCapuUSD / 10**6;
+		return s.softCapuUSD / 10**6;
 	}
 	function setSoftCapuUSD(uint256 softCap) external onlyOwner {
-		softCapuUSD = softCap;
+		s.softCapuUSD = softCap;
 		emit UpdatedSoftCap(softCap);
 	}
 	event UpdatedSoftCap(uint256 hardCap);
@@ -93,12 +102,11 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 		return UUSD_PER_TOKEN;
 	}
 	
-	bool dynamicPrice = false;
 	function gettDynamicPrice() external view returns(bool) {
-		return dynamicPrice;
+		return s.dynamicPrice;
 	}
 	function setDynamicPrice(bool dynPrice) external onlyOwner {
-		dynamicPrice = dynPrice;
+		s.dynamicPrice = dynPrice;
 		emit UpdatedDynamicPrice(dynPrice);
 	}
 	event UpdatedDynamicPrice(bool dynPrice);
@@ -107,30 +115,21 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 	/******************************************* Payment Tokens *********************************************/
 	/********************************************************************************************************/
 	// Payment Tokens
-	string[] private paymentSymbols;
 	function getPaymentSymbols() external view returns (string[] memory) {
-		return paymentSymbols;
+		return s.paymentSymbols;
 	}
-	mapping (string => PaymentToken) paymentTokens;
-	struct PaymentToken {
-		address ptTokenAddress;
-		address ptPriceFeed;
-		uint256 ptUUSD_PER_TOKEN;
-		uint8 ptDecimals;
-		uint256 ptuUSDInvested;
-		uint256 ptAmountInvested;
-	}
-	function getPaymentToken(string calldata symbol) external view returns(PaymentToken memory) {
-		return paymentTokens[symbol];
+
+	function getPaymentToken(string calldata symbol) external view returns(LibCatallacticICOStorage.PaymentToken memory) {
+		return s.paymentTokens[symbol];
 	}
 	function setPaymentToken(string calldata symbol, address tokenAdd, address priceFeed, uint256 uUSDPerTokens, uint8 decimals) external onlyOwner {
 		require(tokenAdd !=  address(0), "ERRW_INVA_ADD");
 
-		if (paymentTokens[symbol].ptDecimals == 0) {
-			paymentSymbols.push(symbol);
+		if (s.paymentTokens[symbol].ptDecimals == 0) {
+			s.paymentSymbols.push(symbol);
 		}
 
-		paymentTokens[symbol] = PaymentToken({
+		s.paymentTokens[symbol] = LibCatallacticICOStorage.PaymentToken({
       ptTokenAddress: tokenAdd,
       ptPriceFeed: priceFeed,
 			ptUUSD_PER_TOKEN: uUSDPerTokens,
@@ -144,12 +143,12 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 	event AddedPaymentToken(string symbol);
 
 	function deletePaymentToken(string calldata symbol, uint8 index) external onlyOwner {
-		require(keccak256(bytes(symbol)) == keccak256(bytes(paymentSymbols[index])), "ERRP_INDX_PAY");
+		require(keccak256(bytes(symbol)) == keccak256(bytes(s.paymentSymbols[index])), "ERRP_INDX_PAY");
 
-		delete paymentTokens[symbol];
+		delete s.paymentTokens[symbol];
 
-		paymentSymbols[index] = paymentSymbols[paymentSymbols.length - 1];
-		paymentSymbols.pop();
+		s.paymentSymbols[index] = s.paymentSymbols[s.paymentSymbols.length - 1];
+		s.paymentSymbols.pop();
 
 		emit DeletedPaymentToken(symbol);
 	}
@@ -159,7 +158,7 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 
 	// price update
 	function getUusdPerToken(string calldata symbol) external view returns (uint256) {
-		AggregatorV3Interface currencyToUsdPriceFeed = AggregatorV3Interface(paymentTokens[symbol].ptPriceFeed);
+		AggregatorV3Interface currencyToUsdPriceFeed = AggregatorV3Interface(s.paymentTokens[symbol].ptPriceFeed);
 		(,int256 answer,,,) = currencyToUsdPriceFeed.latestRoundData();
 		return(uint256(answer) * 10**6 / 10**currencyToUsdPriceFeed.decimals());
 	}
@@ -168,39 +167,26 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 	/********************************************* Investors ************************************************/
 	/********************************************************************************************************/
 	// Investors
-	address[] private investors;
 	function getInvestors() external view returns (address[] memory) {
-		return investors;
+		return s.investors;
 	}
 	function getInvestorsCount() external view returns(uint) {  
-		return investors.length;
+		return s.investors.length;
 	}
-
-	// contributions
-	struct Contribution { 				// only for refund
-		uint256 cAmountInvested;		// only for refund
-		uint256 cuUSDInvested;			// only for audit
-	}
-	struct Contributions {
-		bool known;
-		uint256 uUSDToPay;					// for claim and deposits
-		mapping (string => Contribution) conts;
-	}
-	mapping (address => Contributions) private contributions;
 
 	function getContribution(address investor, string calldata symbol) external view returns(uint256){
 		require(investor !=  address(0), "ERRW_INVA_ADD");
-		return contributions[investor].conts[symbol].cAmountInvested;
+		return s.contributions[investor].conts[symbol].cAmountInvested;
 	}
 
 	function getuUSDContribution(address investor, string calldata symbol) external view returns(uint256){
 		require(investor !=  address(0), "ERRW_INVA_ADD");
-		return contributions[investor].conts[symbol].cuUSDInvested;
+		return s.contributions[investor].conts[symbol].cuUSDInvested;
 	}
 
 	function getuUSDToClaim(address investor) external view returns(uint256){
 		require(investor !=  address(0), "ERRW_INVA_ADD");
-		return contributions[investor].uUSDToPay;
+		return s.contributions[investor].uUSDToPay;
 	}
 
 	/********************************************************************************************************/
@@ -219,16 +205,16 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 	function depositWithuUSD(string memory symbol, uint256 rawAmountWitDecimals) internal {
 		// update price. Consider chainlink returning zero or negative
 		// stale case is ignored because investor is prompted a price in the UI, the difference can be minimal, and check would need using block.timestamp and higher gas consumption
-		if(dynamicPrice && paymentTokens[symbol].ptPriceFeed != address(0)) {
-			AggregatorV3Interface currencyToUsdPriceFeed = AggregatorV3Interface(paymentTokens[symbol].ptPriceFeed);
+		if(s.dynamicPrice && s.paymentTokens[symbol].ptPriceFeed != address(0)) {
+			AggregatorV3Interface currencyToUsdPriceFeed = AggregatorV3Interface(s.paymentTokens[symbol].ptPriceFeed);
 			(,int rawUsdPrice,,,) = currencyToUsdPriceFeed.latestRoundData();
 			if(rawUsdPrice > 0) {
-				paymentTokens[symbol].ptUUSD_PER_TOKEN = uint256(rawUsdPrice) * 10**6 / 10**currencyToUsdPriceFeed.decimals();
+				s.paymentTokens[symbol].ptUUSD_PER_TOKEN = uint256(rawUsdPrice) * 10**6 / 10**currencyToUsdPriceFeed.decimals();
 			}
 		}
 		
 		// calculate uUSDAmount
-		deposit(symbol, rawAmountWitDecimals, rawAmountWitDecimals * paymentTokens[symbol].ptUUSD_PER_TOKEN / 10**paymentTokens[symbol].ptDecimals);
+		deposit(symbol, rawAmountWitDecimals, rawAmountWitDecimals * s.paymentTokens[symbol].ptUUSD_PER_TOKEN / 10**s.paymentTokens[symbol].ptDecimals);
 	}
 
 	// receive contribution
@@ -237,36 +223,36 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 		require(!useBlacklist || !blacklisted[msg.sender], 'ERRD_MUSN_BLK');																																				// must not be blacklisted
 		require(uUSDAmount >= minuUSDTransfer, "ERRD_TRAS_LOW");																																										// transfer amount too low
 		require(uUSDAmount <= maxuUSDTransfer, "ERRD_TRAS_HIG");																																										// transfer amount too high
-		require((contributions[msg.sender].uUSDToPay +uUSDAmount < whitelistuUSDThreshold) || whitelisted[msg.sender], 'ERRD_MUST_WHI');						// must be whitelisted
-		require(contributions[msg.sender].uUSDToPay +uUSDAmount <= maxuUSDInvestment, "ERRD_INVT_HIG");																							// total invested amount too high
-		require(uUSDAmount + totaluUSDTInvested < hardCapuUSD, "ERRD_HARD_CAP");																																		// amount higher than available
+		require((s.contributions[msg.sender].uUSDToPay +uUSDAmount < whitelistuUSDThreshold) || whitelisted[msg.sender], 'ERRD_MUST_WHI');						// must be whitelisted
+		require(s.contributions[msg.sender].uUSDToPay +uUSDAmount <= maxuUSDInvestment, "ERRD_INVT_HIG");																							// total invested amount too high
+		require(uUSDAmount + s.totaluUSDTInvested < s.hardCapuUSD, "ERRD_HARD_CAP");																																		// amount higher than available
 
 		// add investor
-		if(!contributions[msg.sender].known) {
-			investors.push(msg.sender);
-			contributions[msg.sender].known = true;
+		if(!s.contributions[msg.sender].known) {
+			s.investors.push(msg.sender);
+			s.contributions[msg.sender].known = true;
 		}
 
 		// add contribution to investor
-		contributions[msg.sender].conts[symbol].cAmountInvested += rawAmountWitDecimals;	// only for refund
-		contributions[msg.sender].conts[symbol].cuUSDInvested += uUSDAmount;							// only for audit
+		s.contributions[msg.sender].conts[symbol].cAmountInvested += rawAmountWitDecimals;	// only for refund
+		s.contributions[msg.sender].conts[symbol].cuUSDInvested += uUSDAmount;							// only for audit
 
 		// add total to investor
-		contributions[msg.sender].uUSDToPay += uUSDAmount;																// only for claim
+		s.contributions[msg.sender].uUSDToPay += uUSDAmount;																// only for claim
 
 		// add total to payment method
-		paymentTokens[symbol].ptuUSDInvested += uUSDAmount;																// only for audit
-		paymentTokens[symbol].ptAmountInvested += rawAmountWitDecimals;										// only for audit
+		s.paymentTokens[symbol].ptuUSDInvested += uUSDAmount;																// only for audit
+		s.paymentTokens[symbol].ptAmountInvested += rawAmountWitDecimals;										// only for audit
 
 		// add total
-		totaluUSDTInvested += uUSDAmount;																									// lifecycle
+		s.totaluUSDTInvested += uUSDAmount;																									// lifecycle
 
 		emit FundsReceived(msg.sender, symbol, rawAmountWitDecimals);
 
 		// move tokens if tokens investment
 		if (keccak256(bytes(symbol)) != COIN) {
-			require(IERC20Upgradeable(paymentTokens[symbol].ptTokenAddress).allowance(msg.sender, address(this)) >= rawAmountWitDecimals, "ERRD_ALLO_LOW");				// insuffient allowance
-			IERC20Upgradeable(paymentTokens[symbol].ptTokenAddress).safeTransferFrom(msg.sender, address(this), rawAmountWitDecimals);
+			require(IERC20Upgradeable(s.paymentTokens[symbol].ptTokenAddress).allowance(msg.sender, address(this)) >= rawAmountWitDecimals, "ERRD_ALLO_LOW");				// insuffient allowance
+			IERC20Upgradeable(s.paymentTokens[symbol].ptTokenAddress).safeTransferFrom(msg.sender, address(this), rawAmountWitDecimals);
 		}
 
 	}
@@ -283,14 +269,14 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 	}
 	function refundInvestor(string calldata symbol, address investor) internal {
 		require(stage == CrowdsaleStage.Finished, "ERRR_MUST_FIN");																																									// ICO must be finished
-		require(totaluUSDTInvested < softCapuUSD, "ERRR_PASS_SOF");																																									// Passed SoftCap. No refund
+		require(s.totaluUSDTInvested < s.softCapuUSD, "ERRR_PASS_SOF");																																									// Passed SoftCap. No refund
 		require(investor !=  address(0), "ERRW_INVA_ADD");
-		uint256 rawAmount = contributions[investor].conts[symbol].cAmountInvested;
+		uint256 rawAmount = s.contributions[investor].conts[symbol].cAmountInvested;
 		require(rawAmount > 0, "ERRR_ZERO_REF");																																																		// Nothing to refund
 
 		// clear variables
-		contributions[investor].uUSDToPay -= contributions[investor].conts[symbol].cuUSDInvested;
-		delete contributions[investor].conts[symbol];
+		s.contributions[investor].uUSDToPay -= s.contributions[investor].conts[symbol].cuUSDInvested;
+		delete s.contributions[investor].conts[symbol];
 
 		emit FundsRefunded(investor, symbol, rawAmount);
 
@@ -301,7 +287,7 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 			require(success, "ERRR_WITH_REF");																																																			// Unable to refund
 
 		} else {
-			IERC20Upgradeable(paymentTokens[symbol].ptTokenAddress).safeTransfer(investor, rawAmount);
+			IERC20Upgradeable(s.paymentTokens[symbol].ptTokenAddress).safeTransfer(investor, rawAmount);
 		}
 
 	}
@@ -318,88 +304,86 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 	}
 	function claimInvestor(address investor) internal {
 		require(stage == CrowdsaleStage.Finished, "ERRC_MUST_FIN");																																										// ICO must be finished
-		require(totaluUSDTInvested > softCapuUSD, "ERRC_NPAS_SOF");																																										// Not passed SoftCap
+		require(s.totaluUSDTInvested > s.softCapuUSD, "ERRC_NPAS_SOF");																																										// Not passed SoftCap
 		require(investor !=  address(0), "ERRW_INVA_ADD");
-		require(tokenAddress != address(0x0), "ERRC_MISS_TOK");																																												// Provide Token
+		require(s.tokenAddress != address(0x0), "ERRC_MISS_TOK");																																												// Provide Token
 
-		uint claimed = contributions[investor].uUSDToPay * 10**18 / UUSD_PER_TOKEN;
+		uint claimed = s.contributions[investor].uUSDToPay * 10**18 / UUSD_PER_TOKEN;
 		require(claimed > 0, "ERRR_ZERO_CLM");																																																				// Nothing to refund
 
 		// clear variables
-		contributions[investor].uUSDToPay = 0;
-		uint paymentSymbolsLength = paymentSymbols.length;
+		s.contributions[investor].uUSDToPay = 0;
+		uint paymentSymbolsLength = s.paymentSymbols.length;
 		for (uint i = 0; i < paymentSymbolsLength; i++) {
-			if(contributions[investor].conts[paymentSymbols[i]].cAmountInvested != 0) {
-				contributions[investor].conts[paymentSymbols[i]].cAmountInvested = 0;
-				contributions[investor].conts[paymentSymbols[i]].cuUSDInvested = 0;
+			if(s.contributions[investor].conts[s.paymentSymbols[i]].cAmountInvested != 0) {
+				s.contributions[investor].conts[s.paymentSymbols[i]].cAmountInvested = 0;
+				s.contributions[investor].conts[s.paymentSymbols[i]].cuUSDInvested = 0;
 			}
 		}
 
 		emit FundsClaimed(investor, claimed);
 
 		// do claim
-		IERC20Upgradeable(tokenAddress).safeTransferFrom(owner(), investor, claimed);
+		IERC20Upgradeable(s.tokenAddress).safeTransferFrom(owner(), investor, claimed);
 	}
 	event FundsClaimed(address backer, uint amount);
 
 	// tokenWalletAddress
-	address payable tokenAddress;
 	function setTokenAddress(address payable add) external onlyOwner {
 		require(add !=  address(0), "ERRW_INVA_ADD");
 
-		tokenAddress = add;
+		s.tokenAddress = add;
 	
 		emit UpdatedTokenAddress(add);
 	}
 	event UpdatedTokenAddress(address payable add);
 
 	function getTokenAddress() external view returns (address) {
-		return tokenAddress;
+		return s.tokenAddress;
 	}
 
 	/********************************************************************************************************/
 	/*************************************************** Withdraw *******************************************/
 	/********************************************************************************************************/
 	function withdraw(string calldata symbol, uint8 percentage) external nonReentrant onlyOwner {
-		require(totaluUSDTInvested > softCapuUSD, "ERRW_NPAS_SOF");																																										// Not passed SoftCap
-		require(targetWalletAddress != address(0x0), "ERRW_MISS_WAL");																																								// Provide Wallet
+		require(s.totaluUSDTInvested > s.softCapuUSD, "ERRW_NPAS_SOF");																																										// Not passed SoftCap
+		require(s.targetWalletAddress != address(0x0), "ERRW_MISS_WAL");																																								// Provide Wallet
 
-		paymentTokens[symbol].ptuUSDInvested -= paymentTokens[symbol].ptuUSDInvested * percentage / 100;
-		paymentTokens[symbol].ptAmountInvested -= paymentTokens[symbol].ptAmountInvested * percentage / 100;
+		s.paymentTokens[symbol].ptuUSDInvested -= s.paymentTokens[symbol].ptuUSDInvested * percentage / 100;
+		s.paymentTokens[symbol].ptAmountInvested -= s.paymentTokens[symbol].ptAmountInvested * percentage / 100;
 
 		if (keccak256(bytes(symbol)) == COIN) {
 			uint amount = address(this).balance;
 			require(amount > 0, "ERRR_ZERO_WIT");																																																				// Nothing to withdraw
 
 			//slither-disable-next-line low-level-calls
-			(bool success, ) = targetWalletAddress.call{ value: amount * percentage / 100 }("");
+			(bool success, ) = s.targetWalletAddress.call{ value: amount * percentage / 100 }("");
 			require(success, "ERRR_WITH_BAD");																																																					// Unable to withdraw
 			emit FundsWithdrawn(symbol, amount);
 
 		} else {
-			address paymentTokenAddress = paymentTokens[symbol].ptTokenAddress;
+			address paymentTokenAddress = s.paymentTokens[symbol].ptTokenAddress;
 			uint amount = IERC20Upgradeable(paymentTokenAddress).balanceOf(address(this));
 			require(amount > 0, "ERRR_ZERO_WIT");																																																				// Nothing to withdraw
 
-			IERC20Upgradeable(paymentTokenAddress).safeTransfer(targetWalletAddress, amount * percentage / 100 );
+			IERC20Upgradeable(paymentTokenAddress).safeTransfer(s.targetWalletAddress, amount * percentage / 100 );
 			emit FundsWithdrawn(symbol, amount);
 		}
 	}
 	event FundsWithdrawn(string symbol, uint amount);
 
 	// targetWalletAddress
-	address payable targetWalletAddress;
 	function setTargetWalletAddress(address payable add) external onlyOwner {
 		require(add !=  address(0), "ERRW_INVA_ADD");
 
-		targetWalletAddress = add;
+		s.targetWalletAddress = add;
 
 		emit UpdatedTargetWalletAddress(add);
 	}
 	event UpdatedTargetWalletAddress(address payable add);
 
 	function getTargetWalletAddress() external view returns (address) {
-		return targetWalletAddress;
+		return s.targetWalletAddress;
 	}
 
 }
