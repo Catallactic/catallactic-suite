@@ -4,11 +4,12 @@ import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 // describe.skip
-describe.skip("ico-4-standalone-ico2token-common-test", function () {
+describe("ico-4-standalone-ico2token-common-test", function () {
 	const hre = require("hardhat");
 
 	let CrowdsaleFacet, ico: Contract;
 	let ERC20Facet, token: Contract;
+	let CommonFacet, common: Contract;
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
 
@@ -51,6 +52,17 @@ describe.skip("ico-4-standalone-ico2token-common-test", function () {
             acc.push(contract.interface.getSighash(val));
         }
         return acc;
+    }, []);
+	}
+	let removeSelectors = function (selectors: string[], removeSelectors: string[]) {
+		selectors = selectors.filter(v => !removeSelectors.includes(v))
+		return selectors
+	}
+	let logSelectors = function (contract:Contract) {
+    const signatures: string[] = Object.keys(contract.interface.functions);
+    return signatures.reduce((acc: string[], val) => {
+			console.log(val + '->' + contract.interface.getSighash(val));
+      return acc;
     }, []);
 	}
 
@@ -105,38 +117,54 @@ describe.skip("ico-4-standalone-ico2token-common-test", function () {
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, diamondInit.address, diamondInit.interface.encodeFunctionData('init'))).to.not.be.reverted;
 		console.log('Diamond initialized:',);
 
-		// add ICO facet
+		// add Common facet
+		CommonFacet = await ethers.getContractFactory("CommonFacet");
+		let commonFacet = await CommonFacet.deploy();
+		await commonFacet.deployed();
+		console.log("deployed Common:" + commonFacet.address);
+
+		// attach Common facet
+		console.log('attachig functions:', getSelectors(commonFacet))
+		_diamondCut = [{ facetAddress: commonFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(commonFacet), }];
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+		console.log("attached ICO:" + commonFacet.address);
+
+		// add Crowdsale facet
 		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
 		let crowdsaleFacet = await CrowdsaleFacet.deploy();
 		await crowdsaleFacet.deployed();
 		console.log("deployed ICO:" + crowdsaleFacet.address);
 
-		// attach ICO facet
-		console.log('attachig functions:', getSelectors(crowdsaleFacet))
-		_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(crowdsaleFacet), }];
+		// attach Crowdsale facet ex Common
+		const crowdsaleFacetExCommonFacetSelectors = removeSelectors(getSelectors(crowdsaleFacet),getSelectors(commonFacet));
+		console.log('attachig functions:', crowdsaleFacetExCommonFacetSelectors)
+		_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: FacetCutAction.Add, functionSelectors: crowdsaleFacetExCommonFacetSelectors, }];
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
 		console.log("attached ICO:" + crowdsaleFacet.address);
 
-		// add token facet
+		// add Token facet
 		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
 		let erc20Facet = await ERC20Facet.deploy();
 		await erc20Facet.deployed();
 		console.log("deployed Token:" + erc20Facet.address);
 
-		// attach token facet
-		console.log('attachig functions:', getSelectors(erc20Facet))
-		_diamondCut = [{ facetAddress: erc20Facet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(erc20Facet), }];
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.be.revertedWith('Ownable: caller is not the owner');
+		// attach Token facet ex Common
+		const erc20FacetExCommonFacetSelectors = removeSelectors(getSelectors(erc20Facet),getSelectors(commonFacet));
+		console.log('attachig functions:', erc20FacetExCommonFacetSelectors)
+		_diamondCut = [{ facetAddress: erc20Facet.address, action: FacetCutAction.Add, functionSelectors: erc20FacetExCommonFacetSelectors, }];
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
 		console.log("attached Token:" + erc20Facet.address);
 
 		// get contracts on Diamond
-		ico = await ethers.getContractAt('CatallacticICO', diamond.address)
+		common = await ethers.getContractAt('CommonFacet', diamond.address)
+		ico = await ethers.getContractAt('CrowdsaleFacet', diamond.address)
     token = await ethers.getContractAt('ERC20Facet', diamond.address)
 
 		// initialize
+		console.log('initializing')
 		ico.initialize();
 		await ico.setPaymentToken("COIN", diamond.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
-		token.initialize();
+		console.log('initialized')
 
 	});
 

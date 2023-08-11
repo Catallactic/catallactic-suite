@@ -2,7 +2,9 @@
 pragma solidity 0.8.18;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
+import "../../features/lifecycle/InitializableNoStorage.sol";
+
 import "./LibERC20UpgradeableStorage.sol";
 
 /**
@@ -33,9 +35,8 @@ import "./LibERC20UpgradeableStorage.sol";
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-contract ERC20UpgradeableNoStorage is Initializable, IERC20Upgradeable {
+contract ERC20UpgradeableNoStorage is InitializableNoStorage, IERC20Upgradeable {
 	LibERC20UpgradeableStorage.MyStruct internal s;
-
 
     /**
      * @dev Sets the values for {name} and {symbol}.

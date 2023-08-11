@@ -5,7 +5,6 @@ import "hardhat/console.sol";
 
 library LibAntiWhaleStorage {
 
-
   struct MyStruct {
 		uint256 whitelistuUSDThreshold;
 		address[] whitelistedAccs;

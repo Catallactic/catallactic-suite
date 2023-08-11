@@ -5,28 +5,29 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-
+import "../../features/security/ReentrancyGuardUpgradeableNoStorage.sol";
 import "../../features/security/AntiWhale.sol";
 import "../../features/security/LibAntiWhaleStorage.sol";
+import "../../features/lifecycle/InitializableNoStorage.sol";
+
 import "./LibCrowdsaleStorage.sol";
 import "hardhat/console.sol";
 
-contract CrowdsaleFacet is AntiWhale, ReentrancyGuardUpgradeable {
+contract CrowdsaleFacet is AntiWhale, ReentrancyGuardUpgradeableNoStorage {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
 	LibCrowdsaleStorage.MyStruct internal s;
 
 	function initialize() public initializer {
+		console.log('Owner is ', msg.sender);
     __Ownable_init();
+		console.log('Owner is ', owner());
 
 		// initialization
 		console.log('**************************************************');
 		console.log('**************** Initialize ICO ******************');
 		console.log('**************************************************');
-		
+
 		s.totaluUSDTInvested = 0;
 		s.hardCapuUSD = 300_000_000_000;
 		s.softCapuUSD = 50_000_000_000;

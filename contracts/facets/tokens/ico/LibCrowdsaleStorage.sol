@@ -41,7 +41,7 @@ library LibCrowdsaleStorage {
 
 
 	// define slot for this storage 
-  bytes32 constant LIB_ICO_STORAGE_POSITION = keccak256("com.mycompany.projectx.mystruct");
+  bytes32 constant LIB_ICO_STORAGE_POSITION = keccak256("com.mycompany.LibCrowdsaleStorage");
 
   function libCatallacticICOStorage() internal pure returns (MyStruct storage mystruct) {
     bytes32 position = LIB_ICO_STORAGE_POSITION;
