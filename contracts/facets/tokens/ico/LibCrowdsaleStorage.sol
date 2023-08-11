@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 import "hardhat/console.sol";
 
-library LibCatallacticICOStorage {
+library LibCrowdsaleStorage {
 
 	struct PaymentToken {
 		address ptTokenAddress;

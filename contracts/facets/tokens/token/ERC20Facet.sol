@@ -20,11 +20,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import "./ERC20UpgradeableNoStorage.sol";
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol"; 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract CatallacticERC20Facet is Initializable, ERC20Upgradeable, Ownable2StepUpgradeable { 
+contract ERC20Facet is ERC20UpgradeableNoStorage, Ownable2StepUpgradeable { 
 
   function initialize() initializer public {
     __ERC20_init("CatallacticERC20", "CATA");

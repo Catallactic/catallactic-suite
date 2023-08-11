@@ -6,8 +6,8 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 describe("ico-2-standalone-ico2token-coin-test", function () {
 	const hre = require("hardhat");
 
-	let CatallacticICO, ico: Contract;
-	let CatallacticERC20Facet, token: Contract;
+	let CrowdsaleFacet, ico: Contract;
+	let ERC20Facet, token: Contract;
 	let ChainLinkAggregator, chainLinkAggregator: Contract;
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
@@ -53,15 +53,15 @@ describe("ico-2-standalone-ico2token-coin-test", function () {
 		await chainLinkAggregator.deployed();
 		console.log("ChainLinkAggregator:" + chainLinkAggregator.address);
 
-		CatallacticICO = await ethers.getContractFactory("CatallacticICO");
-		ico = await CatallacticICO.deploy();
+		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
+		ico = await CrowdsaleFacet.deploy();
 		await ico.deployed();
 		ico.initialize();
 		await ico.setPaymentToken("COIN", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18);
 		console.log("deployed ICO:" + ico.address);
 
-		CatallacticERC20Facet = await ethers.getContractFactory("CatallacticERC20Facet");
-		token = await CatallacticERC20Facet.deploy();
+		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
+		token = await ERC20Facet.deploy();
 		await token.deployed();
 		token.initialize();
 		console.log("deployed Token:" + token.address);

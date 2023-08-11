@@ -1,22 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
 import "../../features/security/AntiWhale.sol";
 import "../../features/security/LibAntiWhaleStorage.sol";
-import "./LibCatallacticICOStorage.sol";
+import "./LibCrowdsaleStorage.sol";
 import "hardhat/console.sol";
 
-contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable {
+contract CrowdsaleFacet is AntiWhale, ReentrancyGuardUpgradeable {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
-	LibCatallacticICOStorage.MyStruct internal s;
+	LibCrowdsaleStorage.MyStruct internal s;
 
 	function initialize() public initializer {
     __Ownable_init();
@@ -126,7 +127,7 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 		return s.paymentSymbols;
 	}
 
-	function getPaymentToken(string calldata symbol) external view returns(LibCatallacticICOStorage.PaymentToken memory) {
+	function getPaymentToken(string calldata symbol) external view returns(LibCrowdsaleStorage.PaymentToken memory) {
 		return s.paymentTokens[symbol];
 	}
 	function setPaymentToken(string calldata symbol, address tokenAdd, address priceFeed, uint256 uUSDPerTokens, uint8 decimals) external onlyOwner {
@@ -136,7 +137,7 @@ contract CatallacticICO is Initializable, AntiWhale, ReentrancyGuardUpgradeable 
 			s.paymentSymbols.push(symbol);
 		}
 
-		s.paymentTokens[symbol] = LibCatallacticICOStorage.PaymentToken({
+		s.paymentTokens[symbol] = LibCrowdsaleStorage.PaymentToken({
       ptTokenAddress: tokenAdd,
       ptPriceFeed: priceFeed,
 			ptUUSD_PER_TOKEN: uUSDPerTokens,
