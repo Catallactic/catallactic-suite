@@ -15,6 +15,7 @@ describe("ico-4-diamond-ico-consistency-test", function () {
 
   let diamondCutContract: Contract, diamondLoupeContract: Contract;
 
+	let ERRD_MUST_NST: string = 'ERRD_MUST_NST' // ICO must be not started
 	let ERRW_OWNR_NOT: string = 'ERRW_OWNR_NOT' // Ownable: caller is not the owner
 	let ERRP_INDX_PAY: string = 'ERRP_INDX_PAY' // Wrong index
 	let ERRD_MUST_ONG: string = 'ERRD_MUST_ONG' // ICO must be ongoing
@@ -154,7 +155,7 @@ describe("ico-4-diamond-ico-consistency-test", function () {
 		// initialize
 		console.log('initializing')
 		await expect(await common.owner()).to.equal('0x0000000000000000000000000000000000000000');
-		common.initialize();
+		ico.createCrowdsale(300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999);
 		await ico.setPaymentToken("COIN", diamond.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
 		console.log('initialized')
 	});

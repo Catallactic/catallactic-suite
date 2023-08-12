@@ -13,6 +13,7 @@ describe.skip("ico-6-diamond-ico2token-token-test", function () {
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
 
+	let ERRD_MUST_NST: string = 'ERRD_MUST_NST' // ICO must be not started
 	let ERRW_OWNR_NOT: string = 'ERRW_OWNR_NOT' // Ownable: caller is not the owner
 	let ERRP_INDX_PAY: string = 'ERRP_INDX_PAY' // Wrong index
 	let ERRD_MUST_ONG: string = 'ERRD_MUST_ONG' // ICO must be ongoing

@@ -13,6 +13,7 @@ describe("ico-3-standalone-ico2token-token-test", function () {
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
 
+	let ERRD_MUST_NST: string = 'ERRD_MUST_NST' // ICO must be not started
 	let ERRW_OWNR_NOT: string = 'ERRW_OWNR_NOT' // Ownable: caller is not the owner
 	let ERRP_INDX_PAY: string = 'ERRP_INDX_PAY' // Wrong index
 	let ERRD_MUST_ONG: string = 'ERRD_MUST_ONG' // ICO must be ongoing
@@ -68,7 +69,7 @@ describe("ico-3-standalone-ico2token-token-test", function () {
 		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
 		ico = await CrowdsaleFacet.deploy();
 		await ico.deployed();
-		ico.createCrowdsale();
+		ico.createCrowdsale(300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999);
 		await ico.setPaymentToken("FOO", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18);
 		console.log("deployed ICO:" + ico.address);
 
