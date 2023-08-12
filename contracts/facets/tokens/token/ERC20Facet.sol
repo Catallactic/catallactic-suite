@@ -23,6 +23,8 @@ pragma solidity 0.8.18;
 import "../../features/security/Ownable2StepUpgradeableNoStorage.sol";
 import "./ERC20UpgradeableNoStorage.sol";
 
+import "hardhat/console.sol";
+
 contract ERC20Facet is ERC20UpgradeableNoStorage, Ownable2StepUpgradeableNoStorage { 
 
   function initialize() initializer public {

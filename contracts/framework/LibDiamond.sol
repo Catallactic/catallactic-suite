@@ -32,7 +32,7 @@ library LibDiamond {
 				}
 			}
 			emit DiamondCut(_diamondCut, _init, _calldata);
-			initializeDiamondCut(_init, _calldata);
+			//initializeDiamondCut(_init, _calldata);
     }
 
     function addFunctions(address _facetAddress, bytes4[] memory _functionSelectors) internal {
@@ -137,7 +137,7 @@ library LibDiamond {
         }
     }
 
-    function initializeDiamondCut(address _init, bytes memory _calldata) internal {
+    /*function initializeDiamondCut(address _init, bytes memory _calldata) internal {
         if (_init == address(0)) {
             return;
         }
@@ -155,7 +155,7 @@ library LibDiamond {
                 revert InitializationFunctionReverted(_init, _calldata);
             }
         }
-    }
+    }*/
 
     function enforceHasContractCode(address _contract, string memory _errorMessage) internal view {
         uint256 contractSize;

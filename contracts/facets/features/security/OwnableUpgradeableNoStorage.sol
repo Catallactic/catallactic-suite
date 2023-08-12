@@ -4,7 +4,6 @@
 pragma solidity ^0.8.0;
 
 import "../lifecycle/InitializableNoStorage.sol";
-import "./LibOwnableStorage.sol";
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -19,7 +18,6 @@ import "./LibOwnableStorage.sol";
  * the owner.
  */
 abstract contract OwnableUpgradeableNoStorage is InitializableNoStorage {
-		LibOwnableStorage.MyStruct internal o;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -46,7 +44,7 @@ abstract contract OwnableUpgradeableNoStorage is InitializableNoStorage {
      * @dev Returns the address of the current owner.
      */
     function owner() public view virtual returns (address) {
-        return o._owner;
+        return s._owner;
     }
 
     /**
@@ -81,8 +79,8 @@ abstract contract OwnableUpgradeableNoStorage is InitializableNoStorage {
      * Internal function without access restriction.
      */
     function _transferOwnership(address newOwner) internal virtual {
-        address oldOwner = o._owner;
-        o._owner = newOwner;
+        address oldOwner = s._owner;
+        s._owner = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
     }
 

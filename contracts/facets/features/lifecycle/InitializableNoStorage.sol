@@ -4,7 +4,7 @@
 pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "./LibInitializableStorage.sol";
+import "../../../storage/AppStorage.sol";
 
 /**
  * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
@@ -57,7 +57,7 @@ import "./LibInitializableStorage.sol";
  * ====
  */
 abstract contract InitializableNoStorage {
-	LibInitializableStorage.MyStruct internal i;
+	AppStorage internal s;
 
     /**
      * @dev Triggered when the contract has been initialized or reinitialized.
@@ -74,18 +74,18 @@ abstract contract InitializableNoStorage {
      * Emits an {Initialized} event.
      */
     modifier initializer() {
-        bool isTopLevelCall = !i._initializing;
+        bool isTopLevelCall = !s._initializing;
         require(
-            (isTopLevelCall && i._initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && i._initialized == 1),
+            (isTopLevelCall && s._initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && s._initialized == 1),
             "Initializable: contract is already initialized"
         );
-        i._initialized = 1;
+        s._initialized = 1;
         if (isTopLevelCall) {
-            i._initializing = true;
+            s._initializing = true;
         }
         _;
         if (isTopLevelCall) {
-            i._initializing = false;
+            s._initializing = false;
             emit Initialized(1);
         }
     }
@@ -109,11 +109,11 @@ abstract contract InitializableNoStorage {
      * Emits an {Initialized} event.
      */
     modifier reinitializer(uint8 version) {
-        require(!i._initializing && i._initialized < version, "Initializable: contract is already initialized");
-        i._initialized = version;
-        i._initializing = true;
+        require(!s._initializing && s._initialized < version, "Initializable: contract is already initialized");
+        s._initialized = version;
+        s._initializing = true;
         _;
-        i._initializing = false;
+        s._initializing = false;
         emit Initialized(version);
     }
 
@@ -122,7 +122,7 @@ abstract contract InitializableNoStorage {
      * {initializer} and {reinitializer} modifiers, directly or indirectly.
      */
     modifier onlyInitializing() {
-        require(i._initializing, "Initializable: contract is not initializing");
+        require(s._initializing, "Initializable: contract is not initializing");
         _;
     }
 
@@ -135,9 +135,9 @@ abstract contract InitializableNoStorage {
      * Emits an {Initialized} event the first time it is successfully executed.
      */
     function _disableInitializers() internal virtual {
-        require(!i._initializing, "Initializable: contract is initializing");
-        if (i._initialized != type(uint8).max) {
-            i._initialized = type(uint8).max;
+        require(!s._initializing, "Initializable: contract is initializing");
+        if (s._initialized != type(uint8).max) {
+            s._initialized = type(uint8).max;
             emit Initialized(type(uint8).max);
         }
     }
@@ -146,13 +146,13 @@ abstract contract InitializableNoStorage {
      * @dev Returns the highest version that has been initialized. See {reinitializer}.
      */
     function _getInitializedVersion() internal view returns (uint8) {
-        return i._initialized;
+        return s._initialized;
     }
 
     /**
      * @dev Returns `true` if the contract is currently initializing. See {onlyInitializing}.
      */
     function _isInitializing() internal view returns (bool) {
-        return i._initializing;
+        return s._initializing;
     }
 }

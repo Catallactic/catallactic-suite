@@ -5,8 +5,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import "../../features/lifecycle/InitializableNoStorage.sol";
 
-import "./LibERC20UpgradeableStorage.sol";
-
 /**
  * @dev Implementation of the {IERC20} interface.
  *
@@ -36,7 +34,6 @@ import "./LibERC20UpgradeableStorage.sol";
  * allowances. See {IERC20-approve}.
  */
 contract ERC20UpgradeableNoStorage is InitializableNoStorage, IERC20Upgradeable {
-	LibERC20UpgradeableStorage.MyStruct internal s;
 
     /**
      * @dev Sets the values for {name} and {symbol}.

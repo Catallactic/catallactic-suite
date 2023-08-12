@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 
 import "../lifecycle/InitializableNoStorage.sol";
 import "./OwnableUpgradeableNoStorage.sol";
-import "./LibOwnableStorage.sol";
 
 /**
  * @dev Contract module which provides access control mechanism, where
@@ -33,7 +32,7 @@ abstract contract Ownable2StepUpgradeableNoStorage is InitializableNoStorage, Ow
      * @dev Returns the address of the pending owner.
      */
     function pendingOwner() public view virtual returns (address) {
-        return o._pendingOwner;
+        return s._pendingOwner;
     }
 
     /**
@@ -41,7 +40,7 @@ abstract contract Ownable2StepUpgradeableNoStorage is InitializableNoStorage, Ow
      * Can only be called by the current owner.
      */
     function transferOwnership(address newOwner) public virtual override onlyOwner {
-        o._pendingOwner = newOwner;
+        s._pendingOwner = newOwner;
         emit OwnershipTransferStarted(owner(), newOwner);
     }
 
@@ -50,7 +49,7 @@ abstract contract Ownable2StepUpgradeableNoStorage is InitializableNoStorage, Ow
      * Internal function without access restriction.
      */
     function _transferOwnership(address newOwner) internal virtual override {
-        delete o._pendingOwner;
+        delete s._pendingOwner;
         super._transferOwnership(newOwner);
     }
 

@@ -90,82 +90,73 @@ describe("ico-4-standalone-ico2token-common-test", function () {
 		await diamondCutFacet.deployed()
 		console.log('DiamondCutFacet deployed:', diamondCutFacet.address)
 
-		// deploy DiamondLoupeFacet
-		const DiamondLoupeFacet = await ethers.getContractFactory('DiamondLoupeFacet')
-		let diamondLoupeFacet = await DiamondLoupeFacet.deploy()
-		await diamondLoupeFacet.deployed()
-		console.log('DiamondLoupeFacet deployed:', diamondLoupeFacet.address)
-
 		// deploy Diamond
 		const Diamond = await ethers.getContractFactory('Diamond')
 		let diamond = await Diamond.deploy(diamondCutFacet.address)
 		await diamond.deployed()
 		console.log('Diamond deployed:', diamond.address)
-
-		// get contracts on Diamond
 		diamondCutContract = await ethers.getContractAt('DiamondCutFacet', diamond.address)
+
+		// deploy DiamondLoupeFacet
+		const DiamondLoupeFacet = await ethers.getContractFactory('DiamondLoupeFacet')
+		let diamondLoupeFacet = await DiamondLoupeFacet.deploy()
+		await diamondLoupeFacet.deployed()
     diamondLoupeContract = await ethers.getContractAt('DiamondLoupeFacet', diamond.address)
+		console.log('DiamondLoupeFacet deployed:', diamondLoupeFacet.address)
 
-		// deploy DiamondInit
-		const DiamondInit = await ethers.getContractFactory('DiamondInit')
-		const diamondInit = await DiamondInit.deploy()
-		await diamondInit.deployed()
-		console.log('DiamondInit deployed:', diamondInit.address)
-
-	  // initialize to attach facets to diamond
+		// attach DiamondLoupeFacet
 		let _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(diamondLoupeFacet), }];
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, diamondInit.address, diamondInit.interface.encodeFunctionData('init'))).to.not.be.reverted;
-		console.log('Diamond initialized:',);
+		//await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, diamondInit.address, diamondInit.interface.encodeFunctionData('init'))).to.not.be.reverted;
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+		console.log("DiamondLoupeFacet attached as " + diamondCutContract.address);
 
-		// add Common facet
+		// deploy Common facet
 		CommonFacet = await ethers.getContractFactory("CommonFacet");
 		let commonFacet = await CommonFacet.deploy();
 		await commonFacet.deployed();
-		console.log("deployed Common:" + commonFacet.address);
+		common = await ethers.getContractAt('CommonFacet', diamond.address)
+		console.log("CommonFacet deployed:" + commonFacet.address);
 
 		// attach Common facet
-		console.log('attachig functions:', getSelectors(commonFacet))
+		//console.log('attachig functions:', getSelectors(commonFacet))
 		_diamondCut = [{ facetAddress: commonFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(commonFacet), }];
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
-		console.log("attached ICO:" + commonFacet.address);
+		console.log("CommonFacet attached as " + common.address);
 
-		// add Crowdsale facet
+		// deploy Crowdsale facet
 		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
 		let crowdsaleFacet = await CrowdsaleFacet.deploy();
 		await crowdsaleFacet.deployed();
-		console.log("deployed ICO:" + crowdsaleFacet.address);
+		ico = await ethers.getContractAt('CrowdsaleFacet', diamond.address)
+		console.log("CrowdsaleFacet deployed:" + crowdsaleFacet.address);
 
 		// attach Crowdsale facet ex Common
 		const crowdsaleFacetExCommonFacetSelectors = removeSelectors(getSelectors(crowdsaleFacet),getSelectors(commonFacet));
-		console.log('attachig functions:', crowdsaleFacetExCommonFacetSelectors)
+		//console.log('attachig functions:', crowdsaleFacetExCommonFacetSelectors)
 		_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: FacetCutAction.Add, functionSelectors: crowdsaleFacetExCommonFacetSelectors, }];
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
-		console.log("attached ICO:" + crowdsaleFacet.address);
+		console.log("CrowdsaleFacet attached as " + ico.address);
 
-		// add Token facet
+		// deploy Token facet
 		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
 		let erc20Facet = await ERC20Facet.deploy();
 		await erc20Facet.deployed();
-		console.log("deployed Token:" + erc20Facet.address);
+    token = await ethers.getContractAt('ERC20Facet', diamond.address)
+		console.log("ERC20Facet deployed:" + erc20Facet.address);
 
 		// attach Token facet ex Common
 		const erc20FacetExCommonFacetSelectors = removeSelectors(getSelectors(erc20Facet),getSelectors(commonFacet));
-		console.log('attachig functions:', erc20FacetExCommonFacetSelectors)
+		//console.log('attachig functions:', erc20FacetExCommonFacetSelectors)
 		_diamondCut = [{ facetAddress: erc20Facet.address, action: FacetCutAction.Add, functionSelectors: erc20FacetExCommonFacetSelectors, }];
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
-		console.log("attached Token:" + erc20Facet.address);
-
-		// get contracts on Diamond
-		common = await ethers.getContractAt('CommonFacet', diamond.address)
-		ico = await ethers.getContractAt('CrowdsaleFacet', diamond.address)
-    token = await ethers.getContractAt('ERC20Facet', diamond.address)
+		console.log("ERC20Facet attached as " + token.address);
 
 		// initialize
 		console.log('initializing')
-		ico.initialize();
+		await expect(await common.owner()).to.equal('0x0000000000000000000000000000000000000000');
+		common.initialize();
 		await ico.setPaymentToken("COIN", diamond.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
 		console.log('initialized')
-
 	});
 
 	afterEach(async() => {
@@ -201,6 +192,23 @@ describe("ico-4-standalone-ico2token-common-test", function () {
 	let bytes5ToString = function (hexString: string) {
 		return ethers.utils.toUtf8String(hexString);
 	}
+	let logStatus = async () => {
+
+		console.log("\getTotaluUSDInvested: " + await ico.getTotaluUSDInvested() + " USD");
+
+		let price = await ico.getPriceuUSD();
+
+		let investorsCount = await ico.getInvestorsCount();
+		let investors = await ico.getInvestors();
+		console.log("\tInvestors: ");
+		for (let i = 0; i < investorsCount; i++) {
+			let ether = await ethers.provider.getBalance(investors[i]);
+			let uusd = await ico.getuUSDToClaim(investors[i]);
+			let tokens = Math.floor(uusd / price);
+			console.log("\t\t* " + investors[i] + " ether: " + weiToUsd(ether) + " USD" + "; tokens: " + tokens + " CYGAS = " + (uusd/10**6) + " USD");
+		}
+
+	}
 
 	it("Initial Logs.", async() => {
 
@@ -224,29 +232,19 @@ describe("ico-4-standalone-ico2token-common-test", function () {
 	});
 
 	it("Should do number conversions.", async() => {
-
 		console.log("usd to wei to usd: " + weiToUsd(usdToWei(10)));
 		console.log("usd to eher to usd: " + etherToUsd(usdToEther(10)));
-
 	});
 
-	let logStatus = async () => {
-
-		console.log("\getTotaluUSDInvested: " + await ico.getTotaluUSDInvested() + " USD");
-
-		let price = await ico.getPriceuUSD();
-
-		let investorsCount = await ico.getInvestorsCount();
-		let investors = await ico.getInvestors();
-		console.log("\tInvestors: ");
-		for (let i = 0; i < investorsCount; i++) {
-			let ether = await ethers.provider.getBalance(investors[i]);
-			let uusd = await ico.getuUSDToClaim(investors[i]);
-			let tokens = Math.floor(uusd / price);
-			console.log("\t\t* " + investors[i] + " ether: " + weiToUsd(ether) + " USD" + "; tokens: " + tokens + " CYGAS = " + (uusd/10**6) + " USD");
-		}
-
-	}
+	it("Verify Initialization.", async() => {
+		await expect(await common.owner()).to.equal(owner.address);
+		await expect(await ico.getHardCap()).to.equal(300_000);
+		await expect(await ico.getSoftCap()).to.equal(50_000);
+		await expect(await ico.getWhitelistuUSDThreshold()).to.equal(1_000_000_000);
+		await expect(await ico.getMaxUSDInvestment()).to.equal(100_000);
+		await expect(await ico.getMaxUSDTransfer()).to.equal(100_000);
+		await expect(await ico.getMinUSDTransfer()).to.equal(9);
+	});
 
 	/********************************************************************************************************/
 	/*************************************************** Owner **********************************************/
