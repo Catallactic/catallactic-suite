@@ -4,16 +4,12 @@ import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 // describe.skip
-describe("ico-4-standalone-ico2token-common-test", function () {
+describe("ico-1-standalone-ico-consistency-test", function () {
 	const hre = require("hardhat");
 
 	let CrowdsaleFacet, ico: Contract;
-	let ERC20Facet, token: Contract;
-	let CommonFacet, common: Contract;
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
-
-  let diamondCutContract: Contract, diamondLoupeContract: Contract;
 
 	let ERRW_OWNR_NOT: string = 'ERRW_OWNR_NOT' // Ownable: caller is not the owner
 	let ERRP_INDX_PAY: string = 'ERRP_INDX_PAY' // Wrong index
@@ -41,32 +37,6 @@ describe("ico-4-standalone-ico2token-common-test", function () {
 	let ERRR_WITH_BAD: string = 'ERRR_WITH_BAD' // Unable to withdraw
 
 	/********************************************************************************************************/
-	/********************************************** deployment utils ****************************************/
-	/********************************************************************************************************/
-	const FacetCutAction = { Add: 0, Replace: 1, Remove: 2 }
-
-	let getSelectors = function (contract:Contract) {
-    const signatures: string[] = Object.keys(contract.interface.functions);
-    return signatures.reduce((acc: string[], val) => {
-        if (val !== 'init(bytes)') {
-            acc.push(contract.interface.getSighash(val));
-        }
-        return acc;
-    }, []);
-	}
-	let removeSelectors = function (selectors: string[], removeSelectors: string[]) {
-		selectors = selectors.filter(v => !removeSelectors.includes(v))
-		return selectors
-	}
-	let logSelectors = function (contract:Contract) {
-    const signatures: string[] = Object.keys(contract.interface.functions);
-    return signatures.reduce((acc: string[], val) => {
-			console.log(val + '->' + contract.interface.getSighash(val));
-      return acc;
-    }, []);
-	}
-
-	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
 	/********************************************************************************************************/
 	before(async() => {
@@ -77,86 +47,18 @@ describe("ico-4-standalone-ico2token-common-test", function () {
 		//console.log('--------------------');
 		await hre.network.provider.send("hardhat_reset");
 
-		// get accounts
+		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
+		ico = await CrowdsaleFacet.deploy();
+		await ico.deployed();
+		ico.createCrowdsale();
+		await ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
+		console.log("deployed ICO:" + ico.address);
+
 		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
 		[owner, project, liquidity, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
 			let balance = await ethers.provider.getBalance(account.address);
 			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
 		});
-
-		// deploy DiamondCutFacet
-		const DiamondCutFacet = await ethers.getContractFactory('DiamondCutFacet')
-		let diamondCutFacet = await DiamondCutFacet.deploy()
-		await diamondCutFacet.deployed()
-		console.log('DiamondCutFacet deployed:', diamondCutFacet.address)
-
-		// deploy Diamond
-		const Diamond = await ethers.getContractFactory('Diamond')
-		let diamond = await Diamond.deploy(diamondCutFacet.address)
-		await diamond.deployed()
-		console.log('Diamond deployed:', diamond.address)
-		diamondCutContract = await ethers.getContractAt('DiamondCutFacet', diamond.address)
-
-		// deploy DiamondLoupeFacet
-		const DiamondLoupeFacet = await ethers.getContractFactory('DiamondLoupeFacet')
-		let diamondLoupeFacet = await DiamondLoupeFacet.deploy()
-		await diamondLoupeFacet.deployed()
-    diamondLoupeContract = await ethers.getContractAt('DiamondLoupeFacet', diamond.address)
-		console.log('DiamondLoupeFacet deployed:', diamondLoupeFacet.address)
-
-		// attach DiamondLoupeFacet
-		let _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(diamondLoupeFacet), }];
-		//await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, diamondInit.address, diamondInit.interface.encodeFunctionData('init'))).to.not.be.reverted;
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
-		console.log("DiamondLoupeFacet attached as " + diamondCutContract.address);
-
-		// deploy Common facet
-		CommonFacet = await ethers.getContractFactory("CommonFacet");
-		let commonFacet = await CommonFacet.deploy();
-		await commonFacet.deployed();
-		common = await ethers.getContractAt('CommonFacet', diamond.address)
-		console.log("CommonFacet deployed:" + commonFacet.address);
-
-		// attach Common facet
-		//console.log('attachig functions:', getSelectors(commonFacet))
-		_diamondCut = [{ facetAddress: commonFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(commonFacet), }];
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
-		console.log("CommonFacet attached as " + common.address);
-
-		// deploy Crowdsale facet
-		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
-		let crowdsaleFacet = await CrowdsaleFacet.deploy();
-		await crowdsaleFacet.deployed();
-		ico = await ethers.getContractAt('CrowdsaleFacet', diamond.address)
-		console.log("CrowdsaleFacet deployed:" + crowdsaleFacet.address);
-
-		// attach Crowdsale facet ex Common
-		const crowdsaleFacetExCommonFacetSelectors = removeSelectors(getSelectors(crowdsaleFacet),getSelectors(commonFacet));
-		//console.log('attachig functions:', crowdsaleFacetExCommonFacetSelectors)
-		_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: FacetCutAction.Add, functionSelectors: crowdsaleFacetExCommonFacetSelectors, }];
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
-		console.log("CrowdsaleFacet attached as " + ico.address);
-
-		// deploy Token facet
-		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
-		let erc20Facet = await ERC20Facet.deploy();
-		await erc20Facet.deployed();
-    token = await ethers.getContractAt('ERC20Facet', diamond.address)
-		console.log("ERC20Facet deployed:" + erc20Facet.address);
-
-		// attach Token facet ex Common
-		const erc20FacetExCommonFacetSelectors = removeSelectors(getSelectors(erc20Facet),getSelectors(commonFacet));
-		//console.log('attachig functions:', erc20FacetExCommonFacetSelectors)
-		_diamondCut = [{ facetAddress: erc20Facet.address, action: FacetCutAction.Add, functionSelectors: erc20FacetExCommonFacetSelectors, }];
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
-		console.log("ERC20Facet attached as " + token.address);
-
-		// initialize
-		console.log('initializing')
-		await expect(await common.owner()).to.equal('0x0000000000000000000000000000000000000000');
-		common.initialize();
-		await ico.setPaymentToken("COIN", diamond.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
-		console.log('initialized')
 	});
 
 	afterEach(async() => {
@@ -192,6 +94,32 @@ describe("ico-4-standalone-ico2token-common-test", function () {
 	let bytes5ToString = function (hexString: string) {
 		return ethers.utils.toUtf8String(hexString);
 	}
+
+	it("Initial Logs.", async() => {
+
+		//console.log("\tgetMaxTransfer: " + weiToUsd(await ico.getMaxTransfer()) + " USD");
+		//console.log("\tgetMinTransfer: " + weiToUsd(await ico.getMinTransfer()) + " USD");
+		//console.log("\tgetMaxInvestment: " + weiToUsd(await ico.getMaxInvestment()) + " USD");
+		//console.log("\tgetHardCap: " + weiToUsd(await ico.getHardCap()) + " USD");
+
+		console.log("\n");
+		console.log("Addresses:");
+		console.log("\towner address: " + owner.address);
+		console.log("\tico address: " + ico.address);
+		console.log("\tico owner address: " + await ico.owner());
+		console.log("\tproject address: " + project.address);
+		console.log("\tliquidity address: " + liquidity.address);
+		console.log("\n");
+
+	});
+
+	it("Should do number conversions.", async() => {
+
+		console.log("usd to wei to usd: " + weiToUsd(usdToWei(10)));
+		console.log("usd to eher to usd: " + etherToUsd(usdToEther(10)));
+
+	});
+
 	let logStatus = async () => {
 
 		console.log("\getTotaluUSDInvested: " + await ico.getTotaluUSDInvested() + " USD");
@@ -209,42 +137,6 @@ describe("ico-4-standalone-ico2token-common-test", function () {
 		}
 
 	}
-
-	it("Initial Logs.", async() => {
-
-		//console.log("\tgetMaxTransfer: " + weiToUsd(await ico.getMaxTransfer()) + " USD");
-		//console.log("\tgetMinTransfer: " + weiToUsd(await ico.getMinTransfer()) + " USD");
-		//console.log("\tgetMaxInvestment: " + weiToUsd(await ico.getMaxInvestment()) + " USD");
-		//console.log("\tgetHardCap: " + weiToUsd(await ico.getHardCap()) + " USD");
-
-		console.log("\n");
-		console.log("Addresses:");
-		console.log("\towner address: " + owner.address);
-		console.log("\tico address: " + ico.address);
-		console.log("\tico owner address: " + await ico.owner());
-		console.log("\ttoken address: " + token.address);
-		console.log("\ttoken owner address: " + await token.owner());
-		console.log("\ttoken owner balance: " + await token.balanceOf(await token.owner()));
-		console.log("\tproject address: " + project.address);
-		console.log("\tliquidity address: " + liquidity.address);
-		console.log("\n");
-
-	});
-
-	it("Should do number conversions.", async() => {
-		console.log("usd to wei to usd: " + weiToUsd(usdToWei(10)));
-		console.log("usd to eher to usd: " + etherToUsd(usdToEther(10)));
-	});
-
-	it("Verify Initialization.", async() => {
-		await expect(await common.owner()).to.equal(owner.address);
-		await expect(await ico.getHardCap()).to.equal(300_000);
-		await expect(await ico.getSoftCap()).to.equal(50_000);
-		await expect(await ico.getWhitelistuUSDThreshold()).to.equal(1_000_000_000);
-		await expect(await ico.getMaxUSDInvestment()).to.equal(100_000);
-		await expect(await ico.getMaxUSDTransfer()).to.equal(100_000);
-		await expect(await ico.getMinUSDTransfer()).to.equal(9);
-	});
 
 	/********************************************************************************************************/
 	/*************************************************** Owner **********************************************/

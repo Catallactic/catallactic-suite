@@ -6,23 +6,26 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import "../../features/security/ReentrancyGuardUpgradeableNoStorage.sol";
-import "../../features/security/AntiWhale.sol";
+import "../../features/security/AntiWhaleNoStorage.sol";
 import "../../features/lifecycle/InitializableNoStorage.sol";
 
 import "hardhat/console.sol";
 
-contract CrowdsaleFacet is AntiWhale, ReentrancyGuardUpgradeableNoStorage {
+contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStorage {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
-	function initialize() public initializer {
-		console.log('Owner is ', msg.sender);
-    __Ownable_init();
-		console.log('Owner is ', owner());
-
-		// initialization
+	/********************************************************************************************************/
+	/************************************************* Lifecycle ********************************************/
+	/********************************************************************************************************/
+	// initialization
+	function createCrowdsale() public initializer {
 		console.log('**************************************************');
 		console.log('**************** Initialize ICO ******************');
 		console.log('**************************************************');
+
+		console.log('Owner is ', msg.sender);
+    __Ownable_init();
+		console.log('Owner is ', owner());
 
 		s.hardCapuUSD = 300_000_000_000;
 		s.softCapuUSD = 50_000_000_000;
@@ -33,9 +36,6 @@ contract CrowdsaleFacet is AntiWhale, ReentrancyGuardUpgradeableNoStorage {
 		s.minuUSDTransfer = 9_999_999;
 	}
 
-	/********************************************************************************************************/
-	/************************************************* Lifecycle ********************************************/
-	/********************************************************************************************************/
 	// Crowdsale Stage
 	function getCrowdsaleStage() external view returns (CrowdsaleStage) {
 		return stage;
@@ -61,58 +61,6 @@ contract CrowdsaleFacet is AntiWhale, ReentrancyGuardUpgradeableNoStorage {
 		emit UpdatedCrowdsaleStage(stage_);
 	}
 	event UpdatedCrowdsaleStage(uint stage_);
-
-	/********************************************************************************************************/
-	/*********************************************** Invested ***********************************************/
-	/********************************************************************************************************/
-	function getTotaluUSDInvested() external view returns (uint256) {
-		return s.totaluUSDTInvested;
-	}	
-
-	/**
-	 * We need to make HardCap updateable to allow a multichain funding round. 
-	 * We need multichain funding round to give oppportunity to both, retail investors, which invest small amounts 
-	 * and are impacted by transaction fees and VCs that are happy to invest in costly chains.
-	 * There is not a crosschain supply integrity solution in current state of arts
-	 */
-	function getHardCap() external view returns (uint256) {
-		return s.hardCapuUSD / 10**6;
-	}
-	function setHardCapuUSD(uint256 hardCap) external onlyOwner {
-		s.hardCapuUSD = hardCap;
-		emit UpdatedHardCap(hardCap);
-	}
-	event UpdatedHardCap(uint256 hardCap);
-
-	/**
-	 * We need to make SoftCap updateable to allow a multichain funding round. 
-	 * We need multichain funding round to give oppportunity to both, retail investors, which invest small amounts 
-	 * and are impacted by transaction fees and VCs that are happy to invest in costly chains.
-	 * There is not a crosschain supply integrity solution in current state of arts
-	 */
-	function getSoftCap() external view returns (uint256) {
-		return s.softCapuUSD / 10**6;
-	}
-	function setSoftCapuUSD(uint256 softCap) external onlyOwner {
-		s.softCapuUSD = softCap;
-		emit UpdatedSoftCap(softCap);
-	}
-	event UpdatedSoftCap(uint256 hardCap);
-
-	// ICO Price
-	uint256 private constant UUSD_PER_TOKEN = 0.03*10**6;
-	function getPriceuUSD() external pure returns (uint256) {
-		return UUSD_PER_TOKEN;
-	}
-	
-	function gettDynamicPrice() external view returns(bool) {
-		return s.dynamicPrice;
-	}
-	function setDynamicPrice(bool dynPrice) external onlyOwner {
-		s.dynamicPrice = dynPrice;
-		emit UpdatedDynamicPrice(dynPrice);
-	}
-	event UpdatedDynamicPrice(bool dynPrice);
 
 	/********************************************************************************************************/
 	/******************************************* Payment Tokens *********************************************/
@@ -165,6 +113,58 @@ contract CrowdsaleFacet is AntiWhale, ReentrancyGuardUpgradeableNoStorage {
 		(,int256 answer,,,) = currencyToUsdPriceFeed.latestRoundData();
 		return(uint256(answer) * 10**6 / 10**currencyToUsdPriceFeed.decimals());
 	}
+
+	/********************************************************************************************************/
+	/*********************************************** Invested ***********************************************/
+	/********************************************************************************************************/
+	function getTotaluUSDInvested() external view returns (uint256) {
+		return s.totaluUSDTInvested;
+	}	
+
+	/**
+	 * We need to make HardCap updateable to allow a multichain funding round. 
+	 * We need multichain funding round to give oppportunity to both, retail investors, which invest small amounts 
+	 * and are impacted by transaction fees and VCs that are happy to invest in costly chains.
+	 * There is not a crosschain supply integrity solution in current state of arts
+	 */
+	function getHardCap() external view returns (uint256) {
+		return s.hardCapuUSD / 10**6;
+	}
+	function setHardCapuUSD(uint256 hardCap) external onlyOwner {
+		s.hardCapuUSD = hardCap;
+		emit UpdatedHardCap(hardCap);
+	}
+	event UpdatedHardCap(uint256 hardCap);
+
+	/**
+	 * We need to make SoftCap updateable to allow a multichain funding round. 
+	 * We need multichain funding round to give oppportunity to both, retail investors, which invest small amounts 
+	 * and are impacted by transaction fees and VCs that are happy to invest in costly chains.
+	 * There is not a crosschain supply integrity solution in current state of arts
+	 */
+	function getSoftCap() external view returns (uint256) {
+		return s.softCapuUSD / 10**6;
+	}
+	function setSoftCapuUSD(uint256 softCap) external onlyOwner {
+		s.softCapuUSD = softCap;
+		emit UpdatedSoftCap(softCap);
+	}
+	event UpdatedSoftCap(uint256 hardCap);
+
+	// ICO Price
+	uint256 private constant UUSD_PER_TOKEN = 0.03*10**6;
+	function getPriceuUSD() external pure returns (uint256) {
+		return UUSD_PER_TOKEN;
+	}
+	
+	function gettDynamicPrice() external view returns(bool) {
+		return s.dynamicPrice;
+	}
+	function setDynamicPrice(bool dynPrice) external onlyOwner {
+		s.dynamicPrice = dynPrice;
+		emit UpdatedDynamicPrice(dynPrice);
+	}
+	event UpdatedDynamicPrice(bool dynPrice);
 
 	/********************************************************************************************************/
 	/********************************************* Investors ************************************************/
@@ -349,8 +349,8 @@ contract CrowdsaleFacet is AntiWhale, ReentrancyGuardUpgradeableNoStorage {
 	/*************************************************** Withdraw *******************************************/
 	/********************************************************************************************************/
 	function withdraw(string calldata symbol, uint8 percentage) external nonReentrant onlyOwner {
-		require(s.totaluUSDTInvested > s.softCapuUSD, "ERRW_NPAS_SOF");																																										// Not passed SoftCap
-		require(s.targetWalletAddress != address(0x0), "ERRW_MISS_WAL");																																								// Provide Wallet
+		require(s.totaluUSDTInvested > s.softCapuUSD, "ERRW_NPAS_SOF");																																								// Not passed SoftCap
+		require(s.targetWalletAddress != address(0x0), "ERRW_MISS_WAL");																																							// Provide Wallet
 
 		s.paymentTokens[symbol].ptuUSDInvested -= s.paymentTokens[symbol].ptuUSDInvested * percentage / 100;
 		s.paymentTokens[symbol].ptAmountInvested -= s.paymentTokens[symbol].ptAmountInvested * percentage / 100;

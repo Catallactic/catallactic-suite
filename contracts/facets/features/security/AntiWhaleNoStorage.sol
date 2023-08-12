@@ -22,7 +22,7 @@ pragma solidity 0.8.18;
 
 import "./Ownable2StepUpgradeableNoStorage.sol";
 
-contract AntiWhale is Ownable2StepUpgradeableNoStorage {
+contract AntiWhaleNoStorage is Ownable2StepUpgradeableNoStorage {
 
 	/********************************************************************************************************/
 	/********************************************** WhiteLists **********************************************/

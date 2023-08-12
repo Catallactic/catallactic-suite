@@ -41,13 +41,13 @@ struct AppStorage {
 	uint256 maxuUSDTransfer;
 	uint256 minuUSDTransfer;
 
+	string[] paymentSymbols;
+	bool dynamicPrice;
+	mapping (string => PaymentToken) paymentTokens;
 	uint256 totaluUSDTInvested;
 	uint256 hardCapuUSD;
 	uint256 softCapuUSD;
 	//uint256 UUSD_PER_TOKEN;
-	string[] paymentSymbols;
-	bool dynamicPrice;
-	mapping (string => PaymentToken) paymentTokens;
 	address[] investors;
 	mapping (address => Contributions) contributions;
 	address payable tokenAddress;
