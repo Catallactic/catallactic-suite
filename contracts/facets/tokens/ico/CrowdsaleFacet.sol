@@ -324,7 +324,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		emit FundsClaimed(investor, claimed);
 
 		// do claim
-		IERC20Upgradeable(s.tokenAddress).safeTransferFrom(owner(), investor, claimed);
+		IERC20Upgradeable(s.tokenAddress).safeTransfer(investor, claimed);
 	}
 	event FundsClaimed(address backer, uint amount);
 
