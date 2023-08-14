@@ -18,11 +18,12 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	/************************************************* Lifecycle ********************************************/
 	/********************************************************************************************************/
 	// initialization
-	function createCrowdsale(uint256 hardCap_, uint256 softCap_, uint256 whitelistuUSDThreshold_, uint256 maxuUSDInvestment_, uint256 maxuUSDTransfer_, uint256 minuUSDTransfer_) public initializer {
+	// not initializer because should be able to create several crowdsales
+	function createCrowdsale(uint256 hardCap_, uint256 softCap_, uint256 whitelistuUSDThreshold_, uint256 maxuUSDInvestment_, uint256 maxuUSDTransfer_, uint256 minuUSDTransfer_) public {
 		require(owner() == address(0) || owner() == msg.sender, "ERRW_OWNR_NOT");
 		require(stage == CrowdsaleStage.NotStarted, "ERRD_MUST_ONG");																																									// ICO must be not stated
 
-    __Ownable_init();
+    s._owner = msg.sender;
 
 		s.hardCapuUSD = hardCap_;
 		s.softCapuUSD = softCap_;

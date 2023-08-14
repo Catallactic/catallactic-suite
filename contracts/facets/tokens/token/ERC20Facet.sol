@@ -27,15 +27,10 @@ import "hardhat/console.sol";
 
 contract ERC20Facet is ERC20UpgradeableNoStorage, Ownable2StepUpgradeableNoStorage { 
 
-  function initialize() initializer public {
+	// will execute only once
+  function initialize() public initializer {
 		
-		console.log('Owner is ', msg.sender);
     __Ownable_init();
-		console.log('Owner is ', owner());
-
-		console.log('**************************************************');
-		console.log('**************** Initialize ERC20 ****************');
-		console.log('**************************************************');
 		
     __ERC20_init("CatallacticERC20", "CATA");
     _mint(msg.sender, 200_000_000 * 10**18);

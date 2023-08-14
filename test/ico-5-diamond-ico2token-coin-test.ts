@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-describe.skip("ico-5-diamond-ico2token-coin-test", function () {
+describe("ico-5-diamond-ico2token-coin-test", function () {
 	const hre = require("hardhat");
 
 	let CrowdsaleFacet, ico: Contract;
@@ -85,6 +85,12 @@ describe.skip("ico-5-diamond-ico2token-coin-test", function () {
 			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
 		});
 
+		// deploy ChainLinkAggregator mock
+		ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
+		chainLinkAggregator = await ChainLinkAggregator.deploy();
+		await chainLinkAggregator.deployed();
+		console.log("ChainLinkAggregator:" + chainLinkAggregator.address);
+
 		// deploy DiamondCutFacet
 		const DiamondCutFacet = await ethers.getContractFactory('DiamondCutFacet')
 		let diamondCutFacet = await DiamondCutFacet.deploy()
@@ -133,6 +139,7 @@ describe.skip("ico-5-diamond-ico2token-coin-test", function () {
 
 		// attach Crowdsale facet ex Common
 		const crowdsaleFacetExCommonFacetSelectors = removeSelectors(getSelectors(crowdsaleFacet),getSelectors(commonFacet));
+		//crowdsaleFacetExCommonFacetSelectors.push(commonFacet.interface.getSighash('receive()'))
 		//console.log('attachig functions:', crowdsaleFacetExCommonFacetSelectors)
 		_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: FacetCutAction.Add, functionSelectors: crowdsaleFacetExCommonFacetSelectors, }];
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
@@ -155,8 +162,10 @@ describe.skip("ico-5-diamond-ico2token-coin-test", function () {
 		// initialize
 		console.log('initializing')
 		await expect(await common.owner()).to.equal('0x0000000000000000000000000000000000000000');
-		common.createCrowdsale(300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999);
-		await ico.setPaymentToken("COIN", diamond.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
+		await expect(ico.createCrowdsale(300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999)).not.to.be.reverted;
+		await expect(ico.setPaymentToken("COIN", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18)).not.to.be.reverted;
+		await expect(token.initialize()).not.to.be.reverted;
+		await expect(await common.owner()).to.equal(owner.address);
 		console.log('initialized')
 
 	});
@@ -559,23 +568,19 @@ describe.skip("ico-5-diamond-ico2token-coin-test", function () {
 		let uUSDContributed1 = await ico.getuUSDToClaim(addr1.address);
 		console.log("uUSDContributed1 " + uUSDContributed1);
 		let numTokensWithDecimals1 = BigInt(uUSDContributed1) * BigInt(10**18) / BigInt(price);
-		await token.approve(ico.address, numTokensWithDecimals1);
-		expect(await token.allowance(owner.address, ico.address)).to.equal(numTokensWithDecimals1);
+		expect(token.transfer(ico.address, numTokensWithDecimals1)).not.to.be.reverted;
 		await expect(() => ico.connect(addr1).claim())
-			.to.changeTokenBalances(token, [owner, addr1], [BigInt(-1) * numTokensWithDecimals1, numTokensWithDecimals1]);
-		expect(await token.allowance(owner.address, ico.address)).to.equal(0);
-		expect(await ico.getuUSDToClaim(addr1.address)).to.equal(0);
+			.to.changeTokenBalances(token, [ico, addr1], [BigInt(-1) * numTokensWithDecimals1, numTokensWithDecimals1]);
+			expect(await ico.getuUSDToClaim(addr1.address)).to.equal(0);
 		expect(await ico.getContribution(addr1.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr1.address, 'COIN')).to.equal(0);
 
 		// claim tokens from investors 2
 		let uUSDContributed2 = await ico.getuUSDToClaim(addr2.address);
 		let numTokensWithDecimals2 = BigInt(uUSDContributed2) * BigInt(10**18) / BigInt(price);
-		await token.approve(ico.address, numTokensWithDecimals2);
-		expect(await token.allowance(owner.address, ico.address)).to.equal(numTokensWithDecimals1);
+		expect(token.transfer(ico.address, numTokensWithDecimals2)).not.to.be.reverted;
 		await expect(() => ico.connect(addr2).claim())
-			.to.changeTokenBalances(token, [owner, addr2], [BigInt(-1) * numTokensWithDecimals2, numTokensWithDecimals2]);
-		expect(await token.allowance(owner.address, ico.address)).to.equal(0);
+			.to.changeTokenBalances(token, [ico, addr2], [BigInt(-1) * numTokensWithDecimals2, numTokensWithDecimals2]);
 		expect(await ico.getuUSDToClaim(addr2.address)).to.equal(0);
 		expect(await ico.getContribution(addr2.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr2.address, 'COIN')).to.equal(0);
@@ -583,10 +588,9 @@ describe.skip("ico-5-diamond-ico2token-coin-test", function () {
 		// claim tokens from investors 3
 		let uUSDContributed3 = await ico.getuUSDToClaim(addr3.address);
 		let numTokensWithDecimals3 = BigInt(uUSDContributed3) * BigInt(10**18) / BigInt(price);
-		await token.approve(ico.address, numTokensWithDecimals3);
+		expect(token.transfer(ico.address, numTokensWithDecimals3)).not.to.be.reverted;
 		await expect(() => ico.connect(addr3).claim())
-			.to.changeTokenBalances(token, [owner, addr3], [BigInt(-1) * numTokensWithDecimals3, numTokensWithDecimals3]);
-		expect(await token.allowance(owner.address, ico.address)).to.equal(0);
+			.to.changeTokenBalances(token, [ico, addr3], [BigInt(-1) * numTokensWithDecimals3, numTokensWithDecimals3]);
 		expect(await ico.getuUSDToClaim(addr3.address)).to.equal(0);
 		expect(await ico.getContribution(addr3.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr3.address, 'COIN')).to.equal(0);
@@ -617,12 +621,9 @@ describe.skip("ico-5-diamond-ico2token-coin-test", function () {
 		let uUSDContributed1 = await ico.getuUSDToClaim(addr1.address);
 		console.log("uUSDContributed1 " + uUSDContributed1);
 		let numTokensWithDecimals1 = BigInt(uUSDContributed1) * BigInt(10**18) / BigInt(price);
-		console.log("numTokensWithDecimals1 " + numTokensWithDecimals1);
-		await token.approve(ico.address, numTokensWithDecimals1);
-		expect(await token.allowance(owner.address, ico.address)).to.equal(numTokensWithDecimals1);
+		expect(token.transfer(ico.address, numTokensWithDecimals1)).not.to.be.reverted;
 		await expect(() => ico.claimAddress(addr1.address))
-			.to.changeTokenBalances(token, [owner, addr1], [BigInt(-1) * numTokensWithDecimals1, numTokensWithDecimals1]);
-		expect(await token.allowance(owner.address, ico.address)).to.equal(0);
+			.to.changeTokenBalances(token, [ico, addr1], [BigInt(-1) * numTokensWithDecimals1, numTokensWithDecimals1]);
 		expect(await ico.getuUSDToClaim(addr1.address)).to.equal(0);
 		expect(await ico.getContribution(addr1.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr1.address, 'COIN')).to.equal(0);
@@ -630,11 +631,9 @@ describe.skip("ico-5-diamond-ico2token-coin-test", function () {
 		// claim tokens from investors 2
 		let uUSDContributed2 = await ico.getuUSDToClaim(addr2.address);
 		let numTokensWithDecimals2 = BigInt(uUSDContributed2) * BigInt(10**18) / BigInt(price);
-		await token.approve(ico.address, numTokensWithDecimals2);
-		expect(await token.allowance(owner.address, ico.address)).to.equal(numTokensWithDecimals1);
+		expect(token.transfer(ico.address, numTokensWithDecimals2)).not.to.be.reverted;
 		await expect(() => ico.claimAddress(addr2.address))
-			.to.changeTokenBalances(token, [owner, addr2], [BigInt(-1) * numTokensWithDecimals2, numTokensWithDecimals2]);
-		expect(await token.allowance(owner.address, ico.address)).to.equal(0);
+			.to.changeTokenBalances(token, [ico, addr2], [BigInt(-1) * numTokensWithDecimals2, numTokensWithDecimals2]);
 		expect(await ico.getuUSDToClaim(addr2.address)).to.equal(0);
 		expect(await ico.getContribution(addr2.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr2.address, 'COIN')).to.equal(0);
@@ -642,11 +641,9 @@ describe.skip("ico-5-diamond-ico2token-coin-test", function () {
 		// claim tokens from investors 3
 		let uUSDContributed3 = await ico.getuUSDToClaim(addr3.address);
 		let numTokensWithDecimals3 = BigInt(uUSDContributed3) * BigInt(10**18) / BigInt(price);
-		await token.approve(ico.address, numTokensWithDecimals3);
-		expect(await token.allowance(owner.address, ico.address)).to.equal(numTokensWithDecimals1);
+		expect(token.transfer(ico.address, numTokensWithDecimals3)).not.to.be.reverted;
 		await expect(() => ico.claimAddress(addr3.address))
-			.to.changeTokenBalances(token, [owner, addr3], [BigInt(-1) * numTokensWithDecimals3, numTokensWithDecimals3]);
-		expect(await token.allowance(owner.address, ico.address)).to.equal(0);
+			.to.changeTokenBalances(token, [ico, addr3], [BigInt(-1) * numTokensWithDecimals3, numTokensWithDecimals3]);
 		expect(await ico.getuUSDToClaim(addr3.address)).to.equal(0);
 		expect(await ico.getContribution(addr3.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr3.address, 'COIN')).to.equal(0);

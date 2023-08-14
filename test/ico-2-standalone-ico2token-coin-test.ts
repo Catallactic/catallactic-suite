@@ -57,14 +57,14 @@ describe("ico-2-standalone-ico2token-coin-test", function () {
 		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
 		ico = await CrowdsaleFacet.deploy();
 		await ico.deployed();
-		ico.createCrowdsale(300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999);
-		await ico.setPaymentToken("COIN", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18);
+		await expect(ico.createCrowdsale(300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999)).not.to.be.reverted;
+		await expect(ico.setPaymentToken("COIN", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18)).not.to.be.reverted;
 		console.log("deployed ICO:" + ico.address);
 
 		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
 		token = await ERC20Facet.deploy();
 		await token.deployed();
-		token.initialize();
+		await expect(token.initialize()).not.to.be.reverted;
 		console.log("deployed Token:" + token.address);
 
 		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
@@ -585,29 +585,5 @@ describe("ico-2-standalone-ico2token-coin-test", function () {
 		expect((await ico.getPaymentToken("COIN"))[4]).to.equal(0, 'Invested amount must be zero');		// uUSDInvested
 		expect((await ico.getPaymentToken("COIN"))[5]).to.equal(0, 'Invested amount must be zero');		// amountInvested			
 	});
-
-	/********************************************************************************************************/
-	/************************************************* Finalize *********************************************/
-	/********************************************************************************************************/
-	/*it("Should be able to finalize", async() => {
-
-		await ico.setCrowdsaleStage(1);
-
-
-		let balanceOfOwner = await ethers.provider.getBalance(owner.address);
-		console.log("Owner " + owner.address + " balanceOfOwner " + balanceOfOwner);
-		expect(await ethers.provider.getBalance(ico.address)).to.equal(0);
-
-		await expect(testTransferCoin(addr1, 40)).not.to.be.reverted;
-
-		console.log("Finalizing");
-		await ico.setCrowdsaleStage(3);
-		await ico.finalize();
-		console.log("Finalized");
-
-		expect(await ethers.provider.getBalance(ico.address)).to.equal(0);
-		//expect(await ethers.provider.getBalance(owner.address)).to.equal(balanceOfOwner.add(40));
-
-	});*/
 
 });

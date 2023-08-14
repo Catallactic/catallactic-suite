@@ -51,8 +51,8 @@ describe("ico-1-standalone-ico-consistency-test", function () {
 		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
 		ico = await CrowdsaleFacet.deploy();
 		await ico.deployed();
-		ico.createCrowdsale(300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999);
-		await ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
+		await expect(ico.createCrowdsale(300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999)).not.to.be.reverted;
+		await expect(ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18)).not.to.be.reverted;
 		console.log("deployed ICO:" + ico.address);
 
 		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
