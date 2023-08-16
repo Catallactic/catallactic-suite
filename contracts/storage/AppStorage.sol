@@ -12,23 +12,31 @@ struct PaymentToken {
 
 // contributions
 struct Contribution { 				// only for refund
-	uint256 cAmountInvested;		// only for refund
-	uint256 cuUSDInvested;			// only for audit
+	uint256 cAmountInvested;		// only for refund				// reset on claim / refund
+	uint256 cuUSDInvested;			// only for audit					// reset on claim / refund
 }
 struct Contributions {
 	bool known;
-	uint256 uUSDToPay;					// for claim and deposits
+	uint256 uUSDToPay;					// for claim and deposits	// reset on claim / refund
+	uint256 uUSDInvested;				// for max investment			// no reset
 	mapping (string => Contribution) conts;
+}
+
+enum CrowdsaleStage {
+	NotStarted,
+	Ongoing,
+	OnHold,
+	Finished
 }
 
 struct AppStorage {
 
-	uint8 _initialized;
-	bool _initializing;
+	uint8 _initialized;																		// no reset
+	bool _initializing;																		// no reset
+	address _owner;																				// no reset
+	address _pendingOwner;																// no reset
 
-	address _owner;
-	address _pendingOwner;
-
+	// antiwhale variables
 	uint256 whitelistuUSDThreshold;
 	address[] whitelistedAccs;
 	mapping(address => bool) whitelisted;
@@ -41,22 +49,26 @@ struct AppStorage {
 	uint256 maxuUSDTransfer;
 	uint256 minuUSDTransfer;
 
-	string[] paymentSymbols;
-	bool dynamicPrice;
-	mapping (string => PaymentToken) paymentTokens;
-	uint256 totaluUSDTInvested;
-	uint256 hardCapuUSD;
-	uint256 softCapuUSD;
+	// crowdsale variables
+	CrowdsaleStage stage;
+	string[] paymentSymbols;															// no reset
+	bool dynamicPrice;																		// no reset
+	mapping (string => PaymentToken) paymentTokens;				// no reset
+	uint256 totaluUSDTInvested;														// reset on claim / refund
+	uint256 hardCapuUSD;																	// manual reset
+	uint256 softCapuUSD;																	// manual reset
 	//uint256 UUSD_PER_TOKEN;
-	address[] investors;
-	mapping (address => Contributions) contributions;
-	address payable tokenAddress;
-	address payable targetWalletAddress;
+	address[] investors;																	// no reset
+	mapping (address => Contributions) contributions;			// reset on claim / refund
+	address payable tokenAddress;													// manual reset
+	address payable targetWalletAddress;									// manual reset
 
-	mapping(address => uint256) _balances;
-	mapping(address => mapping(address => uint256)) _allowances;
-	uint256 _totalSupply;
+	// erc-20 variables
 	string _name;
 	string _symbol;
+	uint256 _totalSupply;
+	mapping(address => uint256) _balances;
+	mapping(address => mapping(address => uint256)) _allowances;
+
 
 }

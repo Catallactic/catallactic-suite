@@ -21,7 +21,8 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	// not initializer because should be able to create several crowdsales
 	function createCrowdsale(uint256 hardCap_, uint256 softCap_, uint256 whitelistuUSDThreshold_, uint256 maxuUSDInvestment_, uint256 maxuUSDTransfer_, uint256 minuUSDTransfer_) public {
 		require(owner() == address(0) || owner() == msg.sender, "ERRW_OWNR_NOT");
-		require(stage == CrowdsaleStage.NotStarted, "ERRD_MUST_ONG");																																									// ICO must be not stated
+		require(s.stage == CrowdsaleStage.NotStarted, "ERRD_MUST_ONG");																																									// ICO must be not started
+		require(s.totaluUSDTInvested == 0, "ERRD_MUST_ONG");																																														// ICO must not have investment
 
     s._owner = msg.sender;
 
@@ -36,29 +37,31 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 
 	// Crowdsale Stage
 	function getCrowdsaleStage() external view returns (CrowdsaleStage) {
-		return stage;
+		return s.stage;
 	}
-	enum CrowdsaleStage {
-		NotStarted,
-		Ongoing,
-		OnHold,
-		Finished
-	}
-	CrowdsaleStage private stage = CrowdsaleStage.NotStarted;
 	function setCrowdsaleStage(uint stage_) external onlyOwner {
 		if(uint(CrowdsaleStage.NotStarted) == stage_) {							// 0
-			stage = CrowdsaleStage.NotStarted;
+			s.stage = CrowdsaleStage.NotStarted;
 		} else if (uint(CrowdsaleStage.Ongoing) == stage_) {				// 1
-			stage = CrowdsaleStage.Ongoing;
+			s.stage = CrowdsaleStage.Ongoing;
 		} else if (uint(CrowdsaleStage.OnHold) == stage_) {					// 2
-			stage = CrowdsaleStage.OnHold;
+			s.stage = CrowdsaleStage.OnHold;
 		} else if (uint(CrowdsaleStage.Finished) == stage_) {				// 3
-			stage = CrowdsaleStage.Finished;
+			s.stage = CrowdsaleStage.Finished;
 		}
 
 		emit UpdatedCrowdsaleStage(stage_);
 	}
 	event UpdatedCrowdsaleStage(uint stage_);
+
+	function reset() external onlyOwner {
+		s.stage = CrowdsaleStage.NotStarted;
+		s.totaluUSDTInvested = 0;
+		s.hardCapuUSD = 0;
+		s.softCapuUSD = 0;
+		s.tokenAddress = payable(address(0x0));
+		s.targetWalletAddress = payable(address(0x0));
+	}
 
 	/********************************************************************************************************/
 	/******************************************* Payment Tokens *********************************************/
@@ -185,6 +188,10 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		return s.contributions[investor].conts[symbol].cuUSDInvested;
 	}
 
+	function getuUSDInvested(address investor) external view returns(uint256){
+		require(investor !=  address(0), "ERRW_INVA_ADD");
+		return s.contributions[investor].uUSDInvested;
+	}
 	function getuUSDToClaim(address investor) external view returns(uint256){
 		require(investor !=  address(0), "ERRW_INVA_ADD");
 		return s.contributions[investor].uUSDToPay;
@@ -220,13 +227,13 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 
 	// receive contribution
 	function deposit(string memory symbol, uint256 rawAmountWitDecimals, uint uUSDAmount) internal {
-		require(stage == CrowdsaleStage.Ongoing, "ERRD_MUST_ONG");																																									// ICO must be ongoing
-		require(!s.useBlacklist || !s.blacklisted[msg.sender], 'ERRD_MUSN_BLK');																																				// must not be blacklisted
+		require(s.stage == CrowdsaleStage.Ongoing, "ERRD_MUST_ONG");																																									// ICO must be ongoing
+		require(!s.useBlacklist || !s.blacklisted[msg.sender], 'ERRD_MUSN_BLK');																																			// must not be blacklisted
 		require(uUSDAmount >= s.minuUSDTransfer, "ERRD_TRAS_LOW");																																										// transfer amount too low
 		require(uUSDAmount <= s.maxuUSDTransfer, "ERRD_TRAS_HIG");																																										// transfer amount too high
-		require((s.contributions[msg.sender].uUSDToPay +uUSDAmount < s.whitelistuUSDThreshold) || s.whitelisted[msg.sender], 'ERRD_MUST_WHI');						// must be whitelisted
-		require(s.contributions[msg.sender].uUSDToPay +uUSDAmount <= s.maxuUSDInvestment, "ERRD_INVT_HIG");																							// total invested amount too high
-		require(uUSDAmount + s.totaluUSDTInvested < s.hardCapuUSD, "ERRD_HARD_CAP");																																		// amount higher than available
+		require((s.contributions[msg.sender].uUSDInvested +uUSDAmount < s.whitelistuUSDThreshold) || s.whitelisted[msg.sender], 'ERRD_MUST_WHI');			// must be whitelisted
+		require(s.contributions[msg.sender].uUSDInvested +uUSDAmount <= s.maxuUSDInvestment, "ERRD_INVT_HIG");																				// total invested amount too high
+		require(uUSDAmount + s.totaluUSDTInvested < s.hardCapuUSD, "ERRD_HARD_CAP");																																	// amount higher than available
 
 		// add investor
 		if(!s.contributions[msg.sender].known) {
@@ -240,6 +247,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 
 		// add total to investor
 		s.contributions[msg.sender].uUSDToPay += uUSDAmount;																// only for claim
+		s.contributions[msg.sender].uUSDInvested += uUSDAmount;															// only for max investment
 
 		// add total to payment method
 		s.paymentTokens[symbol].ptuUSDInvested += uUSDAmount;																// only for audit
@@ -269,7 +277,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		refundInvestor(symbol, investor);
 	}
 	function refundInvestor(string calldata symbol, address investor) internal {
-		require(stage == CrowdsaleStage.Finished, "ERRR_MUST_FIN");																																									// ICO must be finished
+		require(s.stage == CrowdsaleStage.Finished, "ERRR_MUST_FIN");																																									// ICO must be finished
 		require(s.totaluUSDTInvested < s.softCapuUSD, "ERRR_PASS_SOF");																																									// Passed SoftCap. No refund
 		require(investor !=  address(0), "ERRW_INVA_ADD");
 		uint256 rawAmount = s.contributions[investor].conts[symbol].cAmountInvested;
@@ -304,7 +312,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		claimInvestor(investor);
 	}
 	function claimInvestor(address investor) internal {
-		require(stage == CrowdsaleStage.Finished, "ERRC_MUST_FIN");																																										// ICO must be finished
+		require(s.stage == CrowdsaleStage.Finished, "ERRC_MUST_FIN");																																										// ICO must be finished
 		require(s.totaluUSDTInvested > s.softCapuUSD, "ERRC_NPAS_SOF");																																										// Not passed SoftCap
 		require(investor !=  address(0), "ERRW_INVA_ADD");
 		require(s.tokenAddress != address(0x0), "ERRC_MISS_TOK");																																												// Provide Token
