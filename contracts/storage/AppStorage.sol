@@ -57,7 +57,7 @@ struct AppStorage {
 	uint256 totaluUSDTInvested;														// reset on claim / refund
 	uint256 hardCapuUSD;																	// manual reset
 	uint256 softCapuUSD;																	// manual reset
-	//uint256 UUSD_PER_TOKEN;
+	uint256 uUsdPrice;
 	address[] investors;																	// no reset
 	mapping (address => Contributions) contributions;			// reset on claim / refund
 	address payable tokenAddress;													// manual reset

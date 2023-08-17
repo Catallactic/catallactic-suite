@@ -19,13 +19,14 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	/********************************************************************************************************/
 	// initialization
 	// not initializer because should be able to create several crowdsales
-	function createCrowdsale(uint256 hardCap_, uint256 softCap_, uint256 whitelistuUSDThreshold_, uint256 maxuUSDInvestment_, uint256 maxuUSDTransfer_, uint256 minuUSDTransfer_) public {
+	function createCrowdsale(uint256 uUsdPrice_, uint256 hardCap_, uint256 softCap_, uint256 whitelistuUSDThreshold_, uint256 maxuUSDInvestment_, uint256 maxuUSDTransfer_, uint256 minuUSDTransfer_) public {
 		require(owner() == address(0) || owner() == msg.sender, "ERRW_OWNR_NOT");
 		require(s.stage == CrowdsaleStage.NotStarted, "ERRD_MUST_ONG");																																									// ICO must be not started
 		require(s.totaluUSDTInvested == 0, "ERRD_MUST_ONG");																																														// ICO must not have investment
 
     s._owner = msg.sender;
 
+		s.uUsdPrice = uUsdPrice_;
 		s.hardCapuUSD = hardCap_;
 		s.softCapuUSD = softCap_;
 
@@ -56,6 +57,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 
 	function reset() external onlyOwner {
 		s.stage = CrowdsaleStage.NotStarted;
+		s.uUsdPrice = 0;
 		s.totaluUSDTInvested = 0;
 		s.hardCapuUSD = 0;
 		s.softCapuUSD = 0;
@@ -152,10 +154,9 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	}
 	event UpdatedSoftCap(uint256 hardCap);
 
-	// ICO Price
-	uint256 private constant UUSD_PER_TOKEN = 0.03*10**6;
-	function getPriceuUSD() external pure returns (uint256) {
-		return UUSD_PER_TOKEN;
+	// Crowdsale Price
+	function getPriceuUSD() external view returns (uint256) {
+		return s.uUsdPrice;
 	}
 	
 	function gettDynamicPrice() external view returns(bool) {
@@ -317,7 +318,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		require(investor !=  address(0), "ERRW_INVA_ADD");
 		require(s.tokenAddress != address(0x0), "ERRC_MISS_TOK");																																												// Provide Token
 
-		uint claimed = s.contributions[investor].uUSDToPay * 10**18 / UUSD_PER_TOKEN;
+		uint claimed = s.contributions[investor].uUSDToPay * 10**18 / s.uUsdPrice;
 		require(claimed > 0, "ERRR_ZERO_CLM");																																																				// Nothing to refund
 
 		// clear variables

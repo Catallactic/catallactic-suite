@@ -162,7 +162,7 @@ describe("ico-5-diamond-ico2token-coin-test", function () {
 		// initialize
 		console.log('initializing')
 		await expect(await common.owner()).to.equal('0x0000000000000000000000000000000000000000');
-		await expect(ico.createCrowdsale(300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999)).not.to.be.reverted;
+		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999)).not.to.be.reverted;
 		await expect(ico.setPaymentToken("COIN", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18)).not.to.be.reverted;
 		await expect(token.initialize()).not.to.be.reverted;
 		await expect(await common.owner()).to.equal(owner.address);
@@ -727,7 +727,7 @@ describe("ico-5-diamond-ico2token-coin-test", function () {
 		expect(await ico.getTotaluUSDInvested()).to.equal(29999997);																																		// totaluUSDTInvested
 		expect(await ico.getHardCap()).to.equal(300000);
 		expect(await ico.getSoftCap()).to.equal(50000);
-		// UUSD_PER_TOKEN
+		expect(await ico.getPriceuUSD()).to.equal(30_000);
 		expect(await ico.getInvestorsCount()).to.equal(3);
 		let investorsCount = await ico.getInvestorsCount();
 		let investors = await ico.getInvestors();
@@ -749,7 +749,7 @@ describe("ico-5-diamond-ico2token-coin-test", function () {
 		expect(await ico.getTotaluUSDInvested()).to.equal(0);																																							// totaluUSDTInvested
 		expect(await ico.getHardCap()).to.equal(0);
 		expect(await ico.getSoftCap()).to.equal(0);
-		// UUSD_PER_TOKEN
+		expect(await ico.getPriceuUSD()).to.equal(0);
 		expect(await ico.getInvestorsCount()).to.equal(3);
 		investorsCount = await ico.getInvestorsCount();
 		investors = await ico.getInvestors();
@@ -834,7 +834,7 @@ describe("ico-5-diamond-ico2token-coin-test", function () {
 		expect(await ico.getTotaluUSDInvested()).to.equal(57000000000);																																		// totaluUSDTInvested
 		expect(await ico.getHardCap()).to.equal(300000);
 		expect(await ico.getSoftCap()).to.equal(50000);
-		// UUSD_PER_TOKEN
+		expect(await ico.getPriceuUSD()).to.equal(30_000);
 		expect(await ico.getInvestorsCount()).to.equal(3);
 		let investorsCount = await ico.getInvestorsCount();
 		let investors = await ico.getInvestors();
@@ -856,7 +856,7 @@ describe("ico-5-diamond-ico2token-coin-test", function () {
 		expect(await ico.getTotaluUSDInvested()).to.equal(0);																																							// totaluUSDTInvested
 		expect(await ico.getHardCap()).to.equal(0);
 		expect(await ico.getSoftCap()).to.equal(0);
-		// UUSD_PER_TOKEN
+		expect(await ico.getPriceuUSD()).to.equal(0);
 		expect(await ico.getInvestorsCount()).to.equal(3);
 		investorsCount = await ico.getInvestorsCount();
 		investors = await ico.getInvestors();
