@@ -25,6 +25,8 @@ library LibDiamondStorage {
         // facet addresses
         address[] facetAddresses;
 
+				address receiveFacet;
+
         // Used to query if a contract implements an interface.
         // Used to implement ERC-165.
         mapping(bytes4 => bool) supportedInterfaces;

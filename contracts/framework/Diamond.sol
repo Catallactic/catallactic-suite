@@ -12,6 +12,8 @@ import { LibDiamond } from "./LibDiamond.sol";
 import { IDiamondCut } from "./IDiamondCut.sol";
 import { LibDiamondStorage } from "./LibDiamondStorage.sol";
 
+import "hardhat/console.sol";
+
 contract Diamond {    
 
     constructor(address _diamondCutFacet) payable {        
@@ -70,10 +72,11 @@ contract Diamond {
 			assembly {
 				ds.slot := position
 			}
-			
+		
+			require(ds.receiveFacet !=  address(0), "Diamond: Address cannot be null");
+
 			// get facet from function selector
-			address facet = 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853;
-			require(facet != address(0), "Diamond: Function does not exist");
+			address facet = ds.receiveFacet;
 
 			// Execute external function from facet using delegatecall and return any value.
 			assembly {
@@ -92,5 +95,18 @@ contract Diamond {
 						return(0, returndatasize())
 					}
 			}
+		}
+
+		function setReceiveFacet(address payable receiveFacet_) external {
+			require(receiveFacet_ !=  address(0), "Diamond: Address cannot be null");
+
+			LibDiamondStorage.DiamondStorage storage ds;
+			bytes32 position = LibDiamondStorage.DIAMOND_STORAGE_POSITION;
+			assembly {
+				ds.slot := position
+			}
+
+			console.log('setReceiveFacet', receiveFacet_);
+			ds.receiveFacet = receiveFacet_;
 		}
 }
