@@ -15,10 +15,10 @@ error InitializationFunctionReverted(address _initializationContractAddress, byt
 
 library LibDiamond {
 
-    event DiamondCut(IDiamondCut.FacetCut[] _diamondCut, address _init, bytes _calldata);
+    event DiamondCut(IDiamondCut.FacetCut[] _diamondCut);
 
     // Internal function version of diamondCut
-    function executeDiamondCut(IDiamondCut.FacetCut[] memory _diamondCut, address _init, bytes memory _calldata) internal {
+    function executeDiamondCut(IDiamondCut.FacetCut[] memory _diamondCut) internal {
 			for (uint256 facetIndex; facetIndex < _diamondCut.length; facetIndex++) {
 				IDiamondCut.FacetCutAction action = _diamondCut[facetIndex].action;
 				if (action == IDiamondCut.FacetCutAction.Add) {
@@ -31,8 +31,7 @@ library LibDiamond {
 						revert("LibDiamondCut: Incorrect FacetCutAction");
 				}
 			}
-			emit DiamondCut(_diamondCut, _init, _calldata);
-			//initializeDiamondCut(_init, _calldata);
+			emit DiamondCut(_diamondCut);
     }
 
     function addFunctions(address _facetAddress, bytes4[] memory _functionSelectors) internal {
@@ -136,26 +135,6 @@ library LibDiamond {
             delete ds.facetFunctionSelectors[_facetAddress].facetAddressPosition;
         }
     }
-
-    /*function initializeDiamondCut(address _init, bytes memory _calldata) internal {
-        if (_init == address(0)) {
-            return;
-        }
-        enforceHasContractCode(_init, "LibDiamondCut: _init address has no code");        
-        (bool success, bytes memory error) = _init.delegatecall(_calldata);
-        if (!success) {
-            if (error.length > 0) {
-                // bubble up error
-                /// @solidity memory-safe-assembly
-                assembly {
-                    let returndata_size := mload(error)
-                    revert(add(32, error), returndata_size)
-                }
-            } else {
-                revert InitializationFunctionReverted(_init, _calldata);
-            }
-        }
-    }*/
 
     function enforceHasContractCode(address _contract, string memory _errorMessage) internal view {
         uint256 contractSize;

@@ -113,8 +113,7 @@ describe("ico-5-diamond-ico2token-coin-test", function () {
 
 		// attach DiamondLoupeFacet
 		let _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(diamondLoupeFacet), }];
-		//await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, diamondInit.address, diamondInit.interface.encodeFunctionData('init'))).to.not.be.reverted;
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 		console.log("DiamondLoupeFacet attached as " + diamondCutContract.address);
 
 		// deploy Common facet
@@ -127,7 +126,7 @@ describe("ico-5-diamond-ico2token-coin-test", function () {
 		// attach Common facet
 		//console.log('attachig functions:', getSelectors(commonFacet))
 		_diamondCut = [{ facetAddress: commonFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(commonFacet), }];
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 		console.log("CommonFacet attached as " + common.address);
 
 		// deploy Crowdsale facet
@@ -142,7 +141,7 @@ describe("ico-5-diamond-ico2token-coin-test", function () {
 		//crowdsaleFacetExCommonFacetSelectors.push(commonFacet.interface.getSighash('receive()'))
 		//console.log('attachig functions:', crowdsaleFacetExCommonFacetSelectors)
 		_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: FacetCutAction.Add, functionSelectors: crowdsaleFacetExCommonFacetSelectors, }];
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 		console.log("CrowdsaleFacet attached as " + ico.address);
 
 		// deploy Token facet
@@ -156,7 +155,7 @@ describe("ico-5-diamond-ico2token-coin-test", function () {
 		const erc20FacetExCommonFacetSelectors = removeSelectors(getSelectors(erc20Facet),getSelectors(commonFacet));
 		//console.log('attachig functions:', erc20FacetExCommonFacetSelectors)
 		_diamondCut = [{ facetAddress: erc20Facet.address, action: FacetCutAction.Add, functionSelectors: erc20FacetExCommonFacetSelectors, }];
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 		console.log("ERC20Facet attached as " + token.address);
 
 		// initialize

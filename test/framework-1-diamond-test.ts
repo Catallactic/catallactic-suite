@@ -61,15 +61,9 @@ describe("framework-1-diamond-test", function () {
 		diamondCutContract = await ethers.getContractAt('DiamondCutFacet', diamond.address)
     diamondLoupeContract = await ethers.getContractAt('DiamondLoupeFacet', diamond.address)
 
-		// deploy DiamondInit
-		const DiamondInit = await ethers.getContractFactory('DiamondInit')
-		const diamondInit = await DiamondInit.deploy()
-		await diamondInit.deployed()
-		console.log('DiamondInit deployed:', diamondInit.address)
-
 	  // initialize to attach facets to diamond
 		const _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(diamondLoupeFacet), }];
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, diamondInit.address, diamondInit.interface.encodeFunctionData('init'))).to.not.be.reverted;
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 		console.log('Diamond initialized:',)
 	});
 
@@ -163,7 +157,7 @@ describe("framework-1-diamond-test", function () {
 
 			// attach Test1Facet
 			const _diamondCut = [{ facetAddress: test1Facet.address, action: FacetCutAction.Add, functionSelectors: selectors, }];
-			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 
 			const facets = await diamondLoupeContract.facets();
 			expect(facets[2].facetAddress).to.eql(test1Facet.address);
@@ -179,7 +173,7 @@ describe("framework-1-diamond-test", function () {
 
 			// attach Test1Facet
 			let _diamondCut = [{ facetAddress: test1Facet.address, action: FacetCutAction.Add, functionSelectors: selectors, }];
-			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 
 			// invoke old function
 			const test1 = (await diamondAsFacet(diamond, 'Test1Facet')) as Test1Facet;
@@ -190,7 +184,7 @@ describe("framework-1-diamond-test", function () {
 			const selectorTest1Func1 = test1Facet.interface.getSighash('test1Func1()');
 			console.log('selectorTest1Func1', selectorTest1Func1);
 			_diamondCut = [{ facetAddress: test2Facet.address, action: FacetCutAction.Replace, functionSelectors: [ selectorTest1Func1 ], }];
-			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 
 			// invoke new function
 			const test2 = (await diamondAsFacet(diamond, 'Test2Facet')) as Test2Facet;
@@ -203,7 +197,7 @@ describe("framework-1-diamond-test", function () {
 
 			// attach Test1Facet
 			let _diamondCut = [{ facetAddress: test1Facet.address, action: FacetCutAction.Add, functionSelectors: selectors, }];
-			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 
 			// invoke function
 			const test1 = (await diamondAsFacet(diamond, 'Test1Facet')) as Test1Facet;
@@ -213,7 +207,7 @@ describe("framework-1-diamond-test", function () {
 			// remove function
 			const selectorTest1Func1 = test1Facet.interface.getSighash('test1Func1()');
 			_diamondCut = [{ facetAddress: '0x0000000000000000000000000000000000000000', action: FacetCutAction.Remove, functionSelectors: [ selectorTest1Func1 ], }];
-			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 
 			// invoke function
 			await expect(test1.test1Func1()).to.be.revertedWith('Diamond: Function does not exist');
@@ -276,11 +270,11 @@ describe("framework-1-diamond-test", function () {
 
 			// add selectors
 			let _diamondCut = [{ facetAddress: test1Facet.address, action: FacetCutAction.Add, functionSelectors: selectors, }];
-			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 
 			// remove selectors
 			_diamondCut = [{ facetAddress: '0x0000000000000000000000000000000000000000', action: FacetCutAction.Remove, functionSelectors: [ /*ownerSel,*/ sel5, sel10 ], }];
-			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut, '0x0000000000000000000000000000000000000000', '0x')).to.not.be.reverted;
+			await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 
 			// Get the test1Facet's registered functions
 			selectors = await diamondLoupeContract.facetFunctionSelectors(test1Facet.address)
