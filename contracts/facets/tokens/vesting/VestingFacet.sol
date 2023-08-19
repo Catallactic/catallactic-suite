@@ -9,7 +9,7 @@ import "../../features/security/ReentrancyGuardUpgradeableNoStorage.sol";
 import "../../features/security/Ownable2StepUpgradeableNoStorage.sol";
 
 /**
- * @title TokenVesting
+ * @title VestingFacet
  */
 contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgradeableNoStorage {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -66,6 +66,20 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 		vestingSchedulesIds.push(vestingScheduleId);
 		uint256 currentVestingCount = holdersVestingCount[_beneficiary];
 		holdersVestingCount[_beneficiary] = currentVestingCount + 1;
+	}
+
+	/**
+	 * @dev Computes the next vesting schedule identifier for a given holder address.
+	 */
+	function computeNextVestingScheduleIdForHolder(address holder) public view returns (bytes32) {
+		return computeVestingScheduleIdForAddressAndIndex(holder,holdersVestingCount[holder]);
+	}
+
+	/**
+	 * @dev Computes the vesting schedule identifier for an address and an index.
+	 */
+	function computeVestingScheduleIdForAddressAndIndex(address holder,uint256 index) public pure returns (bytes32) {
+		return keccak256(abi.encodePacked(holder, index));
 	}
 
 	/********************************************************************************************************/
@@ -131,6 +145,62 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	}
 
 	/********************************************************************************************************/
+	/***************************************** Compute Amount ***********************************************/
+	/********************************************************************************************************/
+	/**
+	 * @notice Computes the vested amount of tokens for the given vesting schedule identifier.
+	 * @return the vested amount
+	 */
+	function computeReleasableAmount(bytes32 vestingScheduleId) external view onlyIfVestingScheduleNotRevoked(vestingScheduleId) returns (uint256) {
+		VestingSchedule storage vestingSchedule = vestingSchedules[vestingScheduleId];
+		return _computeReleasableAmount(vestingSchedule);
+	}
+
+	/**
+	 * @dev Computes the releasable amount of tokens for a vesting schedule.
+	 * @return the amount of releasable tokens
+	 */
+	function _computeReleasableAmount(VestingSchedule memory vestingSchedule) internal view returns (uint256) {
+		// Retrieve the current time.
+		uint256 currentTime = getCurrentTime();
+
+		// If the current time is before the cliff, no tokens are releasable.
+		if ((currentTime < vestingSchedule.cliff) || vestingSchedule.revoked)
+				return 0;
+		
+		// If the current time is after the vesting period, all tokens are releasable, minus the amount already released.
+		if (currentTime >= vestingSchedule.start + vestingSchedule.duration)
+				return vestingSchedule.amountTotal - vestingSchedule.released;
+
+		// Otherwise, some tokens are releasable. Compute the number of full vesting periods that have elapsed.
+		uint256 timeFromStart = currentTime - vestingSchedule.start;
+		uint256 secondsPerSlice = vestingSchedule.slicePeriodSeconds;
+		uint256 vestedSlicePeriods = timeFromStart / secondsPerSlice;
+		uint256 vestedSeconds = vestedSlicePeriods * secondsPerSlice;
+		// Compute the amount of tokens that are vested.
+		uint256 vestedAmount = (vestingSchedule.amountTotal * vestedSeconds) / vestingSchedule.duration;
+		// Subtract the amount already released and return.
+		return vestedAmount - vestingSchedule.released;
+	}
+
+	/**
+	 * @dev Returns the current time.
+	 * @return the current timestamp in seconds.
+	 */
+	function getCurrentTime() internal view virtual returns (uint256) {
+			return block.timestamp;
+	}
+
+	/**
+	 * @dev Returns the amount of tokens that can be withdrawn by the owner.
+	 * @return the amount of tokens
+	 */
+	function getWithdrawableAmount() public view returns (uint256) {
+		//return _token.balanceOf(address(this)) - vestingSchedulesTotalAmount;
+		return 100_000;
+	}
+
+	/********************************************************************************************************/
 	/************************************************* Revoke ***********************************************/
 	/********************************************************************************************************/
 	/**
@@ -147,81 +217,6 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 		uint256 unreleased = vestingSchedule.amountTotal - vestingSchedule.released;
 		vestingSchedulesTotalAmount = vestingSchedulesTotalAmount - unreleased;
 		vestingSchedule.revoked = true;
-	}
-
-	/********************************************************************************************************/
-	/***************************************** Compute Withdraw *********************************************/
-	/********************************************************************************************************/
-	/**
-	 * @dev Returns the amount of tokens that can be withdrawn by the owner.
-	 * @return the amount of tokens
-	 */
-	function getWithdrawableAmount() public view returns (uint256) {
-		//return _token.balanceOf(address(this)) - vestingSchedulesTotalAmount;
-		return 100_000;
-	}
-
-	/**
-	 * @notice Computes the vested amount of tokens for the given vesting schedule identifier.
-	 * @return the vested amount
-	 */
-	function computeReleasableAmount(bytes32 vestingScheduleId) external view onlyIfVestingScheduleNotRevoked(vestingScheduleId) returns (uint256) {
-		VestingSchedule storage vestingSchedule = vestingSchedules[vestingScheduleId];
-		return _computeReleasableAmount(vestingSchedule);
-	}
-
-	/**
-	 * @dev Computes the next vesting schedule identifier for a given holder address.
-	 */
-	function computeNextVestingScheduleIdForHolder(address holder) public view returns (bytes32) {
-		return computeVestingScheduleIdForAddressAndIndex(holder,holdersVestingCount[holder]);
-	}
-
-	/**
-	 * @dev Computes the vesting schedule identifier for an address and an index.
-	 */
-	function computeVestingScheduleIdForAddressAndIndex(address holder,uint256 index) public pure returns (bytes32) {
-		return keccak256(abi.encodePacked(holder, index));
-	}
-
-	/**
-	 * @dev Computes the releasable amount of tokens for a vesting schedule.
-	 * @return the amount of releasable tokens
-	 */
-	function _computeReleasableAmount(VestingSchedule memory vestingSchedule) internal view returns (uint256) {
-		// Retrieve the current time.
-		uint256 currentTime = getCurrentTime();
-
-		// If the current time is before the cliff, no tokens are releasable.
-		if ((currentTime < vestingSchedule.cliff) || vestingSchedule.revoked) {
-				return 0;
-		
-		// If the current time is after the vesting period, all tokens are releasable,
-		// minus the amount already released.
-		} else if (currentTime >= vestingSchedule.start + vestingSchedule.duration) {
-				return vestingSchedule.amountTotal - vestingSchedule.released;
-
-		// Otherwise, some tokens are releasable.
-		} else {
-			// Compute the number of full vesting periods that have elapsed.
-			uint256 timeFromStart = currentTime - vestingSchedule.start;
-			uint256 secondsPerSlice = vestingSchedule.slicePeriodSeconds;
-			uint256 vestedSlicePeriods = timeFromStart / secondsPerSlice;
-			uint256 vestedSeconds = vestedSlicePeriods * secondsPerSlice;
-			// Compute the amount of tokens that are vested.
-			uint256 vestedAmount = (vestingSchedule.amountTotal *
-					vestedSeconds) / vestingSchedule.duration;
-			// Subtract the amount already released and return.
-			return vestedAmount - vestingSchedule.released;
-		}
-	}
-
-	/**
-	 * @dev Returns the current time.
-	 * @return the current timestamp in seconds.
-	 */
-	function getCurrentTime() internal view virtual returns (uint256) {
-			return block.timestamp;
 	}
 
 	/********************************************************************************************************/
