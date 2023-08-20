@@ -22,18 +22,9 @@ describe("ico-16-diamond-token-ico2token-test", function () {
 	/************************************************** hooks ***********************************************/
 	/********************************************************************************************************/
 	before(async() => {
-		console.log('-------- Starting Tests -------');
-
-		// uncomment to get real exchange values
-		/*let usdPerEther = async () => {
-			return fetch("https://api.coinbase.com/v2/exchange-rates?currency=ETH", { method: "GET", redirect: "follow" })
-				.then((response) => response.json())
-				.then((result) => {return(result.data.rates.USD)})
-				.catch((error) => {return(error)});
-		}
-		numUsdPerEther = await usdPerEther()
-		console.log('numUsdPerEther: ' + numUsdPerEther);*/
-
+		console.log('*******************************');
+		console.log('******** Starting Tests *******');
+		console.log('*******************************');
 	});
 
 	beforeEach(async() => {
