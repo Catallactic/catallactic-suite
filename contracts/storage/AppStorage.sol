@@ -57,11 +57,13 @@ struct AppStorage {
 	uint256 totaluUSDTInvested;														// reset on claim / refund
 	uint256 hardCapuUSD;																	// manual reset
 	uint256 softCapuUSD;																	// manual reset
-	uint256 uUsdPrice;
+	uint256 uUsdPrice;																		// manual reset
 	address[] investors;																	// no reset
 	mapping (address => Contributions) contributions;			// reset on claim / refund
 	address payable tokenAddress;													// manual reset
 	address payable targetWalletAddress;									// manual reset
+	uint256 percentVested;																// manual reset
+	bytes32 vestingId;																		// manual reset
 
 	// erc-20 variables
 	string _name;

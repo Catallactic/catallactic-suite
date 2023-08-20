@@ -38,6 +38,7 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 	let ERRW_MISS_WAL: string = 'ERRW_MISS_WAL' // Provide Wallet
 	let ERRR_ZERO_WIT: string = 'ERRR_ZERO_WIT' // Nothing to withdraw
 	let ERRR_WITH_BAD: string = 'ERRR_WITH_BAD' // Unable to withdraw
+	let ERRR_VEST_100: string = 'ERRR_VEST_100' // Vesting percentag must be smaller than 100
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
@@ -69,7 +70,7 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
 		ico = await CrowdsaleFacet.deploy();
 		await ico.deployed();
-		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999)).not.to.be.reverted;
+		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 0, '')).not.to.be.reverted;
 		await expect(ico.setPaymentToken("FOO", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18)).not.to.be.reverted;
 		console.log("deployed ICO:" + ico.address);
 
@@ -511,6 +512,8 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		expect(await ico.getHardCap()).to.equal(300000);
 		expect(await ico.getSoftCap()).to.equal(50000);
 		expect(await ico.getPriceuUSD()).to.equal(30_000);
+		expect(await ico.getPercentVested()).to.equal(0);
+		expect(await ico.getVestingId()).to.equal('0x0000000000000000000000000000000000000000000000000000000000000000');
 		expect(await ico.getInvestorsCount()).to.equal(3);
 		let investorsCount = await ico.getInvestorsCount();
 		let investors = await ico.getInvestors();
@@ -533,6 +536,8 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		expect(await ico.getHardCap()).to.equal(0);
 		expect(await ico.getSoftCap()).to.equal(0);
 		expect(await ico.getPriceuUSD()).to.equal(0);
+		expect(await ico.getPercentVested()).to.equal(0);
+		expect(await ico.getVestingId()).to.equal('0x0000000000000000000000000000000000000000000000000000000000000000');
 		expect(await ico.getInvestorsCount()).to.equal(3);
 		investorsCount = await ico.getInvestorsCount();
 		investors = await ico.getInvestors();

@@ -9,6 +9,8 @@ import "../../features/security/ReentrancyGuardUpgradeableNoStorage.sol";
 import "../../features/security/AntiWhaleNoStorage.sol";
 import "../../features/lifecycle/InitializableNoStorage.sol";
 
+import "../vesting/IVestingFacet.sol";
+
 import "hardhat/console.sol";
 
 contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStorage {
@@ -17,18 +19,20 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	/********************************************************************************************************/
 	/************************************************* Lifecycle ********************************************/
 	/********************************************************************************************************/
-	// initialization
 	// not initializer because should be able to create several crowdsales
-	function createCrowdsale(uint256 uUsdPrice_, uint256 hardCap_, uint256 softCap_, uint256 whitelistuUSDThreshold_, uint256 maxuUSDInvestment_, uint256 maxuUSDTransfer_, uint256 minuUSDTransfer_) public {
+	function createCrowdsale(uint256 uUsdPrice_, uint256 hardCap_, uint256 softCap_, uint256 whitelistuUSDThreshold_, uint256 maxuUSDInvestment_, uint256 maxuUSDTransfer_, uint256 minuUSDTransfer_, uint256 percentVested_, string calldata vestingId_) public {
 		require(owner() == address(0) || owner() == msg.sender, "ERRW_OWNR_NOT");
-		require(s.stage == CrowdsaleStage.NotStarted, "ERRD_MUST_ONG");																																									// ICO must be not started
-		require(s.totaluUSDTInvested == 0, "ERRD_MUST_ONG");																																														// ICO must not have investment
+		require(s.stage == CrowdsaleStage.NotStarted, "ERRD_MUST_ONG");																																						// ICO must be not started
+		require(s.totaluUSDTInvested == 0, "ERRD_MUST_ONG");																																											// ICO must not have investment
+		require(percentVested_ < 100, "ERRR_VEST_100");																																														// Vesting percentage smaller than 100
 
     s._owner = msg.sender;
 
 		s.uUsdPrice = uUsdPrice_;
 		s.hardCapuUSD = hardCap_;
 		s.softCapuUSD = softCap_;
+		s.percentVested = percentVested_;
+		s.vestingId = bytes32(bytes(vestingId_));
 
 		s.whitelistuUSDThreshold = whitelistuUSDThreshold_;
 		s.maxuUSDInvestment = maxuUSDInvestment_;
@@ -63,6 +67,8 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		s.softCapuUSD = 0;
 		s.tokenAddress = payable(address(0x0));
 		s.targetWalletAddress = payable(address(0x0));
+		s.percentVested = 0;
+		s.vestingId = '';
 	}
 
 	/********************************************************************************************************/
@@ -334,7 +340,13 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		emit FundsClaimed(investor, claimed);
 
 		// do claim
-		IERC20Upgradeable(s.tokenAddress).safeTransfer(investor, claimed);
+		if (s.percentVested < 100) {
+			IERC20Upgradeable(s.tokenAddress).safeTransfer(investor, claimed * ((100 - s.percentVested) / 100));
+		}
+			
+		if (s.percentVested > 0) {
+			//IVestingFacet(s.tokenAddress).createVestingSchedule(investor, uint256 _start, uint256 _cliff, uint256 _duration, uint256 _slicePeriodSeconds, bool _revocable, claimed);
+		}
 	}
 	event FundsClaimed(address backer, uint amount);
 
@@ -350,6 +362,14 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 
 	function getTokenAddress() external view returns (address) {
 		return s.tokenAddress;
+	}
+
+	// vesting
+	function getPercentVested() external view returns (uint256) {
+		return s.percentVested;
+	}
+	function getVestingId() external view returns (bytes32) {
+		return s.vestingId;
 	}
 
 	/********************************************************************************************************/

@@ -7,91 +7,64 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 import "../../features/security/ReentrancyGuardUpgradeableNoStorage.sol";
 import "../../features/security/Ownable2StepUpgradeableNoStorage.sol";
+import "./IVestingFacet.sol";
 
 /**
  * @title VestingFacet
  */
-contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgradeableNoStorage {
+contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgradeableNoStorage, IVestingFacet {
 	using SafeERC20Upgradeable for IERC20Upgradeable;
 
-	struct VestingSchedule {
-		address beneficiary;																									// beneficiary of tokens after they are released
-		uint256 cliff;																												// cliff time of the vesting start in seconds since the UNIX epoch
+	/********************************************************************************************************/
+	/************************************************* Vestings *********************************************/
+	/********************************************************************************************************/
+	struct Vesting {
+		bytes32 vestingId;																										// vesting identifier
 		uint256 start;																												// start time of the vesting period in seconds since the UNIX epoch
+		uint256 cliff;																												// cliff time of the vesting start in seconds since the UNIX epoch
 		uint256 duration;																											// duration of the vesting period in seconds
 		uint256 slicePeriodSeconds;																						// duration of a slice period for the vesting in seconds
 		bool revocable;																												// whether or not the vesting is revocable
-		uint256 amountTotal;																									// total amount of tokens to be released at the end of the vesting
-		uint256 released;																											// amount of tokens released
-		bool revoked;																													// whether or not the vesting has been revoked
 	}
 
-	bytes32[] private vestingSchedulesIds;
-	mapping(bytes32 => VestingSchedule) private vestingSchedules;
-	uint256 private vestingSchedulesTotalAmount;
-	mapping(address => uint256) private holdersVestingCount;
+	bytes32[] private vestingIds;
+	mapping(bytes32 => Vesting) private vestings;
 
-	/**
-	 * @dev Reverts if the vesting schedule does not exist or has been revoked.
-	 */
-	modifier onlyIfVestingScheduleNotRevoked(bytes32 vestingScheduleId) {
-		require(!vestingSchedules[vestingScheduleId].revoked);
-		_;
-	}
-
-	/********************************************************************************************************/
-	/************************************************* Lifecycle ********************************************/
-	/********************************************************************************************************/
 	/**
 	 * @notice Creates a new vesting schedule for a beneficiary.
-	 * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
 	 * @param _start start time of the vesting period
 	 * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
 	 * @param _duration duration in seconds of the period in which the tokens will vest
 	 * @param _slicePeriodSeconds duration of a slice period for the vesting in seconds
 	 * @param _revocable whether the vesting is revocable or not
-	 * @param _amount total amount of tokens to be released at the end of the vesting
 	 */
-	function createVestingSchedule(address _beneficiary,uint256 _start,uint256 _cliff,uint256 _duration,uint256 _slicePeriodSeconds,bool _revocable,uint256 _amount) external onlyOwner {
-		require(getWithdrawableAmount() >= _amount, "TokenVesting: cannot create vesting schedule because not sufficient tokens");
+	function createVesting(uint256 _start,uint256 _cliff,uint256 _duration,uint256 _slicePeriodSeconds, bool _revocable) external onlyOwner returns (bytes32) {
 		require(_duration > 0, "TokenVesting: duration must be > 0");
-		require(_amount > 0, "TokenVesting: amount must be > 0");
 		require(_slicePeriodSeconds >= 1, "TokenVesting: slicePeriodSeconds must be >= 1");
 		require(_duration >= _cliff, "TokenVesting: duration must be >= cliff");
 
-		bytes32 vestingScheduleId = computeNextVestingScheduleIdForHolder(_beneficiary);
 		uint256 cliff = _start + _cliff;
-		vestingSchedules[vestingScheduleId] = VestingSchedule(_beneficiary,cliff,_start,_duration,_slicePeriodSeconds,_revocable,_amount,0,false);
-		vestingSchedulesTotalAmount = vestingSchedulesTotalAmount + _amount;
-		vestingSchedulesIds.push(vestingScheduleId);
-		uint256 currentVestingCount = holdersVestingCount[_beneficiary];
-		holdersVestingCount[_beneficiary] = currentVestingCount + 1;
-	}
 
-	/**
-	 * @dev Computes the next vesting schedule identifier for a given holder address.
-	 */
-	function computeNextVestingScheduleIdForHolder(address holder) public view returns (bytes32) {
-		return computeVestingScheduleIdForAddressAndIndex(holder,holdersVestingCount[holder]);
-	}
+		bytes32 vestingId = keccak256(abi.encodePacked(_start, _cliff, _duration, _slicePeriodSeconds, _revocable));
+		vestingIds.push(vestingId);
+		vestings[vestingId] = Vesting(vestingId, cliff,_start,_duration,_slicePeriodSeconds,_revocable);
 
-	/**
-	 * @dev Computes the vesting schedule identifier for an address and an index.
-	 */
-	function computeVestingScheduleIdForAddressAndIndex(address holder,uint256 index) public pure returns (bytes32) {
-		return keccak256(abi.encodePacked(holder, index));
+		return vestingId;
 	}
 
 	/********************************************************************************************************/
-	/******************************************* Total Vested ***********************************************/
-	/********************************************************************************************************/	
-	/**
-	 * @notice Returns the total amount of vesting schedules.
-	 * @return the total amount of vesting schedules
-	 */
-	function getVestingSchedulesTotalAmount() external view returns (uint256) {
-		return vestingSchedulesTotalAmount;
+	/***************************************** Vesting Schedules ********************************************/
+	/********************************************************************************************************/
+	struct VestingSchedule {
+		address beneficiary;																									// beneficiary of tokens after they are released
+		uint256 amountTotal;																									// total amount of tokens to be released at the end of the vesting
+		bytes32 vestingId;																										// vesting id
+
+		uint256 released;																											// amount of tokens released
+		bool revoked;																													// whether or not the vesting has been revoked
 	}
+
+	bytes32[] private vestingSchedulesIds;
 
 	/**
 	 * @dev Returns the number of vesting schedules managed by this contract.
@@ -110,6 +83,8 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 		return vestingSchedulesIds[index];
 	}
 
+	mapping(bytes32 => VestingSchedule) private vestingSchedules;
+
 	/**
 	 * @notice Returns the vesting schedule information for a given identifier.
 	 * @return the vesting schedule structure information
@@ -118,9 +93,33 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 		return vestingSchedules[vestingScheduleId];
 	}
 
-	/********************************************************************************************************/
-	/************************************************ Holder Vested *****************************************/
-	/********************************************************************************************************/
+	/**
+	 * @dev Reverts if the vesting schedule does not exist or has been revoked.
+	 */
+	modifier onlyIfVestingScheduleNotRevoked(bytes32 vestingScheduleId) {
+		require(!vestingSchedules[vestingScheduleId].revoked);
+		_;
+	}
+
+	/**
+	 * @notice Creates a new vesting schedule for a beneficiary.
+	 * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
+	 * @param _amount total amount of tokens to be released at the end of the vesting
+	 */
+	function createVestingSchedule(address _beneficiary, uint256 _amount, bytes32 vestingId) external onlyOwner {
+		require(getWithdrawableAmount() >= _amount, "TokenVesting: cannot create vesting schedule because not sufficient tokens");
+		require(_amount > 0, "TokenVesting: amount must be > 0");
+
+		bytes32 vestingScheduleId = keccak256(abi.encodePacked(_beneficiary, holdersVestingCount[_beneficiary]));
+		vestingSchedules[vestingScheduleId] = VestingSchedule(_beneficiary, _amount, vestingId, 0, false);
+		vestingSchedulesTotalAmount = vestingSchedulesTotalAmount + _amount;
+		vestingSchedulesIds.push(vestingScheduleId);
+		uint256 currentVestingCount = holdersVestingCount[_beneficiary];
+		holdersVestingCount[_beneficiary] = currentVestingCount + 1;
+	}
+
+	mapping(address => uint256) private holdersVestingCount;
+
 	/**
 	 * @dev Returns the number of vesting schedules associated to a beneficiary.
 	 * @return the number of vesting schedules
@@ -129,19 +128,14 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 		return holdersVestingCount[_beneficiary];
 	}
 
-	/**
-	 * @dev Returns the last vesting schedule for a given holder address.
-	 */
-	function getLastVestingScheduleForHolder(address holder) external view returns (VestingSchedule memory) {
-		return vestingSchedules[computeVestingScheduleIdForAddressAndIndex(holder,holdersVestingCount[holder] - 1)];
-	}
+	uint256 private vestingSchedulesTotalAmount;
 
 	/**
-	 * @notice Returns the vesting schedule information for a given holder and index.
-	 * @return the vesting schedule structure information
+	 * @notice Returns the total amount of vesting schedules.
+	 * @return the total amount of vesting schedules
 	 */
-	function getVestingScheduleByAddressAndIndex(address holder,uint256 index) external view returns (VestingSchedule memory) {
-		return getVestingSchedule(computeVestingScheduleIdForAddressAndIndex(holder, index));
+	function getVestingSchedulesTotalAmount() external view returns (uint256) {
+		return vestingSchedulesTotalAmount;
 	}
 
 	/********************************************************************************************************/
@@ -164,21 +158,23 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 		// Retrieve the current time.
 		uint256 currentTime = getCurrentTime();
 
+		Vesting memory vesting = vestings[vestingSchedule.vestingId];
+
 		// If the current time is before the cliff, no tokens are releasable.
-		if ((currentTime < vestingSchedule.cliff) || vestingSchedule.revoked)
+		if ((currentTime < vesting.cliff) || vestingSchedule.revoked)
 				return 0;
 		
 		// If the current time is after the vesting period, all tokens are releasable, minus the amount already released.
-		if (currentTime >= vestingSchedule.start + vestingSchedule.duration)
+		if (currentTime >= vesting.start + vesting.duration)
 				return vestingSchedule.amountTotal - vestingSchedule.released;
 
 		// Otherwise, some tokens are releasable. Compute the number of full vesting periods that have elapsed.
-		uint256 timeFromStart = currentTime - vestingSchedule.start;
-		uint256 secondsPerSlice = vestingSchedule.slicePeriodSeconds;
+		uint256 timeFromStart = currentTime - vesting.start;
+		uint256 secondsPerSlice = vesting.slicePeriodSeconds;
 		uint256 vestedSlicePeriods = timeFromStart / secondsPerSlice;
 		uint256 vestedSeconds = vestedSlicePeriods * secondsPerSlice;
 		// Compute the amount of tokens that are vested.
-		uint256 vestedAmount = (vestingSchedule.amountTotal * vestedSeconds) / vestingSchedule.duration;
+		uint256 vestedAmount = (vestingSchedule.amountTotal * vestedSeconds) / vesting.duration;
 		// Subtract the amount already released and return.
 		return vestedAmount - vestingSchedule.released;
 	}
@@ -209,7 +205,7 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	 */
 	function revoke(bytes32 vestingScheduleId) external onlyOwner onlyIfVestingScheduleNotRevoked(vestingScheduleId) {
 		VestingSchedule storage vestingSchedule = vestingSchedules[vestingScheduleId];
-		require(vestingSchedule.revocable,"TokenVesting: vesting is not revocable");
+		require(vestings[vestingSchedule.vestingId].revocable,"TokenVesting: vesting is not revocable");
 		uint256 vestedAmount = _computeReleasableAmount(vestingSchedule);
 		if (vestedAmount > 0) {
 				release(vestingScheduleId, vestedAmount);
