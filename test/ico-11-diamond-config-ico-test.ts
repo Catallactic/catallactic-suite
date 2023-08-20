@@ -3,6 +3,8 @@ import { ethers } from "hardhat";
 import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
+import * as helpers from "./_testhelper";
+
 // describe.skip
 describe("ico-11-diamond-config-ico-test", function () {
 	const hre = require("hardhat");
@@ -14,59 +16,6 @@ describe("ico-11-diamond-config-ico-test", function () {
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
 
   let diamondCutContract: Contract, diamondLoupeContract: Contract;
-
-	let ERRD_MUST_NST: string = 'ERRD_MUST_NST' // ICO must be not started
-	let ERRW_OWNR_NOT: string = 'ERRW_OWNR_NOT' // Ownable: caller is not the owner
-	let ERRP_INDX_PAY: string = 'ERRP_INDX_PAY' // Wrong index
-	let ERRD_MUST_ONG: string = 'ERRD_MUST_ONG' // ICO must be ongoing
-	let ERRD_MUSN_BLK: string = 'ERRD_MUSN_BLK' // must not be blacklisted
-	let ERRD_TRAS_LOW: string = 'ERRD_TRAS_LOW' // transfer amount too low
-	let ERRD_TRAS_HIG: string = 'ERRD_TRAS_HIG' // transfer amount too high
-	let ERRD_MUST_WHI: string = 'ERRD_MUST_WHI' // must be whitelisted
-	let ERRD_INVT_HIG: string = 'ERRD_INVT_HIG' // total invested amount too high
-	let ERRD_HARD_CAP: string = 'ERRD_HARD_CAP' // amount higher than available
-	let ERRD_ALLO_LOW: string = 'ERRD_ALLO_LOW' // insuffient allowance
-	let ERRR_MUST_FIN: string = 'ERRR_MUST_FIN' // ICO must be finished
-	let ERRR_PASS_SOF: string = 'ERRR_PASS_SOF' // Passed SoftCap. No refund
-	let ERRR_ZERO_REF: string = 'ERRR_ZERO_REF' // Nothing to refund
-	let ERRR_WITH_REF: string = 'ERRR_WITH_REF' // Unable to refund
-	let ERRC_MUST_FIN: string = 'ERRC_MUST_FIN' // ICO must be finished
-	let ERRC_NPAS_SOF: string = 'ERRC_NPAS_SOF' // Not passed SoftCap
-	let ERRC_MISS_TOK: string = 'ERRC_MISS_TOK' // Provide Token
-	let ERRW_MUST_FIN: string = 'ERRW_MUST_FIN' // ICO must be finished
-	let ERRW_NPAS_SOF: string = 'ERRW_NPAS_SOF' // Not passed SoftCap
-	let ERRW_INVA_ADD: string = 'ERRW_INVA_ADD' // Invalid Address
-	let ERRR_ZERO_CLM: string = 'ERRR_ZERO_CLM' // Nothing to claim
-	let ERRW_MISS_WAL: string = 'ERRW_MISS_WAL' // Provide Wallet
-	let ERRR_ZERO_WIT: string = 'ERRR_ZERO_WIT' // Nothing to withdraw
-	let ERRR_WITH_BAD: string = 'ERRR_WITH_BAD' // Unable to withdraw
-	let ERRR_VEST_100: string = 'ERRR_VEST_100' // Vesting percentag must be smaller than 100
-
-	/********************************************************************************************************/
-	/********************************************** deployment utils ****************************************/
-	/********************************************************************************************************/
-	const FacetCutAction = { Add: 0, Replace: 1, Remove: 2 }
-
-	let getSelectors = function (contract:Contract) {
-    const signatures: string[] = Object.keys(contract.interface.functions);
-    return signatures.reduce((acc: string[], val) => {
-        if (val !== 'init(bytes)') {
-            acc.push(contract.interface.getSighash(val));
-        }
-        return acc;
-    }, []);
-	}
-	let removeSelectors = function (selectors: string[], removeSelectors: string[]) {
-		selectors = selectors.filter(v => !removeSelectors.includes(v))
-		return selectors
-	}
-	let logSelectors = function (contract:Contract) {
-    const signatures: string[] = Object.keys(contract.interface.functions);
-    return signatures.reduce((acc: string[], val) => {
-			console.log(val + '->' + contract.interface.getSighash(val));
-      return acc;
-    }, []);
-	}
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
@@ -107,7 +56,7 @@ describe("ico-11-diamond-config-ico-test", function () {
 		console.log('DiamondLoupeFacet deployed:', diamondLoupeFacet.address)
 
 		// attach DiamondLoupeFacet
-		let _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(diamondLoupeFacet), }];
+		let _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: helpers.getSelectors(diamondLoupeFacet), }];
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 		console.log("DiamondLoupeFacet attached as " + diamondCutContract.address);
 
@@ -120,7 +69,7 @@ describe("ico-11-diamond-config-ico-test", function () {
 
 		// attach Common facet
 		//console.log('attachig functions:', getSelectors(commonFacet))
-		_diamondCut = [{ facetAddress: commonFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(commonFacet), }];
+		_diamondCut = [{ facetAddress: commonFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: helpers.getSelectors(commonFacet), }];
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 		console.log("CommonFacet attached as " + common.address);
 
@@ -132,9 +81,9 @@ describe("ico-11-diamond-config-ico-test", function () {
 		console.log("CrowdsaleFacet deployed:" + crowdsaleFacet.address);
 
 		// attach Crowdsale facet ex Common
-		const crowdsaleFacetExCommonFacetSelectors = removeSelectors(getSelectors(crowdsaleFacet),getSelectors(commonFacet));
+		const crowdsaleFacetExCommonFacetSelectors = helpers.removeSelectors(helpers.getSelectors(crowdsaleFacet), helpers.getSelectors(commonFacet));
 		//console.log('attachig functions:', crowdsaleFacetExCommonFacetSelectors)
-		_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: FacetCutAction.Add, functionSelectors: crowdsaleFacetExCommonFacetSelectors, }];
+		_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: crowdsaleFacetExCommonFacetSelectors, }];
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 		console.log("CrowdsaleFacet attached as " + ico.address);
 
@@ -146,9 +95,9 @@ describe("ico-11-diamond-config-ico-test", function () {
 		console.log("ERC20Facet deployed:" + erc20Facet.address);
 
 		// attach Token facet ex Common
-		const erc20FacetExCommonFacetSelectors = removeSelectors(getSelectors(erc20Facet),getSelectors(commonFacet));
+		const erc20FacetExCommonFacetSelectors = helpers.removeSelectors(helpers.getSelectors(erc20Facet), helpers.getSelectors(commonFacet));
 		//console.log('attachig functions:', erc20FacetExCommonFacetSelectors)
-		_diamondCut = [{ facetAddress: erc20Facet.address, action: FacetCutAction.Add, functionSelectors: erc20FacetExCommonFacetSelectors, }];
+		_diamondCut = [{ facetAddress: erc20Facet.address, action: helpers.FacetCutAction.Add, functionSelectors: erc20FacetExCommonFacetSelectors, }];
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 		console.log("ERC20Facet attached as " + token.address);
 
@@ -163,7 +112,7 @@ describe("ico-11-diamond-config-ico-test", function () {
 	});
 
 	afterEach(async() => {
-		await logStatus();
+		await helpers.logICOStatus(ico);
 		console.log('--------------------');
 	});
 	
@@ -174,45 +123,6 @@ describe("ico-11-diamond-config-ico-test", function () {
 	/********************************************************************************************************/
 	/********************************************* supporting functions *************************************/
 	/********************************************************************************************************/
-	// currency conversions
-	let numUsdPerEther: number = 1100;
-
-	let etherToUsd = function (ether: number) {
-		return ether * numUsdPerEther;
-	}
-	let usdToEther = function (usd: number) {
-		return usd / numUsdPerEther;
-	}
-	let weiToUsd = function (wei: BigNumber) {
-		return etherToUsd(Number(ethers.utils.formatEther(wei)));
-	}
-	let usdToWei = function (usd: number) {
-		return ethers.utils.parseUnits((usdToEther(usd).toString()));
-	}
-	let stringToBytes5 = function (str: string) {
-		return ethers.utils.hexZeroPad(ethers.utils.toUtf8Bytes(str), 5);
-	}
-	let bytes5ToString = function (hexString: string) {
-		return ethers.utils.toUtf8String(hexString);
-	}
-	let logStatus = async () => {
-
-		console.log("\getTotaluUSDInvested: " + await ico.getTotaluUSDInvested() + " USD");
-
-		let price = await ico.getPriceuUSD();
-
-		let investorsCount = await ico.getInvestorsCount();
-		let investors = await ico.getInvestors();
-		console.log("\tInvestors: ");
-		for (let i = 0; i < investorsCount; i++) {
-			let ether = await ethers.provider.getBalance(investors[i]);
-			let uusd = await ico.getuUSDToClaim(investors[i]);
-			let tokens = Math.floor(uusd / price);
-			console.log("\t\t* " + investors[i] + " ether: " + weiToUsd(ether) + " USD" + "; tokens: " + tokens + " CYGAS = " + (uusd/10**6) + " USD");
-		}
-
-	}
-
 	it("Initial Logs.", async() => {
 
 		//console.log("\tgetMaxTransfer: " + weiToUsd(await ico.getMaxTransfer()) + " USD");
@@ -232,11 +142,6 @@ describe("ico-11-diamond-config-ico-test", function () {
 		console.log("\tliquidity address: " + liquidity.address);
 		console.log("\n");
 
-	});
-
-	it("Should do number conversions.", async() => {
-		console.log("usd to wei to usd: " + weiToUsd(usdToWei(10)));
-		console.log("usd to eher to usd: " + etherToUsd(usdToEther(10)));
 	});
 
 	it("Verify Initialization.", async() => {
@@ -372,14 +277,14 @@ describe("ico-11-diamond-config-ico-test", function () {
 		expect(await ico.getPaymentSymbols()).to.deep.equal([ 'COIN', 'DOGE', 'USDT', 'BNB', 'MATIC' ]);
 
 		// delete multiple payment tokens
-		await expect(ico.deletePaymentToken('DOGE', 2)).to.be.revertedWith(ERRP_INDX_PAY);
+		await expect(ico.deletePaymentToken('DOGE', 2)).to.be.revertedWith(helpers.ERRORS.ERRP_INDX_PAY);
 		await expect(ico.deletePaymentToken('DOGE', 1)).not.to.be.reverted;
 		expect(await ico.getPaymentSymbols()).to.deep.equal([ 'COIN', 'MATIC', 'USDT', 'BNB' ]);
 		await expect(ico.deletePaymentToken('BNB', 3)).not.to.be.reverted;
 		expect(await ico.getPaymentSymbols()).to.deep.equal([ 'COIN', 'MATIC', 'USDT' ]);
 		await expect(ico.deletePaymentToken('MATIC', 1)).not.to.be.reverted;
 		expect(await ico.getPaymentSymbols()).to.deep.equal([ 'COIN', 'USDT' ]);
-		await expect(ico.deletePaymentToken('USDT', 0)).to.be.revertedWith(ERRP_INDX_PAY);
+		await expect(ico.deletePaymentToken('USDT', 0)).to.be.revertedWith(helpers.ERRORS.ERRP_INDX_PAY);
 		await expect(ico.deletePaymentToken('USDT', 1)).not.to.be.reverted;
 		expect(await ico.getPaymentSymbols()).to.deep.equal([ 'COIN' ]);
 
@@ -398,12 +303,12 @@ describe("ico-11-diamond-config-ico-test", function () {
 	/********************************************************************************************************/
 	it("Should be able to configure wallets", async() => {
 		expect(await ico.getTokenAddress()).to.equal('0x0000000000000000000000000000000000000000', 'Initial token address must be 0');
-		await expect(ico.setTokenAddress('0x0000000000000000000000000000000000000000')).to.be.revertedWith('ERRW_INVA_ADD');
+		await expect(ico.setTokenAddress('0x0000000000000000000000000000000000000000')).to.be.revertedWith(helpers.ERRORS.ERRW_INVA_ADD);
 		await ico.setTokenAddress(addr1.address);
 		expect(await ico.getTokenAddress()).to.equal(addr1.address, 'token address project should have changed to ' + addr1.address);
 
 		expect(await ico.getTargetWalletAddress()).to.equal('0x0000000000000000000000000000000000000000', 'Initial project address must be 0');
-		await expect(ico.setTargetWalletAddress('0x0000000000000000000000000000000000000000')).to.be.revertedWith('ERRW_INVA_ADD');
+		await expect(ico.setTargetWalletAddress('0x0000000000000000000000000000000000000000')).to.be.revertedWith(helpers.ERRORS.ERRW_INVA_ADD);
 		await ico.setTargetWalletAddress(addr1.address);
 		expect(await ico.getTargetWalletAddress()).to.equal(addr1.address, 'target wallet address should have changed to ' + addr1.address);
 	});

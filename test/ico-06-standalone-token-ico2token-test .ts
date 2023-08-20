@@ -3,6 +3,8 @@ import { ethers } from "hardhat";
 import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
+import * as helpers from "./_testhelper";
+
 describe("ico-06-standalone-token-ico2token-test ", function () {
 	const hre = require("hardhat");
 
@@ -12,33 +14,6 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 	let ChainLinkAggregator, chainLinkAggregator: Contract;
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
-
-	let ERRD_MUST_NST: string = 'ERRD_MUST_NST' // ICO must be not started
-	let ERRW_OWNR_NOT: string = 'ERRW_OWNR_NOT' // Ownable: caller is not the owner
-	let ERRP_INDX_PAY: string = 'ERRP_INDX_PAY' // Wrong index
-	let ERRD_MUST_ONG: string = 'ERRD_MUST_ONG' // ICO must be ongoing
-	let ERRD_MUSN_BLK: string = 'ERRD_MUSN_BLK' // must not be blacklisted
-	let ERRD_TRAS_LOW: string = 'ERRD_TRAS_LOW' // transfer amount too low
-	let ERRD_TRAS_HIG: string = 'ERRD_TRAS_HIG' // transfer amount too high
-	let ERRD_MUST_WHI: string = 'ERRD_MUST_WHI' // must be whitelisted
-	let ERRD_INVT_HIG: string = 'ERRD_INVT_HIG' // total invested amount too high
-	let ERRD_HARD_CAP: string = 'ERRD_HARD_CAP' // amount higher than available
-	let ERRD_ALLO_LOW: string = 'ERRD_ALLO_LOW' // insuffient allowance
-	let ERRR_MUST_FIN: string = 'ERRR_MUST_FIN' // ICO must be finished
-	let ERRR_PASS_SOF: string = 'ERRR_PASS_SOF' // Passed SoftCap. No refund
-	let ERRR_ZERO_REF: string = 'ERRR_ZERO_REF' // Nothing to refund
-	let ERRR_WITH_REF: string = 'ERRR_WITH_REF' // Unable to refund
-	let ERRC_MUST_FIN: string = 'ERRC_MUST_FIN' // ICO must be finished
-	let ERRC_NPAS_SOF: string = 'ERRC_NPAS_SOF' // Not passed SoftCap
-	let ERRC_MISS_TOK: string = 'ERRC_MISS_TOK' // Provide Token
-	let ERRW_MUST_FIN: string = 'ERRW_MUST_FIN' // ICO must be finished
-	let ERRW_NPAS_SOF: string = 'ERRW_NPAS_SOF' // Not passed SoftCap
-	let ERRW_INVA_ADD: string = 'ERRW_INVA_ADD' // Invalid Address
-	let ERRR_ZERO_CLM: string = 'ERRR_ZERO_CLM' // Nothing to claim
-	let ERRW_MISS_WAL: string = 'ERRW_MISS_WAL' // Provide Wallet
-	let ERRR_ZERO_WIT: string = 'ERRR_ZERO_WIT' // Nothing to withdraw
-	let ERRR_WITH_BAD: string = 'ERRR_WITH_BAD' // Unable to withdraw
-	let ERRR_VEST_100: string = 'ERRR_VEST_100' // Vesting percentag must be smaller than 100
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
@@ -96,7 +71,7 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 	});
 
 	afterEach(async() => {
-		await logStatus();
+		await helpers.logICOStatus(ico);
 		console.log('--------------------');
 	});
 	
@@ -107,47 +82,6 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 	/********************************************************************************************************/
 	/********************************************* supporting functions *************************************/
 	/********************************************************************************************************/
-	// currency conversions
-	let numUsdPerEther: number = 1100;
-
-	let etherToUsd = function (ether: number) {
-		return ether * numUsdPerEther;
-	}
-	let usdToEther = function (usd: number) {
-		return usd / numUsdPerEther;
-	}
-	let weiToUsd = function (wei: BigNumber) {
-		return etherToUsd(Number(ethers.utils.formatEther(wei)));
-	}
-	let usdToWei = function (usd: number) {
-		return ethers.utils.parseUnits((usdToEther(usd).toString()));
-	}
-	let stringToBytes5 = function (str: string) {
-		return ethers.utils.hexZeroPad(ethers.utils.toUtf8Bytes(str), 5);
-	}
-	let bytes5ToString = function (hexString: string) {
-		return ethers.utils.toUtf8String(hexString);
-	}
-	let tokenToUsd = async function (token: number) {
-		console.log("UUSD_PER_TOKEN: ");
-		let tokenInfo = await ico.getPaymentToken('FOO');
-		let UUSD_PER_TOKEN = tokenInfo[2];
-		console.log("UUSD_PER_TOKEN: " + UUSD_PER_TOKEN);
-		return token * UUSD_PER_TOKEN;
-	}
-	let usdToToken = async function (usd: number) {
-		console.log("UUSD_PER_TOKEN: ");
-		let tokenInfo = await ico.getPaymentToken('FOO');
-		let UUSD_PER_TOKEN = tokenInfo[2];
-		console.log("UUSD_PER_TOKEN: " + UUSD_PER_TOKEN);
-		console.log("usdToToken: " + usd * 10**6 / UUSD_PER_TOKEN);
-		return usd * 10**6 / UUSD_PER_TOKEN;
-	}
-	let usdToTokenWithDecimals = async function (usd: number) {
-		let change = await usdToToken(usd) * 10**18;
-		return parseInt(change.toString());
-	}
-
 	it("Initial Logs.", async() => {
 
 		//console.log("\tgetMaxTransfer: " + weiToUsd(await ico.getMaxTransfer()) + " USD");
@@ -186,44 +120,6 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		expect(FOO[3]).to.equal(18);
 
 	});
-
-	it("Should do number conversions.", async() => {
-
-		console.log("usd to wei to usd: " + weiToUsd(usdToWei(10)));
-		console.log("usd to eher to usd: " + etherToUsd(usdToEther(10)));
-
-	});
-
-	// transfer helper
-	let testTransferToken = async (addr: SignerWithAddress, token: string, usdAmount: number) => {
-		console.log("purchase of : " + usdAmount + " USD of " + token + " by " + addr.address);
-
-		let tokenInfo = await ico.getPaymentToken(token);
-		let UUSD_PER_TOKEN = tokenInfo[2];
-		let rawAmount = usdAmount * 1e6 / UUSD_PER_TOKEN;
-		let decimals = tokenInfo[3];
-		let amountToTransfer = ethers.utils.parseUnits(rawAmount.toString(), decimals).toString();
-		await foo.connect(addr).approve(ico.address, amountToTransfer);
-		return await ico.connect(addr).depositTokens(token, amountToTransfer);
-	};
-
-	let logStatus = async () => {
-
-		console.log("\getTotaluUSDInvested: " + await ico.getTotaluUSDInvested() + " USD");
-
-		let price = await ico.getPriceuUSD();
-
-		let investorsCount = await ico.getInvestorsCount();
-		let investors = await ico.getInvestors();
-		console.log("\tInvestors: ");
-		for (let i = 0; i < investorsCount; i++) {
-			let ether = await ethers.provider.getBalance(investors[i]);
-			let uusd = await ico.getuUSDToClaim(investors[i]);
-			let tokens = Math.floor(uusd / price);
-			console.log("\t\t* " + investors[i] + " ether: " + weiToUsd(ether) + " USD" + "; tokens: " + tokens + " CYGAS = " + (uusd/10**6) + " USD");
-		}
-
-	}
 		
 	/********************************************************************************************************/
 	/************************************************ Claim *************************************************/
@@ -244,9 +140,9 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		await foo.transfer(addr2.address, amountToTransfer);
 		await foo.transfer(addr3.address, amountToTransfer);
 
-		await expect(testTransferToken(addr1, 'FOO', 19000)).not.to.be.reverted;
-		await expect(testTransferToken(addr2, 'FOO', 19000)).not.to.be.reverted;
-		await expect(testTransferToken(addr3, 'FOO', 19000)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr1, 'FOO', 19000, ico, foo)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr2, 'FOO', 19000, ico, foo)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr3, 'FOO', 19000, ico, foo)).not.to.be.reverted;
 
 		await ico.setTokenAddress(token.address);
 
@@ -303,9 +199,9 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		await foo.transfer(addr2.address, amountToTransfer);
 		await foo.transfer(addr3.address, amountToTransfer);
 
-		await expect(testTransferToken(addr1, 'FOO', 19000)).not.to.be.reverted;
-		await expect(testTransferToken(addr2, 'FOO', 19000)).not.to.be.reverted;
-		await expect(testTransferToken(addr3, 'FOO', 19000)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr1, 'FOO', 19000, ico, foo)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr2, 'FOO', 19000, ico, foo)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr3, 'FOO', 19000, ico, foo)).not.to.be.reverted;
 
 		await ico.setTokenAddress(token.address);
 
@@ -361,9 +257,9 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		await foo.transfer(addr2.address, amountToTransfer);
 		await foo.transfer(addr3.address, amountToTransfer);
 
-		await expect(testTransferToken(addr1, 'FOO', 10)).not.to.be.reverted;
-		await expect(testTransferToken(addr2, 'FOO', 10)).not.to.be.reverted;
-		await expect(testTransferToken(addr3, 'FOO', 10)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr2, 'FOO', 10, ico, foo)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr3, 'FOO', 10, ico, foo)).not.to.be.reverted;
 
 		await ico.setCrowdsaleStage(3);
 
@@ -451,9 +347,9 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		await foo.transfer(addr2.address, amountToTransfer);
 		await foo.transfer(addr3.address, amountToTransfer);
 
-		await expect(testTransferToken(addr1, 'FOO', 19000)).not.to.be.reverted;
-		await expect(testTransferToken(addr2, 'FOO', 19000)).not.to.be.reverted;
-		await expect(testTransferToken(addr3, 'FOO', 19000)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr1, 'FOO', 19000, ico, foo)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr2, 'FOO', 19000, ico, foo)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr3, 'FOO', 19000, ico, foo)).not.to.be.reverted;
 
 		await ico.setTokenAddress(token.address);
 
@@ -572,9 +468,9 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 
 		await ico.setTargetWalletAddress(liquidity.address);
 
-		await expect(testTransferToken(addr1, 'FOO', 19000)).not.to.be.reverted;
-		await expect(testTransferToken(addr2, 'FOO', 19000)).not.to.be.reverted;
-		await expect(testTransferToken(addr3, 'FOO', 19000)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr1, 'FOO', 19000, ico, foo)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr2, 'FOO', 19000, ico, foo)).not.to.be.reverted;
+		await expect(helpers.testTransferToken(addr3, 'FOO', 19000, ico, foo)).not.to.be.reverted;
 
 		await ico.setCrowdsaleStage(3);
 

@@ -3,6 +3,8 @@ import { ethers } from "hardhat";
 import { BigNumber, Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
+import * as helpers from "./_testhelper";
+
 describe("ico-12-diamond-coin-ico-test", function () {
 	const hre = require("hardhat");
 
@@ -14,59 +16,6 @@ describe("ico-12-diamond-coin-ico-test", function () {
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
 
   let diamondCutContract: Contract, diamondLoupeContract: Contract;
-
-	let ERRD_MUST_NST: string = 'ERRD_MUST_NST' // ICO must be not started
-	let ERRW_OWNR_NOT: string = 'ERRW_OWNR_NOT' // Ownable: caller is not the owner
-	let ERRP_INDX_PAY: string = 'ERRP_INDX_PAY' // Wrong index
-	let ERRD_MUST_ONG: string = 'ERRD_MUST_ONG' // ICO must be ongoing
-	let ERRD_MUSN_BLK: string = 'ERRD_MUSN_BLK' // must not be blacklisted
-	let ERRD_TRAS_LOW: string = 'ERRD_TRAS_LOW' // transfer amount too low
-	let ERRD_TRAS_HIG: string = 'ERRD_TRAS_HIG' // transfer amount too high
-	let ERRD_MUST_WHI: string = 'ERRD_MUST_WHI' // must be whitelisted
-	let ERRD_INVT_HIG: string = 'ERRD_INVT_HIG' // total invested amount too high
-	let ERRD_HARD_CAP: string = 'ERRD_HARD_CAP' // amount higher than available
-	let ERRD_ALLO_LOW: string = 'ERRD_ALLO_LOW' // insuffient allowance
-	let ERRR_MUST_FIN: string = 'ERRR_MUST_FIN' // ICO must be finished
-	let ERRR_PASS_SOF: string = 'ERRR_PASS_SOF' // Passed SoftCap. No refund
-	let ERRR_ZERO_REF: string = 'ERRR_ZERO_REF' // Nothing to refund
-	let ERRR_WITH_REF: string = 'ERRR_WITH_REF' // Unable to refund
-	let ERRC_MUST_FIN: string = 'ERRC_MUST_FIN' // ICO must be finished
-	let ERRC_NPAS_SOF: string = 'ERRC_NPAS_SOF' // Not passed SoftCap
-	let ERRC_MISS_TOK: string = 'ERRC_MISS_TOK' // Provide Token
-	let ERRW_MUST_FIN: string = 'ERRW_MUST_FIN' // ICO must be finished
-	let ERRW_NPAS_SOF: string = 'ERRW_NPAS_SOF' // Not passed SoftCap
-	let ERRW_INVA_ADD: string = 'ERRW_INVA_ADD' // Invalid Address
-	let ERRR_ZERO_CLM: string = 'ERRR_ZERO_CLM' // Nothing to claim
-	let ERRW_MISS_WAL: string = 'ERRW_MISS_WAL' // Provide Wallet
-	let ERRR_ZERO_WIT: string = 'ERRR_ZERO_WIT' // Nothing to withdraw
-	let ERRR_WITH_BAD: string = 'ERRR_WITH_BAD' // Unable to withdraw
-	let ERRR_VEST_100: string = 'ERRR_VEST_100' // Vesting percentag must be smaller than 100
-
-	/********************************************************************************************************/
-	/********************************************** deployment utils ****************************************/
-	/********************************************************************************************************/
-	const FacetCutAction = { Add: 0, Replace: 1, Remove: 2 }
-
-	let getSelectors = function (contract:Contract) {
-    const signatures: string[] = Object.keys(contract.interface.functions);
-    return signatures.reduce((acc: string[], val) => {
-        if (val !== 'init(bytes)') {
-            acc.push(contract.interface.getSighash(val));
-        }
-        return acc;
-    }, []);
-	}
-	let removeSelectors = function (selectors: string[], removeSelectors: string[]) {
-		selectors = selectors.filter(v => !removeSelectors.includes(v))
-		return selectors
-	}
-	let logSelectors = function (contract:Contract) {
-    const signatures: string[] = Object.keys(contract.interface.functions);
-    return signatures.reduce((acc: string[], val) => {
-			console.log(val + '->' + contract.interface.getSighash(val));
-      return acc;
-    }, []);
-	}
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
@@ -113,7 +62,7 @@ describe("ico-12-diamond-coin-ico-test", function () {
 		console.log('DiamondLoupeFacet deployed:', diamondLoupeFacet.address)
 
 		// attach DiamondLoupeFacet
-		let _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(diamondLoupeFacet), }];
+		let _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: helpers.getSelectors(diamondLoupeFacet), }];
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 		console.log("DiamondLoupeFacet attached as " + diamondCutContract.address);
 
@@ -126,7 +75,7 @@ describe("ico-12-diamond-coin-ico-test", function () {
 
 		// attach Common facet
 		//console.log('attachig functions:', getSelectors(commonFacet))
-		_diamondCut = [{ facetAddress: commonFacet.address, action: FacetCutAction.Add, functionSelectors: getSelectors(commonFacet), }];
+		_diamondCut = [{ facetAddress: commonFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: helpers.getSelectors(commonFacet), }];
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 		console.log("CommonFacet attached as " + common.address);
 
@@ -138,10 +87,10 @@ describe("ico-12-diamond-coin-ico-test", function () {
 		console.log("CrowdsaleFacet deployed:" + crowdsaleFacet.address);
 
 		// attach Crowdsale facet ex Common
-		const crowdsaleFacetExCommonFacetSelectors = removeSelectors(getSelectors(crowdsaleFacet),getSelectors(commonFacet));
+		const crowdsaleFacetExCommonFacetSelectors = helpers.removeSelectors(helpers.getSelectors(crowdsaleFacet), helpers.getSelectors(commonFacet));
 		//crowdsaleFacetExCommonFacetSelectors.push(commonFacet.interface.getSighash('receive()'))
 		//console.log('attachig functions:', crowdsaleFacetExCommonFacetSelectors)
-		_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: FacetCutAction.Add, functionSelectors: crowdsaleFacetExCommonFacetSelectors, }];
+		_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: crowdsaleFacetExCommonFacetSelectors, }];
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 		console.log("CrowdsaleFacet attached as " + ico.address);
 
@@ -153,9 +102,9 @@ describe("ico-12-diamond-coin-ico-test", function () {
 		console.log("ERC20Facet deployed:" + erc20Facet.address);
 
 		// attach Token facet ex Common
-		const erc20FacetExCommonFacetSelectors = removeSelectors(getSelectors(erc20Facet),getSelectors(commonFacet));
+		const erc20FacetExCommonFacetSelectors = helpers.removeSelectors(helpers.getSelectors(erc20Facet), helpers.getSelectors(commonFacet));
 		//console.log('attachig functions:', erc20FacetExCommonFacetSelectors)
-		_diamondCut = [{ facetAddress: erc20Facet.address, action: FacetCutAction.Add, functionSelectors: erc20FacetExCommonFacetSelectors, }];
+		_diamondCut = [{ facetAddress: erc20Facet.address, action: helpers.FacetCutAction.Add, functionSelectors: erc20FacetExCommonFacetSelectors, }];
 		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
 		console.log("ERC20Facet attached as " + token.address);
 
@@ -172,7 +121,7 @@ describe("ico-12-diamond-coin-ico-test", function () {
 	});
 
 	afterEach(async() => {
-		await logStatus();
+		await helpers.logICOStatus(ico);
 		console.log('--------------------');
 	});
 	
@@ -183,28 +132,6 @@ describe("ico-12-diamond-coin-ico-test", function () {
 	/********************************************************************************************************/
 	/********************************************* supporting functions *************************************/
 	/********************************************************************************************************/
-	// currency conversions
-	let numUsdPerEther: number = 1100;
-
-	let etherToUsd = function (ether: number) {
-		return ether * numUsdPerEther;
-	}
-	let usdToEther = function (usd: number) {
-		return usd / numUsdPerEther;
-	}
-	let weiToUsd = function (wei: BigNumber) {
-		return etherToUsd(Number(ethers.utils.formatEther(wei)));
-	}
-	let usdToWei = function (usd: number) {
-		return ethers.utils.parseUnits((usdToEther(usd).toString()), 18);
-	}
-	let stringToBytes5 = function (str: string) {
-		return ethers.utils.hexZeroPad(ethers.utils.toUtf8Bytes(str), 5);
-	}
-	let bytes5ToString = function (hexString: string) {
-		return ethers.utils.toUtf8String(hexString);
-	}
-
 	it("Initial Logs.", async() => {
 
 		//console.log("\tgetMaxTransfer: " + weiToUsd(await ico.getMaxTransfer()) + " USD");
@@ -226,42 +153,6 @@ describe("ico-12-diamond-coin-ico-test", function () {
 
 	});
 
-	it("Should do number conversions.", async() => {
-
-		console.log("usd to wei to usd: " + weiToUsd(usdToWei(10)));
-		console.log("usd to eher to usd: " + etherToUsd(usdToEther(10)));
-
-	});
-
-	// transfer helper
-	let testTransferCoin = async (addr: SignerWithAddress, usdAmount: number) => {
-		console.log("purchase of : " + usdAmount + " USD = " + usdToWei(usdAmount) + " Wei by " + addr.address);
-		return await addr.sendTransaction({
-			to: ico.address,
-			value: usdToWei(usdAmount),
-			gasPrice: '0x5b9aca00',
-			gasLimit: '0x56f90',
-		});
-	};
-
-	let logStatus = async () => {
-
-		console.log("\getTotaluUSDInvested: " + await ico.getTotaluUSDInvested() + " USD");
-
-		let price = await ico.getPriceuUSD();
-
-		let investorsCount = await ico.getInvestorsCount();
-		let investors = await ico.getInvestors();
-		console.log("\tInvestors: ");
-		for (let i = 0; i < investorsCount; i++) {
-			let ether = await ethers.provider.getBalance(investors[i]);
-			let uusd = await ico.getuUSDToClaim(investors[i]);
-			let tokens = Math.floor(uusd / price);
-			console.log("\t\t* " + investors[i] + " ether: " + weiToUsd(ether) + " USD" + "; tokens: " + tokens + " CYGAS = " + (uusd/10**6) + " USD");
-		}
-
-	}
-
 	/********************************************************************************************************/
 	/****************************************** Payment Tokens **********************************************/
 	/********************************************************************************************************/
@@ -269,15 +160,15 @@ describe("ico-12-diamond-coin-ico-test", function () {
 
 		await ico.setCrowdsaleStage(1);
 
-		await expect(testTransferCoin(addr1, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
 		expect((await ico.getPaymentToken("COIN"))[4]).to.equal(1 * 9999999, 'Invested amount must be accounted');																	// uUSDInvested
 		expect((await ico.getPaymentToken("COIN"))[5]).to.equal(BigInt(1 * 9090909090909090), 'Invested amount must be accounted');									// amountInvested			
 
-		await expect(testTransferCoin(addr2, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr2, 10, ico)).not.to.be.reverted;
 		expect((await ico.getPaymentToken("COIN"))[4]).to.equal(2 * 9999999, 'Invested amount must be accounted');																	// uUSDInvested
 		expect((await ico.getPaymentToken("COIN"))[5]).to.equal(BigInt((2 * 9090909090909090).toString()), 'Invested amount must be accounted');		// amountInvested
 
-		await expect(testTransferCoin(addr3, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr3, 10, ico)).not.to.be.reverted;
 		expect((await ico.getPaymentToken("COIN"))[4]).to.equal(3 * 9999999, 'Invested amount must be accounted');																	// uUSDInvested
 		expect((await ico.getPaymentToken("COIN"))[5]).to.equal(BigInt((3 * 9090909090909090).toString()), 'Invested amount must be accounted');		// amountInvested
 	});
@@ -287,25 +178,25 @@ describe("ico-12-diamond-coin-ico-test", function () {
 		await ico.setCrowdsaleStage(1);
 
 		// use default price
-		await expect(testTransferCoin(addr1, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
 		expect((await ico.getPaymentToken("COIN"))[4]).to.equal(1 * 9999999, 'Invested amount must be accounted');																	// uUSDInvested
 
 		// use dynamic price - same price
 		await ico.setDynamicPrice(true);
 		await chainLinkAggregator.setDynamicPrice(Math.floor(1100));
-		await expect(testTransferCoin(addr1, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
 		expect((await ico.getPaymentToken("COIN"))[4]).to.equal(2 * 9999999, 'Invested amount must be accounted');																	// uUSDInvested
 
 		// use dynamic price - double price
 		await ico.setDynamicPrice(true);
 		await chainLinkAggregator.setDynamicPrice(Math.floor(2200));
-		await expect(testTransferCoin(addr1, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
 		expect((await ico.getPaymentToken("COIN"))[4]).to.equal(4 * 9999999 + 1, 'Invested amount must be accounted');															// uUSDInvested
 
 		// use dynamic price - double price
 		await ico.setDynamicPrice(true);
 		await chainLinkAggregator.setDynamicPrice(0);
-		await expect(testTransferCoin(addr1, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
 		expect((await ico.getPaymentToken("COIN"))[4]).to.equal(6 * 9999999 + 2, 'Invested amount must be accounted');															// uUSDInvested
 
 	});
@@ -317,9 +208,9 @@ describe("ico-12-diamond-coin-ico-test", function () {
 
 		await ico.setCrowdsaleStage(1);
 
-		await expect(testTransferCoin(addr1, 10)).not.to.be.reverted;
-		await expect(testTransferCoin(addr2, 10)).not.to.be.reverted;
-		await expect(testTransferCoin(addr3, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr2, 10, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr3, 10, ico)).not.to.be.reverted;
 
 		let investorsCount = await ico.getInvestorsCount();
 		expect(investorsCount).to.equal(3, 'Investors not counted correctly');
@@ -344,8 +235,8 @@ describe("ico-12-diamond-coin-ico-test", function () {
 		await ico.setCrowdsaleStage(1);
 
 		// update balances
-		await expect(await testTransferCoin(addr1, 10))
-			.to.changeEtherBalances([ico, addr1], [usdToWei(10), usdToWei(-10)]);
+		await expect(await helpers.testTransferCoin(addr1, 10, ico))
+			.to.changeEtherBalances([ico, addr1], [helpers.usdToWei(10), helpers.usdToWei(-10)]);
 
 		// update counters
 		expect(await ico.getContribution(addr1.address, 'COIN')).to.equal(BigInt(9090909090909090));																						// cAmountInvested
@@ -359,17 +250,17 @@ describe("ico-12-diamond-coin-ico-test", function () {
 
 	it("Should be able to deposit only if Ongoing", async() => {
 		await ico.setCrowdsaleStage(1);
-		await expect(await testTransferCoin(addr1, 10))
-			.to.changeEtherBalances([ico, addr1], [usdToWei(10), usdToWei(-10)]);
+		await expect(await helpers.testTransferCoin(addr1, 10, ico))
+			.to.changeEtherBalances([ico, addr1], [helpers.usdToWei(10), helpers.usdToWei(-10)]);
 
 		await ico.setCrowdsaleStage(0);
-		await expect(testTransferCoin(addr1, 10)).to.be.revertedWith(ERRD_MUST_ONG);
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).to.be.revertedWith(helpers.ERRORS.ERRD_MUST_ONG);
 
 		await ico.setCrowdsaleStage(2);
-		await expect(testTransferCoin(addr1, 10)).to.be.revertedWith(ERRD_MUST_ONG);
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).to.be.revertedWith(helpers.ERRORS.ERRD_MUST_ONG);
 
 		await ico.setCrowdsaleStage(3);
-		await expect(testTransferCoin(addr1, 10)).to.be.revertedWith(ERRD_MUST_ONG);
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).to.be.revertedWith(helpers.ERRORS.ERRD_MUST_ONG);
 	});
 
 	it("Should be able to whitelist and unwhitelist", async() => {
@@ -378,9 +269,9 @@ describe("ico-12-diamond-coin-ico-test", function () {
 		// whitelisting enabled
 		await ico.setWhitelistuUSDThreshold(30 * 10**6);
 		await ico.unwhitelistUser(addr1.address);
-		await expect(testTransferCoin(addr1, 31)).to.be.revertedWith(ERRD_MUST_WHI);
+		await expect(helpers.testTransferCoin(addr1, 31, ico)).to.be.revertedWith(helpers.ERRORS.ERRD_MUST_WHI);
 		await ico.whitelistUser(addr1.address);
-		await expect(testTransferCoin(addr1, 21)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 21, ico)).not.to.be.reverted;
 	});
 
 	it("Should be able to blacklist and unblacklist", async() => {
@@ -388,15 +279,15 @@ describe("ico-12-diamond-coin-ico-test", function () {
 
 		await ico.setUseBlacklist(false);
 		await ico.blacklistUser(addr1.address);
-		await expect(testTransferCoin(addr1, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
 
 		await ico.setUseBlacklist(true);
 		await ico.blacklistUser(addr1.address);
-		await expect(testTransferCoin(addr1, 10)).to.be.revertedWith(ERRD_MUSN_BLK);
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).to.be.revertedWith(helpers.ERRORS.ERRD_MUSN_BLK);
 
 		await ico.setUseBlacklist(true);
 		await ico.unblacklistUser(addr1.address);
-		await expect(testTransferCoin(addr1, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
 
 		await ico.setUseBlacklist(false);
 	});
@@ -407,22 +298,22 @@ describe("ico-12-diamond-coin-ico-test", function () {
 		console.log("Testing Transfer Limits");
 
 		await ico.setMinuUSDTransfer(9.9999 * 10**6);
-		await expect(testTransferCoin(addr1, 9)).to.be.revertedWith(ERRD_TRAS_LOW);
-		await expect(testTransferCoin(addr1, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 9, ico)).to.be.revertedWith(helpers.ERRORS.ERRD_TRAS_LOW);
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
 		await ico.setMinuUSDTransfer(9.99 * 10**6);
 		console.log("Min Transfer is ok");
 
 		await ico.setMaxuUSDTransfer(20.0001 * 10**6);
-		await expect(testTransferCoin(addr1, 21)).to.be.revertedWith(ERRD_TRAS_HIG);
-		await expect(testTransferCoin(addr1, 20)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 21, ico)).to.be.revertedWith(helpers.ERRORS.ERRD_TRAS_HIG);
+		await expect(helpers.testTransferCoin(addr1, 20, ico)).not.to.be.reverted;
 		await ico.setMaxuUSDTransfer(10_000.001  * 10**6);
 		console.log("Max Transfer is ok");
 
 		console.log("getuUSDToClaim: " + await ico.getuUSDToClaim(addr1.address));
 		await ico.setMaxuUSDInvestment(130 * 10**6);
-		await expect(testTransferCoin(addr1, 11)).not.to.be.reverted;
-		await expect(testTransferCoin(addr1, 11)).not.to.be.reverted;
-		await expect(testTransferCoin(addr1, 80)).to.be.revertedWith(ERRD_INVT_HIG);
+		await expect(helpers.testTransferCoin(addr1, 11, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 11, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 80, ico)).to.be.revertedWith(helpers.ERRORS.ERRD_INVT_HIG);
 		await ico.setMaxuUSDInvestment(10_001 * 10**6);
 		console.log("Max Investment is ok");
 	});
@@ -433,12 +324,12 @@ describe("ico-12-diamond-coin-ico-test", function () {
 		await ico.setMaxuUSDTransfer(21 * 10**6);
 		await ico.setMaxuUSDInvestment(80 * 10**6);
 		await ico.setHardCapuUSD(100 * 10**6);
-		await expect(testTransferCoin(addr1, 20)).not.to.be.reverted;
-		await expect(testTransferCoin(addr1, 20)).not.to.be.reverted;
-		await expect(testTransferCoin(addr1, 20)).not.to.be.reverted;
-		await expect(testTransferCoin(addr2, 20)).not.to.be.reverted;
-		await expect(testTransferCoin(addr2, 20)).not.to.be.reverted;
-		await expect(testTransferCoin(addr2, 20)).to.be.revertedWith(ERRD_HARD_CAP);
+		await expect(helpers.testTransferCoin(addr1, 20, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 20, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 20, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr2, 20, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr2, 20, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr2, 20, ico)).to.be.revertedWith(helpers.ERRORS.ERRD_HARD_CAP);
 		await ico.setMaxuUSDTransfer(10_000 * 10**6);
 		await ico.setMaxuUSDInvestment(10_000 * 10**6);
 	});
@@ -447,9 +338,9 @@ describe("ico-12-diamond-coin-ico-test", function () {
 		await ico.setCrowdsaleStage(1);
 		await ico.setMinuUSDTransfer(10 * 10**6);
 
-		await expect(testTransferCoin(addr1, 11)).not.to.be.reverted;
-		await expect(testTransferCoin(addr2, 11)).not.to.be.reverted;
-		await expect(testTransferCoin(addr3, 11)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 11, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr2, 11, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr3, 11, ico)).not.to.be.reverted;
 
 		let contributed1 = await ico.getContribution(addr1.address, "COIN");
 		let contributed2 = await ico.getContribution(addr2.address, "COIN");
@@ -468,7 +359,7 @@ describe("ico-12-diamond-coin-ico-test", function () {
 		await ico.setMaxuUSDTransfer(4_000_000 * 10**6);
 		await ico.setMaxuUSDInvestment(4_000_000 * 10**6);
 		await ico.setHardCapuUSD(4_000_000 * 10**6);
-		await expect(testTransferCoin(addr1, 3_000_000)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 3_000_000, ico)).not.to.be.reverted;
 		await expect(await ico.getuUSDContribution(addr1.address, "COIN")).to.equal(3_000_000_000_000);
 	});
 
@@ -479,9 +370,9 @@ describe("ico-12-diamond-coin-ico-test", function () {
 
 		await ico.setCrowdsaleStage(1);
 
-		await expect(testTransferCoin(addr1, 10)).not.to.be.reverted;
-		await expect(testTransferCoin(addr2, 10)).not.to.be.reverted;
-		await expect(testTransferCoin(addr3, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr2, 10, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr3, 10, ico)).not.to.be.reverted;
 
 		await ico.setCrowdsaleStage(3);
 
@@ -517,9 +408,9 @@ describe("ico-12-diamond-coin-ico-test", function () {
 
 		await ico.setCrowdsaleStage(1);
 
-		await expect(testTransferCoin(addr1, 10)).not.to.be.reverted;
-		await expect(testTransferCoin(addr2, 10)).not.to.be.reverted;
-		await expect(testTransferCoin(addr3, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr2, 10, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr3, 10, ico)).not.to.be.reverted;
 
 		await ico.setCrowdsaleStage(3);
 
@@ -549,9 +440,9 @@ describe("ico-12-diamond-coin-ico-test", function () {
 		// prepare test
 		await ico.setCrowdsaleStage(1);
 
-		await expect(testTransferCoin(addr1, 10)).not.to.be.reverted;
-		await expect(testTransferCoin(addr2, 10)).not.to.be.reverted;
-		await expect(testTransferCoin(addr3, 10)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr2, 10, ico)).not.to.be.reverted;
+		await expect(helpers.testTransferCoin(addr3, 10, ico)).not.to.be.reverted;
 
 		await ico.setCrowdsaleStage(3);
 
