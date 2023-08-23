@@ -349,7 +349,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 			
 		// vested claim
 		if (s.percentVested > 0) {
-			IVestingFacet(s.vestingAddress).createVestingSchedule(investor, claimed, s.vestingId);
+			IVestingFacet(s.vestingAddress).createVestingSchedule(investor, claimed * s.percentVested / 100, s.vestingId);
 			IERC20Upgradeable(s.tokenAddress).safeTransfer(s.vestingAddress, claimed * s.percentVested / 100);
 		}
 	}

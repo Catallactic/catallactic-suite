@@ -35,12 +35,12 @@ export const ERRORS: {[key: string]: string} = {
 
 // time
 export const TIME: {[key: string]: number} = {
-	SECONDS_IN_MINUTE: 60,
-	SECONDS_IN_HOUR  : 60 * 60,
-	SECONDS_IN_DAY   : 60 * 60 * 24,
-	SECONDS_IN_WEEK   : 60 * 60 * 24 * 7,
-	SECONDS_IN_MONTH : 60 * 60 * 24 * 30,
-	SECONDS_IN_YEAR  : 60 * 60 * 24 * 365,
+	MILLIS_IN_MINUTE: 1000 * 60,
+	MILLIS_IN_HOUR  : 1000 * 60 * 60,
+	MILLIS_IN_DAY   : 1000 * 60 * 60 * 24,
+	MILLIS_IN_WEEK  : 1000 * 60 * 60 * 24 * 7,
+	MILLIS_IN_MONTH : 1000 * 60 * 60 * 24 * 30,
+	MILLIS_IN_YEAR  : 1000 * 60 * 60 * 24 * 365,
 }
 
 // currency conversions

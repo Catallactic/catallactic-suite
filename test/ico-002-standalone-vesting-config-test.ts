@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { BigNumber, Contract } from "ethers";
+import { Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import * as helpers from "./_testhelper";
@@ -76,8 +76,8 @@ describe("ico-002-standalone-vesting-config-test", function () {
 	it("Only Owner functions", async() => {
 
 		// vesting functions 
-		await expect(vesting.createVesting(Date.now(), helpers.TIME.SECONDS_IN_MONTH, helpers.TIME.SECONDS_IN_YEAR, 12)).not.to.be.reverted;
-		await expect(vesting.connect(addr1).createVesting(Date.now(), helpers.TIME.SECONDS_IN_MONTH, helpers.TIME.SECONDS_IN_YEAR, 12)).to.be.revertedWith('ERRW_OWNR_NOT');
+		await expect(vesting.createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
+		await expect(vesting.connect(addr1).createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).to.be.revertedWith('ERRW_OWNR_NOT');
 
 		// vesting schedule functions
 		await expect(vesting.createVestingSchedule(addr1.address, 100_000_000, 0)).to.be.revertedWith('onlyGrantor');
@@ -92,17 +92,17 @@ describe("ico-002-standalone-vesting-config-test", function () {
 	/************************************************** Vesting *********************************************/
 	/********************************************************************************************************/
 	it("Should be able to create vesting", async() => {
-		await expect(vesting.createVesting(Date.now(), helpers.TIME.SECONDS_IN_MONTH, helpers.TIME.SECONDS_IN_YEAR, 12)).not.to.be.reverted;
+		await expect(vesting.createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
 		await expect((await vesting.getVestingIds()).length).to.equal(1);
 		await expect((await vesting.getVestingIds())[0]).to.equal(0);
 		let vestingItem = await vesting.getVesting(0);
-		expect(vestingItem[1]).to.equal(helpers.TIME.SECONDS_IN_MONTH);
-		expect(vestingItem[2]).to.equal(helpers.TIME.SECONDS_IN_YEAR);
+		expect(vestingItem[1]).to.equal(helpers.TIME.MILLIS_IN_MONTH);
+		expect(vestingItem[2]).to.equal(helpers.TIME.MILLIS_IN_YEAR);
 		expect(vestingItem[3]).to.equal(12);
 	});
 
 	it("Should be able to create vesting schedule", async() => {
-		await expect(vesting.createVesting(Date.now(), helpers.TIME.SECONDS_IN_MONTH, helpers.TIME.SECONDS_IN_YEAR, 12)).not.to.be.reverted;
+		await expect(vesting.createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
 
 		await expect(vesting.addGrantor(owner.address, true)).not.to.be.reverted;
 		await expect(vesting.createVestingSchedule(addr1.address, 100_000_000, 0)).not.to.be.reverted;
@@ -118,7 +118,7 @@ describe("ico-002-standalone-vesting-config-test", function () {
 
 	it("Should do correct vesting computations", async() => {
 
-		await expect(vesting.createVesting(Date.now(), helpers.TIME.SECONDS_IN_MONTH, helpers.TIME.SECONDS_IN_YEAR, 12)).not.to.be.reverted;
+		await expect(vesting.createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
 
 		await expect(vesting.addGrantor(owner.address, true)).not.to.be.reverted;
 		await expect(vesting.createVestingSchedule(addr1.address, 120_000_000, 0)).not.to.be.reverted;
@@ -127,49 +127,49 @@ describe("ico-002-standalone-vesting-config-test", function () {
 		await expect(await vesting.computeReleasableAmount(0)).to.equal(0);
 
 		// in 1 day
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(await vesting.computeReleasableAmount(0)).to.equal(0);
 
 		// in 29 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 29 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 29 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(await vesting.computeReleasableAmount(0)).to.equal(0);
 
 		// in 31 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 31 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 31 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(await vesting.computeReleasableAmount(0)).to.equal(0);		
 
 		// in 59 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 59 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 59 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(await vesting.computeReleasableAmount(0)).to.equal(0);	
 
 		// in 61 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 61 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 61 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(await vesting.computeReleasableAmount(0)).to.equal(10_000_000);
 
 		// in 91 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 91 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 91 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(await vesting.computeReleasableAmount(0)).to.equal(20_000_000);
 
 		// in 122 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 122 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 122 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(await vesting.computeReleasableAmount(0)).to.equal(30_000_000);
 
 		// in 306 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 306 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 306 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(await vesting.computeReleasableAmount(0)).to.equal(90_000_000);
 
 		// in 396 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 396 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 396 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(await vesting.computeReleasableAmount(0)).to.equal(120_000_000);
 
 		// in 480 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 480 * helpers.TIME.SECONDS_IN_DAY ]);
-		await expect(await vesting.computeReleasableAmount(0)).to.equal(0);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 480 * helpers.TIME.MILLIS_IN_DAY ]);
+		await expect(await vesting.computeReleasableAmount(0)).to.equal(120_000_000);
 
 	});
 
 	it("Should be able to release", async() => {
-		await expect(vesting.createVesting(Date.now(), helpers.TIME.SECONDS_IN_MONTH, helpers.TIME.SECONDS_IN_YEAR, 12)).not.to.be.reverted;
+		await expect(vesting.createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
 
 		await expect(vesting.addGrantor(owner.address, true)).not.to.be.reverted;
 		await expect(vesting.createVestingSchedule(addr1.address, 120_000_000, 0)).not.to.be.reverted;
@@ -181,52 +181,52 @@ describe("ico-002-standalone-vesting-config-test", function () {
 		await expect(await token.balanceOf(addr1.address)).to.equal(0);
 
 		// in 1 day
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(vesting.release(0)).not.to.be.reverted;
 		await expect(await token.balanceOf(addr1.address)).to.equal(0);
 
 		// in 29 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 29 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 29 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(vesting.release(0)).not.to.be.reverted;
 		await expect(await token.balanceOf(addr1.address)).to.equal(0);
 
 		// in 31 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 31 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 31 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(vesting.release(0)).not.to.be.reverted;
 		await expect(await token.balanceOf(addr1.address)).to.equal(0);
 
 		// in 59 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 59 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 59 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(vesting.release(0)).not.to.be.reverted;
 		await expect(await token.balanceOf(addr1.address)).to.equal(0);
 
 		// in 61 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 61 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 61 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(vesting.release(0)).not.to.be.reverted;
 		await expect(await token.balanceOf(addr1.address)).to.equal(10_000_000);
 
 		// in 91 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 91 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 91 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(vesting.release(0)).not.to.be.reverted;
 		await expect(await token.balanceOf(addr1.address)).to.equal(20_000_000);
 
 		// in 122 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 122 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 122 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(vesting.release(0)).not.to.be.reverted;
 		await expect(await token.balanceOf(addr1.address)).to.equal(30_000_000);
 
 		// in 306 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 306 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 306 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(vesting.release(0)).not.to.be.reverted;
 		await expect(await token.balanceOf(addr1.address)).to.equal(90_000_000);
 
 		// in 396 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 396 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 396 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(vesting.release(0)).not.to.be.reverted;
 		await expect(await token.balanceOf(addr1.address)).to.equal(120_000_000);
 
 		// in 480 days
-		await hre.ethers.provider.send('evm_mine', [ Date.now() + 480 * helpers.TIME.SECONDS_IN_DAY ]);
+		await hre.ethers.provider.send('evm_mine', [ Date.now() + 480 * helpers.TIME.MILLIS_IN_DAY ]);
 		await expect(vesting.release(0)).not.to.be.reverted;
 		await expect(await token.balanceOf(addr1.address)).to.equal(120_000_000);
 

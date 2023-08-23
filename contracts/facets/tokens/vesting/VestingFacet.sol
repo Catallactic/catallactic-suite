@@ -102,17 +102,16 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	function _computeReleasableAmount(VestingSchedule memory vestingSchedule) internal view returns (uint256) {
 		// Retrieve the current time.
 		uint256 currentTime = block.timestamp;
-		console.log(currentTime);
 
 		// If the current time is before the cliff, no tokens are releasable.
 		Vesting memory vesting = s.vestings[vestingSchedule.vestingId];
 		if ((currentTime < vesting.start + vesting.cliff))
 			return 0;
-		
+
 		// Otherwise, some tokens are releasable.
 		uint256 vestedSlides = (currentTime - vesting.start - vesting.cliff) * vesting.numSlides / vesting.duration;
 		if (vestedSlides > vesting.numSlides)
-			return 0;
+			vestedSlides = vesting.numSlides;
 
 		console.log('vestedSlides: ', vestedSlides);
 		uint256 vestedAmount = vestedSlides * vestingSchedule.amountTotal / vesting.numSlides;
@@ -134,12 +133,12 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 		require(msg.sender == vestingSchedule.beneficiary || msg.sender == s._owner, "TokenVesting: only beneficiary and owner can release vested tokens");
 		
 		// compute amounts
-		uint256 vestableAmount = _computeReleasableAmount(vestingSchedule);
-		vestingSchedule.released = vestingSchedule.released + vestableAmount;
-		s.totalVestableAmount = s.totalVestableAmount - vestableAmount;
+		uint256 releseableAmount = _computeReleasableAmount(vestingSchedule);
+		vestingSchedule.released = vestingSchedule.released + releseableAmount;
+		s.totalVestableAmount = s.totalVestableAmount - releseableAmount;
 
 		// release
-		IERC20Upgradeable(s.tokenAddress).safeTransfer(vestingSchedule.beneficiary, vestableAmount);
+		IERC20Upgradeable(s.tokenAddress).safeTransfer(vestingSchedule.beneficiary, releseableAmount);
 	}
 
 	// tokenWalletAddress
