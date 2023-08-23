@@ -21,28 +21,18 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	/********************************************************************************************************/
 	/************************************************* Vestings *********************************************/
 	/********************************************************************************************************/
-
-	/**
-	 * @notice Creates a new vesting schedule for a beneficiary.
-	 * @param _start start time of the vesting period
-	 * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
-	 * @param _duration duration in seconds of the period in which the tokens will vest
-	 * @param _slicePeriodSeconds duration of a slice period for the vesting in seconds
-	 */
-	function createVesting(uint256 _start,uint256 _cliff,uint256 _duration,uint256 _slicePeriodSeconds) external {
+	function createVesting(uint256 _start, uint256 _cliff, uint256 _duration, uint256 _numSlices) external {
 		require(owner() == address(0) || owner() == msg.sender, "ERRW_OWNR_NOT");
 		require(_duration > 0, "TokenVesting: duration must be > 0");
-		require(_slicePeriodSeconds >= 1, "TokenVesting: slicePeriodSeconds must be >= 1");
+		require(_numSlices >= 1, "TokenVesting: _numSlices must be >= 1");
 		require(_duration >= _cliff, "TokenVesting: duration must be >= cliff");
 
     s._owner = msg.sender;
 
-		uint256 cliff = _start + _cliff;
-
 		// bytes32 vestingId = keccak256(abi.encodePacked(_start, _cliff, _duration, _slicePeriodSeconds));
 		uint256 vestingId = s.vestingIds.length;
 		s.vestingIds.push(vestingId);
-		s.vestings[vestingId] = Vesting(_start,cliff,_duration,_slicePeriodSeconds);
+		s.vestings[vestingId] = Vesting(_start, _cliff, _duration, _numSlices);
 	}
 	function getVestingIds() external view returns(uint256[] memory) {
 		return s.vestingIds;
@@ -65,52 +55,32 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 		//bytes32 vestingScheduleId = keccak256(abi.encodePacked(_beneficiary, s.holdersVestingCount[_beneficiary]));
 		uint256 vestingScheduleId = s.vestingSchedulesIds.length;
 		s.vestingSchedules[vestingScheduleId] = VestingSchedule(_beneficiary, _amount, vestingId, 0);
-		s.vestingSchedulesTotalAmount = s.vestingSchedulesTotalAmount + _amount;
+		s.totalVestableAmount = s.totalVestableAmount + _amount;
 		s.vestingSchedulesIds.push(vestingScheduleId);
-		uint256 currentVestingCount = s.holdersVestingCount[_beneficiary];
-		s.holdersVestingCount[_beneficiary] = currentVestingCount + 1;
 	}
 
 	/**
 	 * @dev Returns the number of vesting schedules managed by this contract.
 	 * @return the number of vesting schedules
 	 */
-	function getVestingSchedulesCount() public view returns (uint256) {
-		return s.vestingSchedulesIds.length;
-	}
-
-	/**
-	 * @dev Returns the vesting schedule id at the given index.
-	 * @return the vesting id
-	 */
-	function getVestingScheduleIdAtIndex(uint256 index) external view returns (uint256) {
-		require(index < getVestingSchedulesCount(),"TokenVesting: index out of bounds");
-		return s.vestingSchedulesIds[index];
+	function getVestingSchedulesIds() external view returns (uint256[] memory) {
+		return s.vestingSchedulesIds;
 	}
 
 	/**
 	 * @notice Returns the vesting schedule information for a given identifier.
 	 * @return the vesting schedule structure information
 	 */
-	function getVestingSchedule(uint256 vestingScheduleId) public view returns (VestingSchedule memory) {
+	function getVestingSchedule(uint256 vestingScheduleId) external view returns (VestingSchedule memory) {
 		return s.vestingSchedules[vestingScheduleId];
 	}
-
-	/**
-	 * @dev Returns the number of vesting schedules associated to a beneficiary.
-	 * @return the number of vesting schedules
-	 */
-	function getVestingSchedulesCountByBeneficiary(address _beneficiary) external view returns (uint256) {
-		return s.holdersVestingCount[_beneficiary];
-	}
-
 
 	/**
 	 * @notice Returns the total amount of vesting schedules.
 	 * @return the total amount of vesting schedules
 	 */
-	function getVestingSchedulesTotalAmount() external view returns (uint256) {
-		return s.vestingSchedulesTotalAmount;
+	function getTotalVestableAmount() external view returns (uint256) {
+		return s.totalVestableAmount;
 	}
 
 	/********************************************************************************************************/
@@ -132,20 +102,24 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	function _computeReleasableAmount(VestingSchedule memory vestingSchedule) internal view returns (uint256) {
 		// Retrieve the current time.
 		uint256 currentTime = block.timestamp;
-
-		Vesting memory vesting = s.vestings[vestingSchedule.vestingId];
-		console.log('currentTime ', currentTime);
-		console.log('vesting.cliff ', vesting.cliff);
+		console.log(currentTime);
 
 		// If the current time is before the cliff, no tokens are releasable.
-		if ((currentTime < vesting.cliff))
-				return 0;
+		Vesting memory vesting = s.vestings[vestingSchedule.vestingId];
+		if ((currentTime < vesting.start + vesting.cliff))
+			return 0;
 		
 		// Otherwise, some tokens are releasable.
-		uint256 totalSlides = vesting.duration / vesting.slicePeriodSeconds;
-		uint256 vestedSlides = (currentTime - vesting.start) / vesting.slicePeriodSeconds;
-		uint256 vestedAmount = (totalSlides - vestedSlides) / totalSlides;
-		return vestedAmount - vestingSchedule.released;
+		uint256 vestedSlides = (currentTime - vesting.start - vesting.cliff) * vesting.numSlides / vesting.duration;
+		if (vestedSlides > vesting.numSlides)
+			return 0;
+
+		console.log('vestedSlides: ', vestedSlides);
+		uint256 vestedAmount = vestedSlides * vestingSchedule.amountTotal / vesting.numSlides;
+		console.log('vestedAmount: ', vestedAmount);
+		uint256 releseableAmount = vestedAmount - vestingSchedule.released;
+		console.log('releseableAmount: ', releseableAmount);
+		return releseableAmount;
 	}
 
 	/********************************************************************************************************/
@@ -154,20 +128,18 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	/**
 	 * @notice Release vested amount of tokens.
 	 * @param vestingScheduleId the vesting schedule identifier
-	 * @param amount the amount to release
 	 */
-	function release(uint256 vestingScheduleId, uint256 amount) public nonReentrant {
+	function release(uint256 vestingScheduleId) public nonReentrant {
 		VestingSchedule storage vestingSchedule = s.vestingSchedules[vestingScheduleId];
 		require(msg.sender == vestingSchedule.beneficiary || msg.sender == s._owner, "TokenVesting: only beneficiary and owner can release vested tokens");
 		
-		uint256 vestedAmount = _computeReleasableAmount(vestingSchedule);
-		require(vestedAmount >= amount,"TokenVesting: cannot release tokens, not enough vested tokens");
+		// compute amounts
+		uint256 vestableAmount = _computeReleasableAmount(vestingSchedule);
+		vestingSchedule.released = vestingSchedule.released + vestableAmount;
+		s.totalVestableAmount = s.totalVestableAmount - vestableAmount;
 
 		// release
-		vestingSchedule.released = vestingSchedule.released + amount;
-		address payable beneficiaryPayable = payable(vestingSchedule.beneficiary);
-		s.vestingSchedulesTotalAmount = s.vestingSchedulesTotalAmount - amount;
-		IERC20Upgradeable(s.tokenAddress).safeTransfer(beneficiaryPayable , amount);
+		IERC20Upgradeable(s.tokenAddress).safeTransfer(vestingSchedule.beneficiary, vestableAmount);
 	}
 
 	// tokenWalletAddress

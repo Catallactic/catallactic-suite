@@ -38,7 +38,7 @@ struct Vesting {
 	uint256 start;																												// start time of the vesting period in seconds since the UNIX epoch
 	uint256 cliff;																												// cliff time of the vesting start in seconds since the UNIX epoch
 	uint256 duration;																											// duration of the vesting period in seconds
-	uint256 slicePeriodSeconds;																						// duration of a slice period for the vesting in seconds
+	uint256 numSlides;																										// number of slides
 }
 struct VestingSchedule {
 	address beneficiary;																									// beneficiary of tokens after they are released
@@ -99,7 +99,6 @@ struct AppStorage {
 	uint256 _totalSupply;
 	mapping(address => uint256) _balances;
 	mapping(address => mapping(address => uint256)) _allowances;
-	mapping(address => uint256) holdersVestingCount;
-	uint256 vestingSchedulesTotalAmount;
+	uint256 totalVestableAmount;
 
 }

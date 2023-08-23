@@ -33,6 +33,16 @@ export const ERRORS: {[key: string]: string} = {
 	ERRR_VEST_100: 'ERRR_VEST_100', // Vesting percentag must be smaller than 100
 }
 
+// time
+export const TIME: {[key: string]: number} = {
+	SECONDS_IN_MINUTE: 60,
+	SECONDS_IN_HOUR  : 60 * 60,
+	SECONDS_IN_DAY   : 60 * 60 * 24,
+	SECONDS_IN_WEEK   : 60 * 60 * 24 * 7,
+	SECONDS_IN_MONTH : 60 * 60 * 24 * 30,
+	SECONDS_IN_YEAR  : 60 * 60 * 24 * 365,
+}
+
 // currency conversions
 export let numUsdPerEther: number = 1100;
 
