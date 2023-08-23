@@ -22,6 +22,7 @@ export const ERRORS: {[key: string]: string} = {
 	ERRC_MUST_FIN: 'ERRC_MUST_FIN', // ICO must be finished
 	ERRC_NPAS_SOF: 'ERRC_NPAS_SOF', // Not passed SoftCap
 	ERRC_MISS_TOK: 'ERRC_MISS_TOK', // Provide Token
+	ERRC_MISS_VAD: 'ERRC_MISS_VAD', // Provide Vesting Token
 	ERRW_MUST_FIN: 'ERRW_MUST_FIN', // ICO must be finished
 	ERRW_NPAS_SOF: 'ERRW_NPAS_SOF', // Not passed SoftCap
 	ERRW_INVA_ADD: 'ERRW_INVA_ADD', // Invalid Address

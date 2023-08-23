@@ -20,7 +20,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	/************************************************* Lifecycle ********************************************/
 	/********************************************************************************************************/
 	// not initializer because should be able to create several crowdsales
-	function createCrowdsale(uint256 uUsdPrice_, uint256 hardCap_, uint256 softCap_, uint256 whitelistuUSDThreshold_, uint256 maxuUSDInvestment_, uint256 maxuUSDTransfer_, uint256 minuUSDTransfer_, uint256 percentVested_, string calldata vestingId_) public {
+	function createCrowdsale(uint256 uUsdPrice_, uint256 hardCap_, uint256 softCap_, uint256 whitelistuUSDThreshold_, uint256 maxuUSDInvestment_, uint256 maxuUSDTransfer_, uint256 minuUSDTransfer_, uint256 percentVested_, uint256 vestingId_) public {
 		require(owner() == address(0) || owner() == msg.sender, "ERRW_OWNR_NOT");
 		require(s.stage == CrowdsaleStage.NotStarted, "ERRD_MUST_ONG");																																						// ICO must be not started
 		require(s.totaluUSDTInvested == 0, "ERRD_MUST_ONG");																																											// ICO must not have investment
@@ -32,7 +32,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		s.hardCapuUSD = hardCap_;
 		s.softCapuUSD = softCap_;
 		s.percentVested = percentVested_;
-		s.vestingId = bytes32(bytes(vestingId_));
+		s.vestingId = vestingId_;
 
 		s.whitelistuUSDThreshold = whitelistuUSDThreshold_;
 		s.maxuUSDInvestment = maxuUSDInvestment_;
@@ -68,7 +68,8 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		s.tokenAddress = payable(address(0x0));
 		s.targetWalletAddress = payable(address(0x0));
 		s.percentVested = 0;
-		s.vestingId = '';
+		s.vestingId = 0;
+		s.vestingAddress = address(0x0);
 	}
 
 	/********************************************************************************************************/
@@ -319,10 +320,11 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		claimInvestor(investor);
 	}
 	function claimInvestor(address investor) internal {
-		require(s.stage == CrowdsaleStage.Finished, "ERRC_MUST_FIN");																																										// ICO must be finished
-		require(s.totaluUSDTInvested > s.softCapuUSD, "ERRC_NPAS_SOF");																																										// Not passed SoftCap
+		require(s.stage == CrowdsaleStage.Finished, "ERRC_MUST_FIN");																																									// ICO must be finished
+		require(s.totaluUSDTInvested > s.softCapuUSD, "ERRC_NPAS_SOF");																																								// Not passed SoftCap
 		require(investor !=  address(0), "ERRW_INVA_ADD");
-		require(s.tokenAddress != address(0x0), "ERRC_MISS_TOK");																																												// Provide Token
+		require(s.tokenAddress != address(0x0) || s.percentVested == 100, "ERRC_MISS_TOK");																														// Provide Token
+		require(s.vestingAddress != address(0x0) || s.percentVested == 0, "ERRC_MISS_VAD");																														// Provide Vesting Token
 
 		uint claimed = s.contributions[investor].uUSDToPay * 10**18 / s.uUsdPrice;
 		require(claimed > 0, "ERRR_ZERO_CLM");																																																				// Nothing to refund
@@ -339,13 +341,16 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 
 		emit FundsClaimed(investor, claimed);
 
-		// do claim
-		if (s.percentVested < 100) {
-			IERC20Upgradeable(s.tokenAddress).safeTransfer(investor, claimed * ((100 - s.percentVested) / 100));
-		}
+		console.log('msg.sender', msg.sender);
+
+		// unvested claim
+		if (s.percentVested < 100)
+			IERC20Upgradeable(s.tokenAddress).safeTransfer(investor, claimed * (100 - s.percentVested) / 100);
 			
+		// vested claim
 		if (s.percentVested > 0) {
-			//IVestingFacet(s.tokenAddress).createVestingSchedule(investor, uint256 _start, uint256 _cliff, uint256 _duration, uint256 _slicePeriodSeconds, bool _revocable, claimed);
+			IVestingFacet(s.vestingAddress).createVestingSchedule(investor, claimed, s.vestingId);
+			IERC20Upgradeable(s.tokenAddress).safeTransfer(s.vestingAddress, claimed * s.percentVested / 100);
 		}
 	}
 	event FundsClaimed(address backer, uint amount);
@@ -368,8 +373,22 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	function getPercentVested() external view returns (uint256) {
 		return s.percentVested;
 	}
-	function getVestingId() external view returns (bytes32) {
+	function getVestingId() external view returns (uint256) {
 		return s.vestingId;
+	}
+
+	// vesting Address
+	function setVestingAddress(address add) external onlyOwner {
+		require(add !=  address(0), "ERRW_INVA_ADD");
+
+		s.vestingAddress = add;
+	
+		emit UpdatedVestingAddress(add);
+	}
+	event UpdatedVestingAddress(address add);
+
+	function getVestingAddress() external view returns (address) {
+		return s.vestingAddress;
 	}
 
 	/********************************************************************************************************/

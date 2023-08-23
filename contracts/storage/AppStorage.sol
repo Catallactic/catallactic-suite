@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+
+struct Role {
+	mapping (address => bool) bearer;
+}
+
 struct PaymentToken {
 	address ptTokenAddress;
 	address ptPriceFeed;
@@ -29,12 +34,28 @@ enum CrowdsaleStage {
 	Finished
 }
 
+struct Vesting {
+	uint256 start;																												// start time of the vesting period in seconds since the UNIX epoch
+	uint256 cliff;																												// cliff time of the vesting start in seconds since the UNIX epoch
+	uint256 duration;																											// duration of the vesting period in seconds
+	uint256 slicePeriodSeconds;																						// duration of a slice period for the vesting in seconds
+}
+struct VestingSchedule {
+	address beneficiary;																									// beneficiary of tokens after they are released
+	uint256 amountTotal;																									// total amount of tokens to be released at the end of the vesting
+	uint256 vestingId;																										// vesting id
+
+	uint256 released;																											// amount of tokens released
+}
+
 struct AppStorage {
 
 	uint8 _initialized;																		// no reset
 	bool _initializing;																		// no reset
 	address _owner;																				// no reset
 	address _pendingOwner;																// no reset
+
+  Role _grantors;
 
 	// antiwhale variables
 	uint256 whitelistuUSDThreshold;
@@ -62,8 +83,15 @@ struct AppStorage {
 	mapping (address => Contributions) contributions;			// reset on claim / refund
 	address payable tokenAddress;													// manual reset
 	address payable targetWalletAddress;									// manual reset
+	address vestingAddress;																// manual reset
 	uint256 percentVested;																// manual reset
-	bytes32 vestingId;																		// manual reset
+	uint256 vestingId;																		// manual reset
+
+	// vesting
+	uint256[] vestingIds;
+	mapping(uint256 => Vesting) vestings;
+	uint256[] vestingSchedulesIds;
+	mapping(uint256 => VestingSchedule) vestingSchedules;
 
 	// erc-20 variables
 	string _name;
@@ -71,6 +99,7 @@ struct AppStorage {
 	uint256 _totalSupply;
 	mapping(address => uint256) _balances;
 	mapping(address => mapping(address => uint256)) _allowances;
-
+	mapping(address => uint256) holdersVestingCount;
+	uint256 vestingSchedulesTotalAmount;
 
 }

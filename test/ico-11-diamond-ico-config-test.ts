@@ -106,7 +106,7 @@ describe("ico-11-diamond-config-ico-test", function () {
 		// initialize
 		console.log('initializing')
 		await expect(await common.owner()).to.equal('0x0000000000000000000000000000000000000000');
-		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 0, '')).not.to.be.reverted;
+		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 0, 0)).not.to.be.reverted;
 		await expect(ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18)).not.to.be.reverted;
 		await expect(diamond.setReceiveFacet(crowdsaleFacet.address)).to.not.be.reverted;
 		await expect(await common.owner()).to.equal(owner.address);
