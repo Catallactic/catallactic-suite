@@ -8,12 +8,13 @@ import * as helpers from "./_testhelper";
 describe("ico-013-standalone-all-token-nok-test", function () {
 	const hre = require("hardhat");
 
+	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
+	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
+
+	let ChainLinkAggregator, chainLinkAggregator: Contract;
 	let CrowdsaleFacet, ico: Contract;
 	let ERC20Facet, token: Contract;
 	let FOO, foo: Contract;
-	let ChainLinkAggregator, chainLinkAggregator: Contract;
-	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
-	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
@@ -27,6 +28,12 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 	beforeEach(async() => {
 		//console.log('--------------------');
 		await hre.network.provider.send("hardhat_reset");
+
+		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+		[owner, project, liquidity, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
+			let balance = await ethers.provider.getBalance(account.address);
+			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
+		});
 
 		ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		chainLinkAggregator = await ChainLinkAggregator.deploy();
@@ -51,13 +58,6 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 		await foo.deployed();
 		foo.initialize();
 		console.log("deployed FOO:" + foo.address);
-
-		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
-		[owner, project, liquidity, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
-			let balance = await ethers.provider.getBalance(account.address);
-			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
-		});
-
 		
 	});
 

@@ -1,17 +1,20 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { BigNumber, Contract } from "ethers";
+import { Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import * as helpers from "./_testhelper";
 
 // describe.skip
-describe("ico-002-standalone-vesting-config-test", function () {
+describe("ico-102-diamond-vesting-config-test", function () {
 	const hre = require("hardhat");
 
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
 
+  let diamondCutContract: Contract, diamondLoupeContract: Contract;
+
+	let CommonFacet, common: Contract;
 	let VestingFacet, vesting: Contract;
 	let ERC20Facet, token: Contract;
 
@@ -28,23 +31,85 @@ describe("ico-002-standalone-vesting-config-test", function () {
 		//console.log('--------------------');
 		await hre.network.provider.send("hardhat_reset");
 
+		// get accounts
 		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
 		[owner, project, liquidity, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
 			let balance = await ethers.provider.getBalance(account.address);
 			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
 		});
 
+		// deploy DiamondCutFacet
+		const DiamondCutFacet = await ethers.getContractFactory('DiamondCutFacet')
+		let diamondCutFacet = await DiamondCutFacet.deploy()
+		await diamondCutFacet.deployed()
+		console.log('DiamondCutFacet deployed:', diamondCutFacet.address)
+
+		// deploy Diamond
+		const Diamond = await ethers.getContractFactory('Diamond')
+		let diamond = await Diamond.deploy(diamondCutFacet.address)
+		await diamond.deployed()
+		console.log('Diamond deployed:', diamond.address)
+		diamondCutContract = await ethers.getContractAt('DiamondCutFacet', diamond.address)
+
+		// deploy DiamondLoupeFacet
+		const DiamondLoupeFacet = await ethers.getContractFactory('DiamondLoupeFacet')
+		let diamondLoupeFacet = await DiamondLoupeFacet.deploy()
+		await diamondLoupeFacet.deployed()
+    diamondLoupeContract = await ethers.getContractAt('DiamondLoupeFacet', diamond.address)
+		console.log('DiamondLoupeFacet deployed:', diamondLoupeFacet.address)
+
+		// attach DiamondLoupeFacet
+		let _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: helpers.getSelectors(diamondLoupeFacet), }];
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
+		console.log("DiamondLoupeFacet attached as " + diamondCutContract.address);
+
+		// deploy Common facet
+		CommonFacet = await ethers.getContractFactory("CommonFacet");
+		let commonFacet = await CommonFacet.deploy();
+		await commonFacet.deployed();
+		common = await ethers.getContractAt('CommonFacet', diamond.address)
+		console.log("CommonFacet deployed: " + commonFacet.address);
+
+		// attach Common facet
+		//console.log('attachig functions:', getSelectors(commonFacet))
+		_diamondCut = [{ facetAddress: commonFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: helpers.getSelectors(commonFacet), }];
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
+		console.log("CommonFacet attached as " + common.address);
+
+		// deploy Vesting facet
 		VestingFacet = await ethers.getContractFactory("VestingFacet");
-		vesting = await VestingFacet.deploy();
-		await vesting.deployed();
-		console.log("deployed vesting: " + vesting.address);
+		let vestingFacet = await VestingFacet.deploy();
+		await vestingFacet.deployed();
+    vesting = await ethers.getContractAt('VestingFacet', diamond.address)
+		console.log("VestingFacet deployed: " + vestingFacet.address);
 
+		// attach Token facet ex Common
+		const vestingFacetExCommonFacetSelectors = helpers.removeSelectors(helpers.getSelectors(vestingFacet), helpers.getSelectors(commonFacet));
+		//console.log('attachig functions:', vestingFacetExCommonFacetSelectors)
+		_diamondCut = [{ facetAddress: vestingFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: vestingFacetExCommonFacetSelectors, }];
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
+		console.log("VestingFacet attached as " + vesting.address);
+
+		// deploy Token facet
 		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
-		token = await ERC20Facet.deploy();
-		await token.deployed();
-		await expect(token.initialize()).not.to.be.reverted;
-		console.log("deployed Token:" + token.address);
+		let erc20Facet = await ERC20Facet.deploy();
+		await erc20Facet.deployed();
+    token = await ethers.getContractAt('ERC20Facet', diamond.address)
+		console.log("ERC20Facet deployed: " + erc20Facet.address);
 
+		// attach Token facet ex Common
+		const erc20FacetExCommonFacetSelectors = helpers.removeSelectors(helpers.getSelectors(erc20Facet), helpers.getSelectors(commonFacet));
+		//console.log('attachig functions:', erc20FacetExCommonFacetSelectors)
+		_diamondCut = [{ facetAddress: erc20Facet.address, action: helpers.FacetCutAction.Add, functionSelectors: erc20FacetExCommonFacetSelectors, }];
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
+		console.log("ERC20Facet attached as " + token.address);
+
+		// initialize
+		console.log('initializing')
+		await expect(await common.owner()).to.equal('0x0000000000000000000000000000000000000000');
+		await expect(token.initialize()).not.to.be.reverted;
+		await expect(await common.owner()).to.equal(owner.address);
+		console.log('initialized')
 	});
 
 	afterEach(async() => {

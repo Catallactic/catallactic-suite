@@ -26,6 +26,12 @@ describe("ico-001-standalone-ico-config-test", function () {
 		//console.log('--------------------');
 		await hre.network.provider.send("hardhat_reset");
 
+		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+		[owner, project, liquidity, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
+			let balance = await ethers.provider.getBalance(account.address);
+			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
+		});
+
 		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
 		ico = await CrowdsaleFacet.deploy();
 		await ico.deployed();
@@ -33,11 +39,6 @@ describe("ico-001-standalone-ico-config-test", function () {
 		await expect(ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18)).not.to.be.reverted;
 		console.log("deployed ICO:" + ico.address);
 
-		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
-		[owner, project, liquidity, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
-			let balance = await ethers.provider.getBalance(account.address);
-			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
-		});
 	});
 
 	afterEach(async() => {

@@ -8,12 +8,14 @@ import * as helpers from "./_testhelper";
 describe("ico-012-standalone-all-coin-ok-test", function () {
 	const hre = require("hardhat");
 
+	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
+	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
+
+	let ChainLinkAggregator, chainLinkAggregator: Contract;
 	let CrowdsaleFacet, ico: Contract;
 	let VestingFacet, vesting: Contract;
 	let ERC20Facet, token: Contract;
-	let ChainLinkAggregator, chainLinkAggregator: Contract;
-	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
-	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
+
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
@@ -27,6 +29,12 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 	beforeEach(async() => {
 		//console.log('--------------------');
 		await hre.network.provider.send("hardhat_reset");
+
+		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+		[owner, project, liquidity, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
+			let balance = await ethers.provider.getBalance(account.address);
+			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
+		});
 
 		ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		chainLinkAggregator = await ChainLinkAggregator.deploy();
@@ -51,12 +59,6 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 		await token.deployed();
 		await expect(token.initialize()).not.to.be.reverted;
 		console.log("deployed Token:" + token.address);
-
-		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
-		[owner, project, liquidity, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
-			let balance = await ethers.provider.getBalance(account.address);
-			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
-		});
 
 	});
 

@@ -8,14 +8,15 @@ import * as helpers from "./_testhelper";
 describe("ico-111-diamond-all-coin-nok-test", function () {
 	const hre = require("hardhat");
 
-	let CrowdsaleFacet, ico: Contract;
-	let ERC20Facet, token: Contract;
-	let CommonFacet, common: Contract;
-	let ChainLinkAggregator, chainLinkAggregator: Contract;
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
 
-  let diamondCutContract: Contract, diamondLoupeContract: Contract;
+	let diamondCutContract: Contract, diamondLoupeContract: Contract;
+
+	let ChainLinkAggregator, chainLinkAggregator: Contract;
+	let CrowdsaleFacet, ico: Contract;
+	let ERC20Facet, token: Contract;
+	let CommonFacet, common: Contract;
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
