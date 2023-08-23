@@ -42,7 +42,13 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 		// bytes32 vestingId = keccak256(abi.encodePacked(_start, _cliff, _duration, _slicePeriodSeconds));
 		uint256 vestingId = s.vestingIds.length;
 		s.vestingIds.push(vestingId);
-		s.vestings[vestingId] = Vesting(cliff,_start,_duration,_slicePeriodSeconds);
+		s.vestings[vestingId] = Vesting(_start,cliff,_duration,_slicePeriodSeconds);
+	}
+	function getVestingIds() external view returns(uint256[] memory) {
+		return s.vestingIds;
+	}
+	function getVesting(uint256 vestingId) external view returns(Vesting memory) {
+		return s.vestings[vestingId];
 	}
 
 	/********************************************************************************************************/
@@ -150,7 +156,7 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	 * @param vestingScheduleId the vesting schedule identifier
 	 * @param amount the amount to release
 	 */
-	function release(uint256 vestingScheduleId,uint256 amount) public nonReentrant {
+	function release(uint256 vestingScheduleId, uint256 amount) public nonReentrant {
 		VestingSchedule storage vestingSchedule = s.vestingSchedules[vestingScheduleId];
 		require(msg.sender == vestingSchedule.beneficiary || msg.sender == s._owner, "TokenVesting: only beneficiary and owner can release vested tokens");
 		

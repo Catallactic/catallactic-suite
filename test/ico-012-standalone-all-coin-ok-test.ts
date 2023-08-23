@@ -5,7 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import * as helpers from "./_testhelper";
 
-describe("ico-03-standalone-coin-ico2token-test", function () {
+describe("ico-012-standalone-all-coin-ok-test", function () {
 	const hre = require("hardhat");
 
 	let CrowdsaleFacet, ico: Contract;

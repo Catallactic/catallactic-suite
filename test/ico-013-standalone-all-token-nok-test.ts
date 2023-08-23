@@ -5,18 +5,15 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import * as helpers from "./_testhelper";
 
-describe("ico-15-diamond-token-ico-test", function () {
+describe("ico-013-standalone-all-token-nok-test", function () {
 	const hre = require("hardhat");
 
 	let CrowdsaleFacet, ico: Contract;
 	let ERC20Facet, token: Contract;
-	let CommonFacet, common: Contract;
 	let FOO, foo: Contract;
 	let ChainLinkAggregator, chainLinkAggregator: Contract;
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
-
-  let diamondCutContract: Contract, diamondLoupeContract: Contract;
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
@@ -31,18 +28,23 @@ describe("ico-15-diamond-token-ico-test", function () {
 		//console.log('--------------------');
 		await hre.network.provider.send("hardhat_reset");
 
-		// get accounts
-		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
-		[owner, project, liquidity, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
-			let balance = await ethers.provider.getBalance(account.address);
-			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
-		});
-
-		// deploy ChainLinkAggregator mock
 		ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		chainLinkAggregator = await ChainLinkAggregator.deploy();
 		await chainLinkAggregator.deployed();
 		console.log("ChainLinkAggregator:" + chainLinkAggregator.address);
+
+		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
+		ico = await CrowdsaleFacet.deploy();
+		await ico.deployed();
+		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 0, 0)).not.to.be.reverted;
+		await expect(ico.setPaymentToken("FOO", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18)).not.to.be.reverted;
+		console.log("deployed ICO:" + ico.address);
+
+		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
+		token = await ERC20Facet.deploy();
+		await token.deployed();
+		token.initialize();
+		console.log("deployed Token:" + token.address);
 
 		FOO = await ethers.getContractFactory("FOO");
 		foo = await FOO.deploy();
@@ -50,82 +52,13 @@ describe("ico-15-diamond-token-ico-test", function () {
 		foo.initialize();
 		console.log("deployed FOO:" + foo.address);
 
-		// deploy DiamondCutFacet
-		const DiamondCutFacet = await ethers.getContractFactory('DiamondCutFacet')
-		let diamondCutFacet = await DiamondCutFacet.deploy()
-		await diamondCutFacet.deployed()
-		console.log('DiamondCutFacet deployed:', diamondCutFacet.address)
+		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+		[owner, project, liquidity, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
+			let balance = await ethers.provider.getBalance(account.address);
+			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
+		});
 
-		// deploy Diamond
-		const Diamond = await ethers.getContractFactory('Diamond')
-		let diamond = await Diamond.deploy(diamondCutFacet.address)
-		await diamond.deployed()
-		console.log('Diamond deployed:', diamond.address)
-		diamondCutContract = await ethers.getContractAt('DiamondCutFacet', diamond.address)
-
-		// deploy DiamondLoupeFacet
-		const DiamondLoupeFacet = await ethers.getContractFactory('DiamondLoupeFacet')
-		let diamondLoupeFacet = await DiamondLoupeFacet.deploy()
-		await diamondLoupeFacet.deployed()
-    diamondLoupeContract = await ethers.getContractAt('DiamondLoupeFacet', diamond.address)
-		console.log('DiamondLoupeFacet deployed:', diamondLoupeFacet.address)
-
-		// attach DiamondLoupeFacet
-		let _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: helpers.getSelectors(diamondLoupeFacet), }];
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
-		console.log("DiamondLoupeFacet attached as " + diamondCutContract.address);
-
-		// deploy Common facet
-		CommonFacet = await ethers.getContractFactory("CommonFacet");
-		let commonFacet = await CommonFacet.deploy();
-		await commonFacet.deployed();
-		common = await ethers.getContractAt('CommonFacet', diamond.address)
-		console.log("CommonFacet deployed:" + commonFacet.address);
-
-		// attach Common facet
-		//console.log('attachig functions:', getSelectors(commonFacet))
-		_diamondCut = [{ facetAddress: commonFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: helpers.getSelectors(commonFacet), }];
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
-		console.log("CommonFacet attached as " + common.address);
-
-		// deploy Crowdsale facet
-		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
-		let crowdsaleFacet = await CrowdsaleFacet.deploy();
-		await crowdsaleFacet.deployed();
-		ico = await ethers.getContractAt('CrowdsaleFacet', diamond.address)
-		console.log("CrowdsaleFacet deployed:" + crowdsaleFacet.address);
-
-		// attach Crowdsale facet ex Common
-		const crowdsaleFacetExCommonFacetSelectors = helpers.removeSelectors(helpers.getSelectors(crowdsaleFacet), helpers.getSelectors(commonFacet));
-		//crowdsaleFacetExCommonFacetSelectors.push(commonFacet.interface.getSighash('receive()'))
-		//console.log('attachig functions:', crowdsaleFacetExCommonFacetSelectors)
-		_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: crowdsaleFacetExCommonFacetSelectors, }];
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
-		console.log("CrowdsaleFacet attached as " + ico.address);
-
-		// deploy Token facet
-		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
-		let erc20Facet = await ERC20Facet.deploy();
-		await erc20Facet.deployed();
-    token = await ethers.getContractAt('ERC20Facet', diamond.address)
-		console.log("ERC20Facet deployed:" + erc20Facet.address);
-
-		// attach Token facet ex Common
-		const erc20FacetExCommonFacetSelectors = helpers.removeSelectors(helpers.getSelectors(erc20Facet), helpers.getSelectors(commonFacet));
-		//console.log('attachig functions:', erc20FacetExCommonFacetSelectors)
-		_diamondCut = [{ facetAddress: erc20Facet.address, action: helpers.FacetCutAction.Add, functionSelectors: erc20FacetExCommonFacetSelectors, }];
-		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
-		console.log("ERC20Facet attached as " + token.address);
-
-		// initialize
-		console.log('initializing')
-		await expect(await common.owner()).to.equal('0x0000000000000000000000000000000000000000');
-		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 0, 0)).not.to.be.reverted;
-		await expect(ico.setPaymentToken("FOO", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18)).not.to.be.reverted;
-		await expect(token.initialize()).not.to.be.reverted;
-		await expect(diamond.setReceiveFacet(crowdsaleFacet.address)).to.not.be.reverted;
-		await expect(await common.owner()).to.equal(owner.address);
-		console.log('initialized')		
+		
 	});
 
 	afterEach(async() => {
@@ -337,7 +270,7 @@ describe("ico-15-diamond-token-ico-test", function () {
 		await foo.transfer(addr2.address, amountToTransfer);
 		await foo.transfer(addr3.address, amountToTransfer);
 
-		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).to.be.revertedWith(helpers.ERRORS.ERRD_MUST_ONG);
+		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).to.be.revertedWith('ERRD_MUST_ONG');
 
 		// bug overflow -> workaround use BigInt
 		// bug BigInt -> workaround use to String() https://stackoverflow.com/questions/70968922/assigning-bigint-stores-wrong-number-number1
@@ -346,10 +279,10 @@ describe("ico-15-diamond-token-ico-test", function () {
 			.to.changeTokenBalances(foo, [ico, addr1], [BigInt((await helpers.usdToTokenWithDecimals(10, ico)).toString()), BigInt((-1*(await helpers.usdToTokenWithDecimals(10, ico))).toString())]);
 
 		await ico.setCrowdsaleStage(2);
-		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).to.be.revertedWith(helpers.ERRORS.ERRD_MUST_ONG)
+		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).to.be.revertedWith('ERRD_MUST_ONG')
 
 		await ico.setCrowdsaleStage(3);
-		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).to.be.revertedWith(helpers.ERRORS.ERRD_MUST_ONG);
+		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).to.be.revertedWith('ERRD_MUST_ONG');
 	});
 
 	it("Should be able to whitelist and unwhitelist", async() => {
@@ -365,7 +298,7 @@ describe("ico-15-diamond-token-ico-test", function () {
 		// whitelisting enabled, small transfer
 		await ico.setWhitelistuUSDThreshold(30 * 10**6);
 		await ico.unwhitelistUser(addr1.address);
-		await expect(helpers.testTransferToken(addr1, 'FOO', 31, ico, foo)).to.be.revertedWith(helpers.ERRORS.ERRD_MUST_WHI);
+		await expect(helpers.testTransferToken(addr1, 'FOO', 31, ico, foo)).to.be.revertedWith('ERRD_MUST_WHI');
 		await ico.whitelistUser(addr1.address);
 		await expect(helpers.testTransferToken(addr1, 'FOO', 31, ico, foo)).not.to.be.reverted;
 	});
@@ -386,7 +319,7 @@ describe("ico-15-diamond-token-ico-test", function () {
 
 		await ico.setUseBlacklist(true);
 		await ico.blacklistUser(addr1.address);
-		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).to.be.revertedWith(helpers.ERRORS.ERRD_MUSN_BLK);
+		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).to.be.revertedWith('ERRD_MUSN_BLK');
 
 		await ico.setUseBlacklist(true);
 		await ico.unblacklistUser(addr1.address);
@@ -407,12 +340,12 @@ describe("ico-15-diamond-token-ico-test", function () {
 		await foo.transfer(addr3.address, amountToTransfer);
 
 		await ico.setMinuUSDTransfer(9.9999 * 10**6);
-		await expect(helpers.testTransferToken(addr1, 'FOO', 9, ico, foo)).to.be.revertedWith(helpers.ERRORS.ERRD_TRAS_LOW);
+		await expect(helpers.testTransferToken(addr1, 'FOO', 9, ico, foo)).to.be.revertedWith('ERRD_TRAS_LOW');
 		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).not.to.be.reverted;
 		await ico.setMinuUSDTransfer(9.99 * 10**6);
 
 		await ico.setMaxuUSDTransfer(20.0001 * 10**6);
-		await expect(helpers.testTransferToken(addr1, 'FOO', 21, ico, foo)).to.be.revertedWith(helpers.ERRORS.ERRD_TRAS_HIG);
+		await expect(helpers.testTransferToken(addr1, 'FOO', 21, ico, foo)).to.be.revertedWith('ERRD_TRAS_HIG');
 		await expect(helpers.testTransferToken(addr1, 'FOO', 20, ico, foo)).not.to.be.reverted;
 		await ico.setMaxuUSDTransfer(10_000.001  * 10**6);
 
@@ -420,7 +353,7 @@ describe("ico-15-diamond-token-ico-test", function () {
 		await ico.setMaxuUSDInvestment(50 * 10**6);
 		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).not.to.be.reverted;
 		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).not.to.be.reverted;
-		await expect(helpers.testTransferToken(addr1, 'FOO', 40, ico, foo)).to.be.revertedWith(helpers.ERRORS.ERRD_INVT_HIG);
+		await expect(helpers.testTransferToken(addr1, 'FOO', 40, ico, foo)).to.be.revertedWith('ERRD_INVT_HIG');
 		await ico.setMaxuUSDInvestment(10_001 * 10**6);
 
 	});

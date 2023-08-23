@@ -5,15 +5,18 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import * as helpers from "./_testhelper";
 
-describe("ico-06-standalone-token-ico2token-test ", function () {
+describe("ico-114-diamond-all-token-ok-test", function () {
 	const hre = require("hardhat");
 
 	let CrowdsaleFacet, ico: Contract;
 	let ERC20Facet, token: Contract;
+	let CommonFacet, common: Contract;
 	let FOO, foo: Contract;
 	let ChainLinkAggregator, chainLinkAggregator: Contract;
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
+
+  let diamondCutContract: Contract, diamondLoupeContract: Contract;
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
@@ -28,23 +31,18 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		//console.log('--------------------');
 		await hre.network.provider.send("hardhat_reset");
 
+		// get accounts
+		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+		[owner, project, liquidity, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
+			let balance = await ethers.provider.getBalance(account.address);
+			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
+		});
+
+		// deploy ChainLinkAggregator mock
 		ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		chainLinkAggregator = await ChainLinkAggregator.deploy();
 		await chainLinkAggregator.deployed();
 		console.log("ChainLinkAggregator:" + chainLinkAggregator.address);
-
-		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
-		ico = await CrowdsaleFacet.deploy();
-		await ico.deployed();
-		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 0, 0)).not.to.be.reverted;
-		await expect(ico.setPaymentToken("FOO", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18)).not.to.be.reverted;
-		console.log("deployed ICO:" + ico.address);
-
-		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
-		token = await ERC20Facet.deploy();
-		await token.deployed();
-		token.initialize();
-		console.log("deployed Token:" + token.address);
 
 		FOO = await ethers.getContractFactory("FOO");
 		foo = await FOO.deploy();
@@ -52,13 +50,82 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		foo.initialize();
 		console.log("deployed FOO:" + foo.address);
 
-		[owner, project, liquidity, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
-		[owner, project, liquidity, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
-			let balance = await ethers.provider.getBalance(account.address);
-			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
-		});
+		// deploy DiamondCutFacet
+		const DiamondCutFacet = await ethers.getContractFactory('DiamondCutFacet')
+		let diamondCutFacet = await DiamondCutFacet.deploy()
+		await diamondCutFacet.deployed()
+		console.log('DiamondCutFacet deployed:', diamondCutFacet.address)
 
-		
+		// deploy Diamond
+		const Diamond = await ethers.getContractFactory('Diamond')
+		let diamond = await Diamond.deploy(diamondCutFacet.address)
+		await diamond.deployed()
+		console.log('Diamond deployed:', diamond.address)
+		diamondCutContract = await ethers.getContractAt('DiamondCutFacet', diamond.address)
+
+		// deploy DiamondLoupeFacet
+		const DiamondLoupeFacet = await ethers.getContractFactory('DiamondLoupeFacet')
+		let diamondLoupeFacet = await DiamondLoupeFacet.deploy()
+		await diamondLoupeFacet.deployed()
+    diamondLoupeContract = await ethers.getContractAt('DiamondLoupeFacet', diamond.address)
+		console.log('DiamondLoupeFacet deployed:', diamondLoupeFacet.address)
+
+		// attach DiamondLoupeFacet
+		let _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: helpers.getSelectors(diamondLoupeFacet), }];
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
+		console.log("DiamondLoupeFacet attached as " + diamondCutContract.address);
+
+		// deploy Common facet
+		CommonFacet = await ethers.getContractFactory("CommonFacet");
+		let commonFacet = await CommonFacet.deploy();
+		await commonFacet.deployed();
+		common = await ethers.getContractAt('CommonFacet', diamond.address)
+		console.log("CommonFacet deployed:" + commonFacet.address);
+
+		// attach Common facet
+		//console.log('attachig functions:', getSelectors(commonFacet))
+		_diamondCut = [{ facetAddress: commonFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: helpers.getSelectors(commonFacet), }];
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
+		console.log("CommonFacet attached as " + common.address);
+
+		// deploy Crowdsale facet
+		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
+		let crowdsaleFacet = await CrowdsaleFacet.deploy();
+		await crowdsaleFacet.deployed();
+		ico = await ethers.getContractAt('CrowdsaleFacet', diamond.address)
+		console.log("CrowdsaleFacet deployed:" + crowdsaleFacet.address);
+
+		// attach Crowdsale facet ex Common
+		const crowdsaleFacetExCommonFacetSelectors = helpers.removeSelectors(helpers.getSelectors(crowdsaleFacet), helpers.getSelectors(commonFacet));
+		//crowdsaleFacetExCommonFacetSelectors.push(commonFacet.interface.getSighash('receive()'))
+		//console.log('attachig functions:', crowdsaleFacetExCommonFacetSelectors)
+		_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: crowdsaleFacetExCommonFacetSelectors, }];
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
+		console.log("CrowdsaleFacet attached as " + ico.address);
+
+		// deploy Token facet
+		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
+		let erc20Facet = await ERC20Facet.deploy();
+		await erc20Facet.deployed();
+    token = await ethers.getContractAt('ERC20Facet', diamond.address)
+		console.log("ERC20Facet deployed:" + erc20Facet.address);
+
+		// attach Token facet ex Common
+		const erc20FacetExCommonFacetSelectors = helpers.removeSelectors(helpers.getSelectors(erc20Facet), helpers.getSelectors(commonFacet));
+		//console.log('attachig functions:', erc20FacetExCommonFacetSelectors)
+		_diamondCut = [{ facetAddress: erc20Facet.address, action: helpers.FacetCutAction.Add, functionSelectors: erc20FacetExCommonFacetSelectors, }];
+		await expect(diamondCutContract.connect(owner).diamondCut(_diamondCut)).to.not.be.reverted;
+		console.log("ERC20Facet attached as " + token.address);
+
+		// initialize
+		console.log('initializing')
+		await expect(await common.owner()).to.equal('0x0000000000000000000000000000000000000000');
+		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 0, 0)).not.to.be.reverted;
+		await expect(ico.setPaymentToken("FOO", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18)).not.to.be.reverted;
+		await expect(token.initialize()).not.to.be.reverted;
+		await expect(diamond.setReceiveFacet(crowdsaleFacet.address)).to.not.be.reverted;
+		await expect(await common.owner()).to.equal(owner.address);
+		console.log('initialized')		
 	});
 
 	afterEach(async() => {
@@ -145,7 +212,7 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		// claim tokens from investors 1
 		let uUSDContributed1 = await ico.getuUSDToClaim(addr1.address);
 		let numTokensWithDecimals1 = BigInt(uUSDContributed1) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals1);
+		expect(token.transfer(ico.address, numTokensWithDecimals1)).not.to.be.reverted;
 		await expect(() => ico.connect(addr1).claim())
 			.to.changeTokenBalances(token, [ico, addr1], [BigInt(-1) * numTokensWithDecimals1, numTokensWithDecimals1]);
 		expect(await ico.getuUSDToClaim(addr1.address)).to.equal(0);
@@ -155,7 +222,7 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		// claim tokens from investors 2
 		let uUSDContributed2 = await ico.getuUSDToClaim(addr2.address);
 		let numTokensWithDecimals2 = BigInt(uUSDContributed2) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals2);
+		expect(token.transfer(ico.address, numTokensWithDecimals2)).not.to.be.reverted;
 		await expect(() => ico.connect(addr2).claim())
 			.to.changeTokenBalances(token, [ico, addr2], [BigInt(-1) * numTokensWithDecimals2, numTokensWithDecimals2]);
 		expect(await ico.getuUSDToClaim(addr2.address)).to.equal(0);
@@ -165,7 +232,7 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		// claim tokens from investors 3
 		let uUSDContributed3 = await ico.getuUSDToClaim(addr3.address);
 		let numTokensWithDecimals3 = BigInt(uUSDContributed3) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals3);
+		expect(token.transfer(ico.address, numTokensWithDecimals3)).not.to.be.reverted;
 		await expect(() => ico.connect(addr3).claim())
 			.to.changeTokenBalances(token, [ico, addr3], [BigInt(-1) * numTokensWithDecimals3, numTokensWithDecimals3]);
 		expect(await ico.getuUSDToClaim(addr3.address)).to.equal(0);
@@ -204,7 +271,7 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		// claim tokens from investors 1
 		let uUSDContributed1 = await ico.getuUSDToClaim(addr1.address);
 		let numTokensWithDecimals1 = BigInt(uUSDContributed1) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals1);
+		expect(token.transfer(ico.address, numTokensWithDecimals1)).not.to.be.reverted;
 		await expect(() => ico.claimAddress(addr1.address))
 			.to.changeTokenBalances(token, [ico, addr1], [BigInt(-1) * numTokensWithDecimals1, numTokensWithDecimals1]);
 		expect(await ico.getuUSDToClaim(addr1.address)).to.equal(0);
@@ -214,7 +281,7 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		// claim tokens from investors 2
 		let uUSDContributed2 = await ico.getuUSDToClaim(addr2.address);
 		let numTokensWithDecimals2 = BigInt(uUSDContributed2) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals2);
+		expect(token.transfer(ico.address, numTokensWithDecimals2)).not.to.be.reverted;
 		await expect(() => ico.claimAddress(addr2.address))
 			.to.changeTokenBalances(token, [ico, addr2], [BigInt(-1) * numTokensWithDecimals2, numTokensWithDecimals2]);
 		expect(await ico.getuUSDToClaim(addr2.address)).to.equal(0);
@@ -224,7 +291,7 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 		// claim tokens from investors 3
 		let uUSDContributed3 = await ico.getuUSDToClaim(addr3.address);
 		let numTokensWithDecimals3 = BigInt(uUSDContributed3) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals3);
+		expect(token.transfer(ico.address, numTokensWithDecimals3)).not.to.be.reverted;
 		await expect(() => ico.claimAddress(addr3.address))
 			.to.changeTokenBalances(token, [ico, addr3], [BigInt(-1) * numTokensWithDecimals3, numTokensWithDecimals3]);
 		expect(await ico.getuUSDToClaim(addr3.address)).to.equal(0);
@@ -233,95 +300,9 @@ describe("ico-06-standalone-token-ico2token-test ", function () {
 
 	});
 
-
 	/********************************************************************************************************/
 	/************************************************** Reset Claim *****************************************/
 	/********************************************************************************************************/
-	it("Should be able to Reset Refund", async() => {
-
-		await ico.setCrowdsaleStage(1);
-
-		// prepare test users
-		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(258.1*1e6), 18);
-		let amountToTransfer = ethers.utils.parseUnits("1000000", 18).toString();
-		await foo.transfer(addr1.address, amountToTransfer);
-		await foo.transfer(addr2.address, amountToTransfer);
-		await foo.transfer(addr3.address, amountToTransfer);
-
-		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).not.to.be.reverted;
-		await expect(helpers.testTransferToken(addr2, 'FOO', 10, ico, foo)).not.to.be.reverted;
-		await expect(helpers.testTransferToken(addr3, 'FOO', 10, ico, foo)).not.to.be.reverted;
-
-		await ico.setCrowdsaleStage(3);
-
-		let contributed1 = await ico.getContribution(addr1.address, "FOO");
-		console.log("refunding " + contributed1);
-		await expect(() => ico.connect(addr1).refund("FOO"))
-			.to.changeTokenBalances(foo, [ico, addr1], [contributed1.mul(-1), contributed1]);
-		expect(await ico.getContribution(addr1.address, "FOO")).to.equal(0);
-		expect(await ico.getuUSDContribution(addr1.address, "FOO")).to.equal(0);
-		expect(await ico.getuUSDToClaim(addr1.address)).to.equal(0);
-
-		let contributed2 = await ico.getContribution(addr2.address, "FOO");
-		await expect(() => ico.connect(addr2).refund("FOO"))
-			.to.changeTokenBalances(foo, [ico, addr2], [contributed2.mul(-1), contributed2]);
-		expect(await ico.getContribution(addr2.address, "FOO")).to.equal(0);
-		expect(await ico.getuUSDContribution(addr2.address, "FOO")).to.equal(0);
-		expect(await ico.getuUSDToClaim(addr2.address)).to.equal(0);
-
-		let contributed3 = await ico.getContribution(addr3.address, "FOO");
-		await expect(() => ico.connect(addr3).refund("FOO"))
-			.to.changeTokenBalances(foo, [ico, addr3], [contributed3.mul(-1), contributed3]);
-		expect(await ico.getContribution(addr3.address, "FOO")).to.equal(0);
-		expect(await ico.getuUSDContribution(addr3.address, "FOO")).to.equal(0);
-		expect(await ico.getuUSDToClaim(addr3.address)).to.equal(0);
-
-		console.log("balanceOfICO " + await ethers.provider.getBalance(ico.address));
-		expect(await foo.balanceOf(ico.address)).to.equal(0);
-
-		// verify finish
-		expect(await ico.owner()).to.equal(owner.address);
-		expect(await ico.getCrowdsaleStage()).to.equal(3, 'The stage couldn\'t be set to Finished');
-		expect(await ico.getTotaluUSDInvested()).to.equal(30000000);																																		// totaluUSDTInvested
-		expect(await ico.getHardCap()).to.equal(300000);
-		expect(await ico.getSoftCap()).to.equal(50000);
-		expect(await ico.getPriceuUSD()).to.equal(30_000);
-		expect(await ico.getInvestorsCount()).to.equal(3);
-		let investorsCount = await ico.getInvestorsCount();
-		let investors = await ico.getInvestors();
-		for (let i = 0; i < investorsCount; i++) {
-			expect(await ico.getuUSDToClaim(investors[i])).to.equal(0);
-			expect(await ico.getuUSDInvested(investors[i])).to.equal(10000000);
-			expect(await ico.getContribution(addr1.address, 'FOO')).to.equal(0);																														// cAmountInvested
-			expect(await ico.getuUSDContribution(addr1.address, 'FOO')).to.equal(0);																												// cuUSDInvested
-		}
-		expect(await ico.getTokenAddress()).to.equal('0x0000000000000000000000000000000000000000', 'token address should be zero');				// tokenAddress
-		expect(await ico.getTargetWalletAddress()).to.equal('0x0000000000000000000000000000000000000000', 'token address should be zero');// targetWalletAddress
-
-		// reset
-		await ico.reset();
-
-		// verify reset
-		expect(await ico.owner()).to.equal(owner.address);
-		expect(await ico.getCrowdsaleStage()).to.equal(0, 'The stage couldn\'t be set to Finished');
-		expect(await ico.getTotaluUSDInvested()).to.equal(0);																																							// totaluUSDTInvested
-		expect(await ico.getHardCap()).to.equal(0);
-		expect(await ico.getSoftCap()).to.equal(0);
-		expect(await ico.getPriceuUSD()).to.equal(0);
-		expect(await ico.getInvestorsCount()).to.equal(3);
-		investorsCount = await ico.getInvestorsCount();
-		investors = await ico.getInvestors();
-		for (let i = 0; i < investorsCount; i++) {
-			expect(await ico.getuUSDToClaim(investors[i])).to.equal(0);
-			expect(await ico.getuUSDInvested(investors[i])).to.equal(10000000);
-			expect(await ico.getContribution(addr1.address, 'FOO')).to.equal(0);																														// cAmountInvested
-			expect(await ico.getuUSDContribution(addr1.address, 'FOO')).to.equal(0);																												// cuUSDInvested
-		}
-		expect(await ico.getTokenAddress()).to.equal('0x0000000000000000000000000000000000000000', 'token address should be zero');				// tokenAddress
-		expect(await ico.getTargetWalletAddress()).to.equal('0x0000000000000000000000000000000000000000', 'token address should be zero');// targetWalletAddress
-
-	});
-
 	it("Should be able to Reset Claim", async() => {
 
 		// prepare test

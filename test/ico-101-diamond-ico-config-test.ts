@@ -6,7 +6,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import * as helpers from "./_testhelper";
 
 // describe.skip
-describe("ico-11-diamond-config-ico-test", function () {
+describe("ico-101-diamond-ico-config-test", function () {
 	const hre = require("hardhat");
 
 	let CrowdsaleFacet, ico: Contract;
