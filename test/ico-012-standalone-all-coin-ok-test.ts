@@ -118,15 +118,15 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 
 		await ico.setCrowdsaleStage(3);
 
-		// claim all coins
+		// claim all tokens
 		let price: number = await ico.getPriceuUSD();
 		console.log("price " + price);
 
-		// claim coins from investor 1
+		// claim tokens from investor 1
 		expect(await ico.getuUSDToClaim(addr1.address)).to.equal(19000 * 10**6);
 		let uUSDContributed1 = await ico.getuUSDToClaim(addr1.address);
 		let numTokensWithDecimals1 = BigInt(uUSDContributed1) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals1);
+		expect(token.transfer(ico.address, numTokensWithDecimals1)).not.to.be.reverted;
 		const unvestedNumTokensWithDecimals1 = numTokensWithDecimals1 * BigInt(10) / BigInt(100);																				// unvested tokens
 		await expect(() => ico.connect(addr1).claim())
 			.to.changeTokenBalances(token, [ico, addr1], [BigInt(-1) * numTokensWithDecimals1 + BigInt(1), unvestedNumTokensWithDecimals1]);
@@ -134,11 +134,11 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 		expect(await ico.getContribution(addr1.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr1.address, 'COIN')).to.equal(0);
 
-		// claim coins from investor 2
+		// claim tokens from investor 2
 		expect(await ico.getuUSDToClaim(addr2.address)).to.equal(19000 * 10**6);
 		let uUSDContributed2 = await ico.getuUSDToClaim(addr2.address);
 		let numTokensWithDecimals2 = BigInt(uUSDContributed2) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals2);
+		expect(token.transfer(ico.address, numTokensWithDecimals2)).not.to.be.reverted;
 		const unvestedNumTokensWithDecimals2 = numTokensWithDecimals2 * BigInt(10) / BigInt(100);																				// unvested tokens
 		await expect(() => ico.connect(addr2).claim())
 			.to.changeTokenBalances(token, [ico, addr2], [BigInt(-1) * numTokensWithDecimals2 + BigInt(1), unvestedNumTokensWithDecimals2]);
@@ -146,11 +146,11 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 		expect(await ico.getContribution(addr2.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr2.address, 'COIN')).to.equal(0);
 
-		// claim coins from investor 3
+		// claim tokens from investor 3
 		expect(await ico.getuUSDToClaim(addr3.address)).to.equal(19000 * 10**6);
 		let uUSDContributed3 = await ico.getuUSDToClaim(addr3.address);
 		let numTokensWithDecimals3 = BigInt(uUSDContributed3) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals3);
+		expect(token.transfer(ico.address, numTokensWithDecimals3)).not.to.be.reverted;
 		const unvestedNumTokensWithDecimals3 = numTokensWithDecimals3 * BigInt(10) / BigInt(100);																				// unvested tokens
 		await expect(() => ico.connect(addr3).claim())
 			.to.changeTokenBalances(token, [ico, addr3], [BigInt(-1) * numTokensWithDecimals3 + BigInt(1), unvestedNumTokensWithDecimals3]);
@@ -158,25 +158,25 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 		expect(await ico.getContribution(addr3.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr3.address, 'COIN')).to.equal(0);
 
-		// vest all coins
+		// vest all tokens
 		expect(await vesting.getTotalVestableAmount()).to.equal((BigInt(3) * numTokensWithDecimals1 * BigInt(90) / BigInt(100)) - BigInt(2));
 		await hre.ethers.provider.send('evm_mine', [ Date.now() + 480 * helpers.TIME.MILLIS_IN_DAY ]);
 
-		// vest coins from investor 1
+		// vest tokens from investor 1
 		expect(await token.balanceOf(addr1.address)).to.equal(unvestedNumTokensWithDecimals1);
 		const vestedNumTokensWithDecimals1 = numTokensWithDecimals1 * BigInt(90) / BigInt(100);																					// vested tokens
 		await expect(() => vesting.connect(addr1).release(0))
 			.to.changeTokenBalances(token, [vesting, addr1], [BigInt(-1) * vestedNumTokensWithDecimals1, vestedNumTokensWithDecimals1]);
 		expect(await token.balanceOf(addr1.address)).to.equal(numTokensWithDecimals1 - BigInt(1));
 
-		// vest coins from investor 2
+		// vest tokens from investor 2
 		expect(await token.balanceOf(addr2.address)).to.equal(unvestedNumTokensWithDecimals2);
 		const vestedNumTokensWithDecimals2 = numTokensWithDecimals2 * BigInt(90) / BigInt(100);																					// vested tokens
 		await expect(() => vesting.connect(addr2).release(1))
 			.to.changeTokenBalances(token, [vesting, addr2], [BigInt(-1) * vestedNumTokensWithDecimals2, vestedNumTokensWithDecimals2]);
 		expect(await token.balanceOf(addr2.address)).to.equal(numTokensWithDecimals2 - BigInt(1));
 
-		// vest coins from investor 3
+		// vest tokens from investor 3
 		expect(await token.balanceOf(addr3.address)).to.equal(unvestedNumTokensWithDecimals3);
 		const vestedNumTokensWithDecimals3 = numTokensWithDecimals3 * BigInt(90) / BigInt(100);																					// vested tokens
 		await expect(() => vesting.connect(addr3).release(2))
@@ -205,15 +205,15 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 
 		await ico.setCrowdsaleStage(3);
 
-		// claim all coins
+		// claim all tokens
 		let price: number = await ico.getPriceuUSD();
 		console.log("price " + price);
 
-		// claim coins from investor 1
+		// claim tokens from investor 1
 		expect(await ico.getuUSDToClaim(addr1.address)).to.equal(19000 * 10**6);
 		let uUSDContributed1 = await ico.getuUSDToClaim(addr1.address);
 		let numTokensWithDecimals1 = BigInt(uUSDContributed1) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals1);
+		expect(token.transfer(ico.address, numTokensWithDecimals1)).not.to.be.reverted;
 		const unvestedNumTokensWithDecimals1 = numTokensWithDecimals1 * BigInt(10) / BigInt(100);																				// unvested tokens
 		await expect(() => ico.claimAddress(addr1.address))
 			.to.changeTokenBalances(token, [ico, addr1], [BigInt(-1) * numTokensWithDecimals1 + BigInt(1), unvestedNumTokensWithDecimals1]);
@@ -221,11 +221,11 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 		expect(await ico.getContribution(addr1.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr1.address, 'COIN')).to.equal(0);
 
-		// claim coins from investor 2
+		// claim tokens from investor 2
 		expect(await ico.getuUSDToClaim(addr2.address)).to.equal(19000 * 10**6);
 		let uUSDContributed2 = await ico.getuUSDToClaim(addr2.address);
 		let numTokensWithDecimals2 = BigInt(uUSDContributed2) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals2);
+		expect(token.transfer(ico.address, numTokensWithDecimals2)).not.to.be.reverted;
 		const unvestedNumTokensWithDecimals2 = numTokensWithDecimals2 * BigInt(10) / BigInt(100);																				// unvested tokens
 		await expect(() => ico.claimAddress(addr2.address))
 			.to.changeTokenBalances(token, [ico, addr2], [BigInt(-1) * numTokensWithDecimals2 + BigInt(1), unvestedNumTokensWithDecimals2]);
@@ -233,11 +233,11 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 		expect(await ico.getContribution(addr2.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr2.address, 'COIN')).to.equal(0);
 
-		// claim coins from investor 3
+		// claim tokens from investor 3
 		expect(await ico.getuUSDToClaim(addr3.address)).to.equal(19000 * 10**6);
 		let uUSDContributed3 = await ico.getuUSDToClaim(addr3.address);
 		let numTokensWithDecimals3 = BigInt(uUSDContributed3) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals3);
+		expect(token.transfer(ico.address, numTokensWithDecimals1)).not.to.be.reverted;
 		const unvestedNumTokensWithDecimals3 = numTokensWithDecimals3 * BigInt(10) / BigInt(100);																				// unvested tokens
 		await expect(() => ico.claimAddress(addr3.address))
 			.to.changeTokenBalances(token, [ico, addr3], [BigInt(-1) * numTokensWithDecimals3 + BigInt(1), unvestedNumTokensWithDecimals3]);
@@ -245,25 +245,25 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 		expect(await ico.getContribution(addr3.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr3.address, 'COIN')).to.equal(0);
 
-		// vest all coins
+		// vest all tokens
 		expect(await vesting.getTotalVestableAmount()).to.equal((BigInt(3) * numTokensWithDecimals1 * BigInt(90) / BigInt(100)) - BigInt(2));
 		await hre.ethers.provider.send('evm_mine', [ Date.now() + 480 * helpers.TIME.MILLIS_IN_DAY ]);
 
-		// vest coins from investor 1
+		// vest tokens from investor 1
 		expect(await token.balanceOf(addr1.address)).to.equal(unvestedNumTokensWithDecimals1);
 		const vestedNumTokensWithDecimals1 = numTokensWithDecimals1 * BigInt(90) / BigInt(100);																					// vested tokens
 		await expect(() => vesting.connect(addr1).release(0))
 			.to.changeTokenBalances(token, [vesting, addr1], [BigInt(-1) * vestedNumTokensWithDecimals1, vestedNumTokensWithDecimals1]);
 		expect(await token.balanceOf(addr1.address)).to.equal(numTokensWithDecimals1 - BigInt(1));
 
-		// vest coins from investor 2
+		// vest tokens from investor 2
 		expect(await token.balanceOf(addr2.address)).to.equal(unvestedNumTokensWithDecimals2);
 		const vestedNumTokensWithDecimals2 = numTokensWithDecimals2 * BigInt(90) / BigInt(100);																					// vested tokens
 		await expect(() => vesting.connect(addr2).release(1))
 			.to.changeTokenBalances(token, [vesting, addr2], [BigInt(-1) * vestedNumTokensWithDecimals2, vestedNumTokensWithDecimals2]);
 		expect(await token.balanceOf(addr2.address)).to.equal(numTokensWithDecimals2 - BigInt(1));
 
-		// vest coins from investor 3
+		// vest tokens from investor 3
 		expect(await token.balanceOf(addr3.address)).to.equal(unvestedNumTokensWithDecimals3);
 		const vestedNumTokensWithDecimals3 = numTokensWithDecimals3 * BigInt(90) / BigInt(100);																					// vested tokens
 		await expect(() => vesting.connect(addr3).release(2))
@@ -295,15 +295,15 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 
 		await ico.setCrowdsaleStage(3);
 
-		// claim all coins
+		// claim all tokens
 		let price: number = await ico.getPriceuUSD();
 		console.log("price " + price);
 
-		// claim coins from investor 1
+		// claim tokens from investor 1
 		expect(await ico.getuUSDToClaim(addr1.address)).to.equal(19000 * 10**6);
 		let uUSDContributed1 = await ico.getuUSDToClaim(addr1.address);
 		let numTokensWithDecimals1 = BigInt(uUSDContributed1) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals1);
+		expect(token.transfer(ico.address, numTokensWithDecimals1)).not.to.be.reverted;
 		const unvestedNumTokensWithDecimals1 = numTokensWithDecimals1 * BigInt(10) / BigInt(100);																				// unvested tokens
 		await expect(() => ico.claimAddress(addr1.address))
 			.to.changeTokenBalances(token, [ico, addr1], [BigInt(-1) * numTokensWithDecimals1 + BigInt(1), unvestedNumTokensWithDecimals1]);
@@ -311,11 +311,11 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 		expect(await ico.getContribution(addr1.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr1.address, 'COIN')).to.equal(0);
 
-		// claim coins from investor 2
+		// claim tokens from investor 2
 		expect(await ico.getuUSDToClaim(addr2.address)).to.equal(19000 * 10**6);
 		let uUSDContributed2 = await ico.getuUSDToClaim(addr2.address);
 		let numTokensWithDecimals2 = BigInt(uUSDContributed2) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals2);
+		expect(token.transfer(ico.address, numTokensWithDecimals2)).not.to.be.reverted;
 		const unvestedNumTokensWithDecimals2 = numTokensWithDecimals2 * BigInt(10) / BigInt(100);																				// unvested tokens
 		await expect(() => ico.claimAddress(addr2.address))
 			.to.changeTokenBalances(token, [ico, addr2], [BigInt(-1) * numTokensWithDecimals2 + BigInt(1), unvestedNumTokensWithDecimals2]);
@@ -323,11 +323,11 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 		expect(await ico.getContribution(addr2.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr2.address, 'COIN')).to.equal(0);
 
-		// claim coins from investor 3
+		// claim tokens from investor 3
 		expect(await ico.getuUSDToClaim(addr3.address)).to.equal(19000 * 10**6);
 		let uUSDContributed3 = await ico.getuUSDToClaim(addr3.address);
 		let numTokensWithDecimals3 = BigInt(uUSDContributed3) * BigInt(10**18) / BigInt(price);
-		token.transfer(ico.address, numTokensWithDecimals3);
+		expect(token.transfer(ico.address, numTokensWithDecimals3)).not.to.be.reverted;
 		const unvestedNumTokensWithDecimals3 = numTokensWithDecimals3 * BigInt(10) / BigInt(100);																				// unvested tokens
 		await expect(() => ico.claimAddress(addr3.address))
 			.to.changeTokenBalances(token, [ico, addr3], [BigInt(-1) * numTokensWithDecimals3 + BigInt(1), unvestedNumTokensWithDecimals3]);
@@ -335,25 +335,25 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 		expect(await ico.getContribution(addr3.address, 'COIN')).to.equal(0);
 		expect(await ico.getuUSDContribution(addr3.address, 'COIN')).to.equal(0);
 
-		// vest all coins
+		// vest all tokens
 		expect(await vesting.getTotalVestableAmount()).to.equal((BigInt(3) * numTokensWithDecimals1 * BigInt(90) / BigInt(100)) - BigInt(2));
 		await hre.ethers.provider.send('evm_mine', [ Date.now() + 480 * helpers.TIME.MILLIS_IN_DAY ]);
 
-		// vest coins from investor 1
+		// vest tokens from investor 1
 		expect(await token.balanceOf(addr1.address)).to.equal(unvestedNumTokensWithDecimals1);
 		const vestedNumTokensWithDecimals1 = numTokensWithDecimals1 * BigInt(90) / BigInt(100);																					// vested tokens
 		await expect(() => vesting.connect(addr1).release(0))
 			.to.changeTokenBalances(token, [vesting, addr1], [BigInt(-1) * vestedNumTokensWithDecimals1, vestedNumTokensWithDecimals1]);
 		expect(await token.balanceOf(addr1.address)).to.equal(numTokensWithDecimals1 - BigInt(1));
 
-		// vest coins from investor 2
+		// vest tokens from investor 2
 		expect(await token.balanceOf(addr2.address)).to.equal(unvestedNumTokensWithDecimals2);
 		const vestedNumTokensWithDecimals2 = numTokensWithDecimals2 * BigInt(90) / BigInt(100);																					// vested tokens
 		await expect(() => vesting.connect(addr2).release(1))
 			.to.changeTokenBalances(token, [vesting, addr2], [BigInt(-1) * vestedNumTokensWithDecimals2, vestedNumTokensWithDecimals2]);
 		expect(await token.balanceOf(addr2.address)).to.equal(numTokensWithDecimals2 - BigInt(1));
 
-		// vest coins from investor 3
+		// vest tokens from investor 3
 		expect(await token.balanceOf(addr3.address)).to.equal(unvestedNumTokensWithDecimals3);
 		const vestedNumTokensWithDecimals3 = numTokensWithDecimals3 * BigInt(90) / BigInt(100);																					// vested tokens
 		await expect(() => vesting.connect(addr3).release(2))

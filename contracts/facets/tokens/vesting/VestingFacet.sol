@@ -105,6 +105,7 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 
 		// If the current time is before the cliff, no tokens are releasable.
 		Vesting memory vesting = s.vestings[vestingSchedule.vestingId];
+		require(vesting.duration > 0, "TokenVesting: vesting must be configured");
 		if ((currentTime < vesting.start + vesting.cliff))
 			return 0;
 
@@ -113,11 +114,8 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 		if (vestedSlides > vesting.numSlides)
 			vestedSlides = vesting.numSlides;
 
-		console.log('vestedSlides: ', vestedSlides);
 		uint256 vestedAmount = vestedSlides * vestingSchedule.amountTotal / vesting.numSlides;
-		console.log('vestedAmount: ', vestedAmount);
 		uint256 releseableAmount = vestedAmount - vestingSchedule.released;
-		console.log('releseableAmount: ', releseableAmount);
 		return releseableAmount;
 	}
 

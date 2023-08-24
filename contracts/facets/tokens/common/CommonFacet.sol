@@ -9,4 +9,18 @@ import "../ico/CrowdsaleFacet.sol";
 
 contract CommonFacet is InitializableNoStorage, Ownable2StepUpgradeableNoStorage {
 	
+	// tokenWalletAddress
+	function setTokenAddress(address payable add) external onlyOwner {
+		require(add !=  address(0), "ERRW_INVA_ADD");
+
+		s.tokenAddress = add;
+	
+		emit UpdatedTokenAddress(add);
+	}
+	event UpdatedTokenAddress(address payable add);
+
+	function getTokenAddress() external view returns (address) {
+		return s.tokenAddress;
+	}
+
 }
