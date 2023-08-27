@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { ethers } from 'hardhat';
 import { BigNumber, Contract } from 'ethers';
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -148,4 +150,30 @@ export let logSelectors = function (contract:Contract) {
 		console.log(val + '->' + contract.interface.getSighash(val));
 		return acc;
 	}, []);
+}
+
+// extractAbi
+export const extractAbi = async () => {
+	
+	if (fs.existsSync('abi'))
+		fs.rmdirSync('abi', { recursive: true });
+	fs.mkdirSync('abi');
+
+  const mainFolder = "artifacts/contracts/";
+	for (const fullJsonFilePath of readAllFiles(mainFolder)) {
+		const abiFileName = fullJsonFilePath.substr(fullJsonFilePath.lastIndexOf("/") + 1);
+		let data: any = fs.readFileSync(fullJsonFilePath);
+		fs.writeFileSync(`abi/${abiFileName}`, JSON.stringify(JSON.parse(data).abi));
+	}
+};
+
+export function* readAllFiles(dir: string): Generator<string> {
+  const files = fs.readdirSync(dir, { withFileTypes: true });
+  for (const file of files) {
+    if (file.isDirectory()) {
+      yield* readAllFiles(path.join(dir, file.name));
+    } else if (!file.name.includes(".dbg.json")) {
+      yield path.join(dir, file.name);
+    }
+  }
 }
