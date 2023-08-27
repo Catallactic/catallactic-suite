@@ -48,9 +48,8 @@ describe("ico-113-diamond-all-token-nok-test", function () {
 		console.log("ChainLinkAggregator:" + chainLinkAggregator.address);
 
 		FOO = await ethers.getContractFactory("FOO");
-		foo = await FOO.deploy();
+		foo = await FOO.deploy("FOO", "FOO");
 		await foo.deployed();
-		foo.initialize();
 		console.log("deployed FOO:" + foo.address);
 
 		// deploy DiamondCutFacet

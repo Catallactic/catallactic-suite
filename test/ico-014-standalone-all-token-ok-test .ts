@@ -61,9 +61,8 @@ describe("ico-014-standalone-all-token-ok-test", function () {
 		console.log("deployed Token:" + token.address);
 
 		FOO = await ethers.getContractFactory("FOO");
-		foo = await FOO.deploy();
+		foo = await FOO.deploy("FOO", "FOO");
 		await foo.deployed();
-		foo.initialize();
 		console.log("deployed FOO:" + foo.address);
 		
 	});
