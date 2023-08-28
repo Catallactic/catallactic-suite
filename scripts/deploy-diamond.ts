@@ -9,6 +9,8 @@ import axios from 'axios';
 import * as helpers from "../test/_testhelper";
 
 async function main() {
+	await helpers.extractAbi();
+
 	// owner
 	const [owner] = await ethers.getSigners();
 	console.log("owner:", owner.address);
@@ -108,8 +110,8 @@ async function main() {
 	// **********************************************************************************************************************************
 	// https://docs.chain.link/data-feeds/price-feeds/addresses?network=polygon
 
-	if (hre.network.name == 'hardhat') {
-		console.log("deploying to hardhat");
+	if (hre.network.name == 'localhost') {
+		console.log("deploying to localhost");
 
 		// ChainLinkAggregator Token
 		const ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);

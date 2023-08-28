@@ -6,8 +6,11 @@
 import { ethers } from "hardhat";
 import hre from 'hardhat'
 import axios from 'axios';
+import * as helpers from "../test/_testhelper";
 
 async function main() {
+	await helpers.extractAbi();
+
 	// owner
 	const [owner] = await ethers.getSigners();
 	console.log("owner:", owner.address);
