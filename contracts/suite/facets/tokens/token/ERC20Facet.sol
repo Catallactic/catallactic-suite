@@ -28,12 +28,12 @@ import "hardhat/console.sol";
 contract ERC20Facet is ERC20UpgradeableNoStorage, Ownable2StepUpgradeableNoStorage { 
 
 	// will execute only once
-  function initialize() public initializer {
+  function initialize(string memory name_, string memory symbol_, uint256 supply_) public initializer {
 		
     __Ownable_init();
 		
-    __ERC20_init("CatallacticERC20", "CATA");
-    _mint(msg.sender, 200_000_000 * 10**18);
+    __ERC20_init(name_, symbol_);
+    _mint(msg.sender, supply_);
   }
 	
 }

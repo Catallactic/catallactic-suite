@@ -33,17 +33,25 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
 		});
 
+		// deploy oracle mock smart contract
 		ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		chainLinkAggregator = await ChainLinkAggregator.deploy();
 		await chainLinkAggregator.deployed();
 		console.log("ChainLinkAggregator:" + chainLinkAggregator.address);
 
+		// deploy token smart contract
 		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
 		ico = await CrowdsaleFacet.deploy();
 		await ico.deployed();
+		console.log("deployed ICO:" + ico.address);
+
+		// initialize
+		console.log('initializing')
+		await expect(await ico.owner()).to.equal('0x0000000000000000000000000000000000000000');
 		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 0, 0)).not.to.be.reverted;
 		await expect(ico.setPaymentToken("COIN", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18)).not.to.be.reverted;
-		console.log("deployed ICO:" + ico.address);
+		await expect(await ico.owner()).to.equal(owner.address);
+		console.log('initialized');
 
 	});
 

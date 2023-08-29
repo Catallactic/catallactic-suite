@@ -36,35 +36,46 @@ describe("ico-014-standalone-all-token-ok-test", function () {
 			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
 		});
 
+		// deploy oracle mock smart contract
 		ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		chainLinkAggregator = await ChainLinkAggregator.deploy();
 		await chainLinkAggregator.deployed();
 		console.log("ChainLinkAggregator:" + chainLinkAggregator.address);
 
+		// deploy ico smart contract
 		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
 		ico = await CrowdsaleFacet.deploy();
 		await ico.deployed();
-		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 90, 0)).not.to.be.reverted;
-		await expect(ico.setPaymentToken("FOO", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18)).not.to.be.reverted;
 		console.log("deployed ICO:" + ico.address);
 
+		// deploy vesting smart contract
 		VestingFacet = await ethers.getContractFactory("VestingFacet");
 		vesting = await VestingFacet.deploy();
 		await vesting.deployed();
-		await expect(vesting.createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
 		console.log("deployed Vesting:" + vesting.address);
 
+		// deploy token smart contract
 		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
 		token = await ERC20Facet.deploy();
 		await token.deployed();
-		token.initialize();
 		console.log("deployed Token:" + token.address);
 
+		// deploy payment token
 		FOO = await ethers.getContractFactory("FOO");
 		foo = await FOO.deploy("FOO", "FOO");
 		await foo.deployed();
 		console.log("deployed FOO:" + foo.address);
-		
+
+		// initialize
+		console.log('initializing')
+		await expect(await ico.owner()).to.equal('0x0000000000000000000000000000000000000000');
+		await expect(token.initialize("CatallacticERC20", "CATA", BigInt(200_000_000 * 10**18))).not.to.be.reverted;
+		await expect(vesting.createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
+		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 90, 0)).not.to.be.reverted;
+		await expect(ico.setPaymentToken("FOO", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18)).not.to.be.reverted;
+		await expect(await ico.owner()).to.equal(owner.address);
+		console.log('initialized');
+
 	});
 
 	afterEach(async() => {

@@ -34,16 +34,24 @@ describe("ico-002-standalone-vesting-config-test", function () {
 			console.log('%d - address: %s ; balance: %s', ++i, account.address, balance);
 		});
 
+		// deploy vesting smart contract
 		VestingFacet = await ethers.getContractFactory("VestingFacet");
 		vesting = await VestingFacet.deploy();
 		await vesting.deployed();
 		console.log("deployed vesting: " + vesting.address);
 
+		// deploy token smart contract
 		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
 		token = await ERC20Facet.deploy();
 		await token.deployed();
-		await expect(token.initialize()).not.to.be.reverted;
 		console.log("deployed Token:" + token.address);
+
+		// initialize
+		console.log('initializing')
+		await expect(await token.owner()).to.equal('0x0000000000000000000000000000000000000000');
+		await expect(token.initialize("CatallacticERC20", "CATA", BigInt(200_000_000 * 10**18))).not.to.be.reverted;
+		await expect(await token.owner()).to.equal(owner.address);
+		console.log('initialized');
 
 	});
 
