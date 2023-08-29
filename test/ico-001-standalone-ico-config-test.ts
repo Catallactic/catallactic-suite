@@ -94,7 +94,7 @@ describe("ico-001-standalone-ico-config-test", function () {
 		await expect(ico.connect(addr1).setMaxuUSDTransfer(100000)).to.be.revertedWith('Ownable: caller is not the owner');
 		await expect(ico.connect(addr1).setMinuUSDTransfer(10)).to.be.revertedWith('Ownable: caller is not the owner');
 
-		await expect(ico.connect(addr1).setCrowdsaleStage(1)).to.be.revertedWith('Ownable: caller is not the owner');
+		await expect(ico.connect(addr1).setCrowdsaleStage(helpers.STAGE.NOT_STARTED)).to.be.revertedWith('Ownable: caller is not the owner');
 		await expect(ico.connect(addr1).setHardCapuUSD(300_000_000_000)).to.be.revertedWith('Ownable: caller is not the owner');
 		await expect(ico.connect(addr1).setSoftCapuUSD(50_000_000_000)).to.be.revertedWith('Ownable: caller is not the owner');
 		await expect(ico.connect(addr1).setDynamicPrice(true)).to.be.revertedWith('Ownable: caller is not the owner');
@@ -134,11 +134,11 @@ describe("ico-001-standalone-ico-config-test", function () {
 	/************************************************* Lifecycle ********************************************/
 	/********************************************************************************************************/
 	it("Should verify Lifecycle.", async() => {
-		ico.setCrowdsaleStage(0);
-		expect(await ico.getCrowdsaleStage()).to.equal(0, 'The stage couldn\'t be set to NotStarted');
+		await ico.setCrowdsaleStage(helpers.STAGE.NOT_STARTED);
+		expect(await ico.getCrowdsaleStage()).to.equal(helpers.STAGE.NOT_STARTED, 'The stage couldn\'t be set to NotStarted');
 
-		await ico.setCrowdsaleStage(3);
-		expect(await ico.getCrowdsaleStage()).to.equal(3, 'The stage couldn\'t be set');
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
+		expect(await ico.getCrowdsaleStage()).to.equal(helpers.STAGE.ONGOING, 'The stage couldn\'t be set');
 	});
 
 	/********************************************************************************************************/

@@ -135,8 +135,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 	/****************************************** Payment Tokens **********************************************/
 	/********************************************************************************************************/
 	it("Should update PaymentTokens", async() => {
-
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(258.1*1e6), 18);
@@ -159,8 +158,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 	});
 
 	it("Should allow dynamic prices", async() => {
-
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(4*1e6), 18);
@@ -201,8 +199,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 	/********************************************** Investors ***********************************************/
 	/********************************************************************************************************/
 	it("Should count investors", async() => {
-
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(258.1*1e6), 18);
@@ -234,7 +231,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 	/********************************************************************************************************/
 	// normal
 	it("Should be able to deposit", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(4*1e6), 18);
@@ -259,8 +256,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 
 	// normal
 	it("Should be able to deposit only if Ongoing", async() => {
-
-		await ico.setCrowdsaleStage(0);
+		await ico.setCrowdsaleStage(helpers.STAGE.NOT_STARTED);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(258.1*1e6), 18);
@@ -273,19 +269,19 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 
 		// bug overflow -> workaround use BigInt
 		// bug BigInt -> workaround use to String() https://stackoverflow.com/questions/70968922/assigning-bigint-stores-wrong-number-number1
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 		await expect(() => helpers.testTransferToken(addr1, 'FOO', 10, ico, foo))
 			.to.changeTokenBalances(foo, [ico, addr1], [BigInt((await helpers.usdToTokenWithDecimals(10, ico)).toString()), BigInt((-1*(await helpers.usdToTokenWithDecimals(10, ico))).toString())]);
 
-		await ico.setCrowdsaleStage(2);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONHOLD);
 		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).to.be.revertedWith('ERRD_MUST_ONG')
 
-		await ico.setCrowdsaleStage(3);
+		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
 		await expect(helpers.testTransferToken(addr1, 'FOO', 10, ico, foo)).to.be.revertedWith('ERRD_MUST_ONG');
 	});
 
 	it("Should be able to whitelist and unwhitelist", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(258.1*1e6), 18);
@@ -303,7 +299,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 	});
 
 	it("Should be able to blacklist and unblacklist", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(258.1*1e6), 18);
@@ -329,7 +325,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 
 	// min transfer
 	it("Should respect transfer limits", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(258.1*1e6), 18);
@@ -359,7 +355,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 
 	// beyond hard cap
 	it("Should not be able to deposit beyond caps", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(258.1*1e6), 18);
@@ -381,7 +377,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 	});
 
 	it("Should update ICO balance", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(258.1*1e6), 18);
@@ -407,7 +403,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 	});
 
 	it("Should be able to do big transactions", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(258.1*1e6), 18);
@@ -429,8 +425,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 	/************************************************** Refund **********************************************/
 	/********************************************************************************************************/
 	it("Should be able to refund Tokens to investor", async() => {
-
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(258.1*1e6), 18);
@@ -443,7 +438,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 		await expect(helpers.testTransferToken(addr2, 'FOO', 10, ico, foo)).not.to.be.reverted;
 		await expect(helpers.testTransferToken(addr3, 'FOO', 10, ico, foo)).not.to.be.reverted;
 
-		await ico.setCrowdsaleStage(3);
+		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
 
 		let contributed1 = await ico.getContribution(addr1.address, "FOO");
 		console.log("refunding " + contributed1);
@@ -473,8 +468,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 	});
 
 	it("Should be able to refund all Tokens", async() => {
-
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(258.1*1e6), 18);
@@ -487,7 +481,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 		await expect(helpers.testTransferToken(addr2, 'FOO', 10, ico, foo)).not.to.be.reverted;
 		await expect(helpers.testTransferToken(addr3, 'FOO', 10, ico, foo)).not.to.be.reverted;
 
-		await ico.setCrowdsaleStage(3);
+		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
 
 		// refund all
 		let contributed1 = await ico.getContribution(addr1.address, "FOO");
@@ -511,8 +505,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 	/************************************************** Reset Refund ****************************************/
 	/********************************************************************************************************/
 	it("Should be able to Reset Refund", async() => {
-
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// prepare test users
 		await ico.setPaymentToken("FOO", foo.address, chainLinkAggregator.address, Math.floor(258.1*1e6), 18);
@@ -525,7 +518,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 		await expect(helpers.testTransferToken(addr2, 'FOO', 10, ico, foo)).not.to.be.reverted;
 		await expect(helpers.testTransferToken(addr3, 'FOO', 10, ico, foo)).not.to.be.reverted;
 
-		await ico.setCrowdsaleStage(3);
+		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
 
 		let contributed1 = await ico.getContribution(addr1.address, "FOO");
 		console.log("refunding " + contributed1);
@@ -554,7 +547,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 
 		// verify finish
 		expect(await ico.owner()).to.equal(owner.address);
-		expect(await ico.getCrowdsaleStage()).to.equal(3, 'The stage couldn\'t be set to Finished');
+		expect(await ico.getCrowdsaleStage()).to.equal(helpers.STAGE.FINISHED, 'The stage couldn\'t be set to Finished');
 		expect(await ico.getTotaluUSDInvested()).to.equal(30000000);																																		// totaluUSDTInvested
 		expect(await ico.getHardCap()).to.equal(300000);
 		expect(await ico.getSoftCap()).to.equal(50000);
@@ -578,7 +571,7 @@ describe("ico-013-standalone-all-token-nok-test", function () {
 
 		// verify reset
 		expect(await ico.owner()).to.equal(owner.address);
-		expect(await ico.getCrowdsaleStage()).to.equal(0, 'The stage couldn\'t be set to Finished');
+		expect(await ico.getCrowdsaleStage()).to.equal(helpers.STAGE.NOT_CREATED, 'The stage couldn\'t be set to Not Created');
 		expect(await ico.getTotaluUSDInvested()).to.equal(0);																																							// totaluUSDTInvested
 		expect(await ico.getHardCap()).to.equal(0);
 		expect(await ico.getSoftCap()).to.equal(0);

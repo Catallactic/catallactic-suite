@@ -176,9 +176,8 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 	/************************************************ Claim *************************************************/
 	/********************************************************************************************************/
 		it("Should be able to Claim Coins", async() => {
-
 		// prepare test
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		await ico.setMaxuUSDTransfer(20_000_000 * 10**6);
 		await ico.setMaxuUSDInvestment(140_000_000 * 10**6);
@@ -193,7 +192,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 		await expect(helpers.testTransferCoin(addr2, 19000, ico)).not.to.be.reverted;
 		await expect(helpers.testTransferCoin(addr3, 19000, ico)).not.to.be.reverted;
 
-		await ico.setCrowdsaleStage(3);
+		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
 
 		// claim all coins
 		let price: number = await ico.getPriceuUSD();
@@ -263,9 +262,8 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 	});
 
 	it("Should be able to Claim Coins by admin", async() => {
-
 		// prepare test
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		await ico.setMaxuUSDTransfer(20_000_000 * 10**6);
 		await ico.setMaxuUSDInvestment(140_000_000 * 10**6);
@@ -280,7 +278,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 		await expect(helpers.testTransferCoin(addr2, 19000, ico)).not.to.be.reverted;
 		await expect(helpers.testTransferCoin(addr3, 19000, ico)).not.to.be.reverted;
 
-		await ico.setCrowdsaleStage(3);
+		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
 
 		let price: number = await ico.getPriceuUSD();
 		console.log("price " + price);
@@ -352,9 +350,8 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 	/************************************************** Reset Claim *****************************************/
 	/********************************************************************************************************/
 	it("Should be able to Reset Claim", async() => {
-
 		// prepare test
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		await ico.setMaxuUSDTransfer(20_000_000 * 10**6);
 		await ico.setMaxuUSDInvestment(140_000_000 * 10**6);
@@ -369,7 +366,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 		await expect(helpers.testTransferCoin(addr2, 19000, ico)).not.to.be.reverted;
 		await expect(helpers.testTransferCoin(addr3, 19000, ico)).not.to.be.reverted;
 
-		await ico.setCrowdsaleStage(3);
+		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
 
 		// claim
 		let price: number = await ico.getPriceuUSD();
@@ -450,7 +447,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 
 		// verify finish
 		expect(await ico.owner()).to.equal(owner.address);
-		expect(await ico.getCrowdsaleStage()).to.equal(3, 'The stage couldn\'t be set to Finished');
+		expect(await ico.getCrowdsaleStage()).to.equal(helpers.STAGE.FINISHED, 'The stage couldn\'t be set to Finished');
 		expect(await ico.getTotaluUSDInvested()).to.equal(57000000000);																																		// totaluUSDTInvested
 		expect(await ico.getHardCap()).to.equal(300000);
 		expect(await ico.getSoftCap()).to.equal(50000);
@@ -474,7 +471,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 
 		// verify reset
 		expect(await ico.owner()).to.equal(owner.address);
-		expect(await ico.getCrowdsaleStage()).to.equal(0, 'The stage couldn\'t be set to Finished');
+		expect(await ico.getCrowdsaleStage()).to.equal(helpers.STAGE.NOT_CREATED, 'The stage couldn\'t be set to Not Created');
 		expect(await ico.getTotaluUSDInvested()).to.equal(0);																																							// totaluUSDTInvested
 		expect(await ico.getHardCap()).to.equal(0);
 		expect(await ico.getSoftCap()).to.equal(0);
@@ -500,7 +497,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 	/********************************************************************************************************/
 	it("Should be able to Withdraw Coins", async() => {
 
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		await ico.setMaxuUSDTransfer(20_000_000 * 10**6);
 		await ico.setMaxuUSDInvestment(140_000_000 * 10**6);
@@ -512,7 +509,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 		await expect(helpers.testTransferCoin(addr2, 19000, ico)).not.to.be.reverted;
 		await expect(helpers.testTransferCoin(addr3, 19000, ico)).not.to.be.reverted;
 		
-		await ico.setCrowdsaleStage(3);
+		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
 
 		// withdraw ether to wallets
 		let balanceOfICO = await ethers.provider.getBalance(ico.address);

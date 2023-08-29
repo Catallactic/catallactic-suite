@@ -82,7 +82,7 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 	/********************************************************************************************************/
 	it("Should update PaymentTokens", async() => {
 
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
 		expect((await ico.getPaymentToken("COIN"))[4]).to.equal(1 * 9999999, 'Invested amount must be accounted');																	// uUSDInvested
@@ -99,7 +99,7 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 
 	it("Should allow dynamic prices", async() => {
 
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// use default price
 		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
@@ -130,7 +130,7 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 	/********************************************************************************************************/
 	it("Should count investors", async() => {
 
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
 		await expect(helpers.testTransferCoin(addr2, 10, ico)).not.to.be.reverted;
@@ -156,7 +156,7 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 	/********************************************************************************************************/
 	// normal
 	it("Should be able to deposit", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// update balances
 		await expect(await helpers.testTransferCoin(addr1, 10, ico))
@@ -173,22 +173,25 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 	});
 
 	it("Should be able to deposit only if Ongoing", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 		await expect(await helpers.testTransferCoin(addr1, 10, ico))
 			.to.changeEtherBalances([ico, addr1], [helpers.usdToWei(10), helpers.usdToWei(-10)]);
 
-		await ico.setCrowdsaleStage(0);
+		await ico.setCrowdsaleStage(helpers.STAGE.NOT_CREATED);
 		await expect(helpers.testTransferCoin(addr1, 10, ico)).to.be.revertedWith(helpers.ERRORS.ERRD_MUST_ONG);
 
-		await ico.setCrowdsaleStage(2);
+		await ico.setCrowdsaleStage(helpers.STAGE.NOT_STARTED);
 		await expect(helpers.testTransferCoin(addr1, 10, ico)).to.be.revertedWith(helpers.ERRORS.ERRD_MUST_ONG);
 
-		await ico.setCrowdsaleStage(3);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONHOLD);
+		await expect(helpers.testTransferCoin(addr1, 10, ico)).to.be.revertedWith(helpers.ERRORS.ERRD_MUST_ONG);
+
+		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
 		await expect(helpers.testTransferCoin(addr1, 10, ico)).to.be.revertedWith(helpers.ERRORS.ERRD_MUST_ONG);
 	});
 
 	it("Should be able to whitelist and unwhitelist", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// whitelisting enabled
 		await ico.setWhitelistuUSDThreshold(30 * 10**6);
@@ -199,7 +202,7 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 	});
 
 	it("Should be able to blacklist and unblacklist", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		await ico.setUseBlacklist(false);
 		await ico.blacklistUser(addr1.address);
@@ -218,7 +221,7 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 
 	// min transfer
 	it("Should respect transfer limits", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 		console.log("Testing Transfer Limits");
 
 		await ico.setMinuUSDTransfer(9.9999 * 10**6);
@@ -243,7 +246,7 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 	});
 
 	it("Should not be able to deposit beyond caps", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		await ico.setMaxuUSDTransfer(21 * 10**6);
 		await ico.setMaxuUSDInvestment(80 * 10**6);
@@ -259,7 +262,7 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 	});
 
 	it("Should update ICO balance", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 		await ico.setMinuUSDTransfer(10 * 10**6);
 
 		await expect(helpers.testTransferCoin(addr1, 11, ico)).not.to.be.reverted;
@@ -276,7 +279,7 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 	});
 
 	it("Should be able to do big transactions", async() => {
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		// do big transaction
 		await ico.whitelistUser(addr1.address);
@@ -291,14 +294,14 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 	/************************************************** Refund **********************************************/
 	/********************************************************************************************************/
 	it("Should be able to refund Coins to investor", async() => {
-
-		await ico.setCrowdsaleStage(1);
+		// prepare test
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
 		await expect(helpers.testTransferCoin(addr2, 10, ico)).not.to.be.reverted;
 		await expect(helpers.testTransferCoin(addr3, 10, ico)).not.to.be.reverted;
 
-		await ico.setCrowdsaleStage(3);
+		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
 
 		let balanceOfICO3 = await ethers.provider.getBalance(ico.address);
 		console.log("balanceOfICO3: " + balanceOfICO3);
@@ -329,14 +332,13 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 	});
 
 	it("Should be able to refund all Coins", async() => {
-
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
 		await expect(helpers.testTransferCoin(addr2, 10, ico)).not.to.be.reverted;
 		await expect(helpers.testTransferCoin(addr3, 10, ico)).not.to.be.reverted;
 
-		await ico.setCrowdsaleStage(3);
+		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
 
 		// refund all
 		let contributed1 = await ico.getContribution(addr1.address, "COIN");
@@ -360,15 +362,14 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 	/************************************************** Reset Refund ****************************************/
 	/********************************************************************************************************/
 	it("Should be able to Reset Refund", async() => {
-
 		// prepare test
-		await ico.setCrowdsaleStage(1);
+		await ico.setCrowdsaleStage(helpers.STAGE.ONGOING);
 
 		await expect(helpers.testTransferCoin(addr1, 10, ico)).not.to.be.reverted;
 		await expect(helpers.testTransferCoin(addr2, 10, ico)).not.to.be.reverted;
 		await expect(helpers.testTransferCoin(addr3, 10, ico)).not.to.be.reverted;
 
-		await ico.setCrowdsaleStage(3);
+		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
 
 		let balanceOfICO3 = await ethers.provider.getBalance(ico.address);
 		console.log("balanceOfICO3: " + balanceOfICO3);
@@ -399,7 +400,7 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 
 		// verify finish
 		expect(await ico.owner()).to.equal(owner.address);
-		expect(await ico.getCrowdsaleStage()).to.equal(3, 'The stage couldn\'t be set to Finished');
+		expect(await ico.getCrowdsaleStage()).to.equal(helpers.STAGE.FINISHED, 'The stage couldn\'t be set to Finished');
 		expect(await ico.getTotaluUSDInvested()).to.equal(29999997);																																		// totaluUSDTInvested
 		expect(await ico.getHardCap()).to.equal(300000);
 		expect(await ico.getSoftCap()).to.equal(50000);
@@ -423,7 +424,7 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 
 		// verify reset
 		expect(await ico.owner()).to.equal(owner.address);
-		expect(await ico.getCrowdsaleStage()).to.equal(0, 'The stage couldn\'t be set to Finished');
+		expect(await ico.getCrowdsaleStage()).to.equal(helpers.STAGE.NOT_CREATED, 'The stage couldn\'t be set to Not Created');
 		expect(await ico.getTotaluUSDInvested()).to.equal(0);																																							// totaluUSDTInvested
 		expect(await ico.getHardCap()).to.equal(0);
 		expect(await ico.getSoftCap()).to.equal(0);

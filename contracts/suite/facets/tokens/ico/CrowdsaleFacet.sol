@@ -22,11 +22,13 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	// not initializer because should be able to create several crowdsales
 	function createCrowdsale(uint256 uUsdPrice_, uint256 hardCap_, uint256 softCap_, uint256 whitelistuUSDThreshold_, uint256 maxuUSDInvestment_, uint256 maxuUSDTransfer_, uint256 minuUSDTransfer_, uint256 percentVested_, uint256 vestingId_) public {
 		require(owner() == address(0) || owner() == msg.sender, "ERRW_OWNR_NOT");
-		require(s.stage == CrowdsaleStage.NotStarted, "ERRD_MUST_ONG");																																						// ICO must be not started
+		require(s.stage == CrowdsaleStage.NotCreated, "ERRD_MUST_ONG");																																						// ICO must be not started
 		require(s.totaluUSDTInvested == 0, "ERRD_MUST_ONG");																																											// ICO must not have investment
 		require(percentVested_ < 100, "ERRR_VEST_100");																																														// Vesting percentage smaller than 100
 
     s._owner = msg.sender;
+
+		s.stage = CrowdsaleStage.NotStarted;
 
 		s.uUsdPrice = uUsdPrice_;
 		s.hardCapuUSD = hardCap_;
@@ -45,13 +47,15 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		return s.stage;
 	}
 	function setCrowdsaleStage(uint stage_) external onlyOwner {
-		if(uint(CrowdsaleStage.NotStarted) == stage_) {							// 0
+		if(uint(CrowdsaleStage.NotCreated) == stage_) {							// 0
+			s.stage = CrowdsaleStage.NotCreated;
+		} else if(uint(CrowdsaleStage.NotStarted) == stage_) {			// 1
 			s.stage = CrowdsaleStage.NotStarted;
-		} else if (uint(CrowdsaleStage.Ongoing) == stage_) {				// 1
+		} else if (uint(CrowdsaleStage.Ongoing) == stage_) {				// 2
 			s.stage = CrowdsaleStage.Ongoing;
-		} else if (uint(CrowdsaleStage.OnHold) == stage_) {					// 2
+		} else if (uint(CrowdsaleStage.OnHold) == stage_) {					// 3
 			s.stage = CrowdsaleStage.OnHold;
-		} else if (uint(CrowdsaleStage.Finished) == stage_) {				// 3
+		} else if (uint(CrowdsaleStage.Finished) == stage_) {				// 4
 			s.stage = CrowdsaleStage.Finished;
 		}
 
@@ -60,7 +64,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	event UpdatedCrowdsaleStage(uint stage_);
 
 	function reset() external onlyOwner {
-		s.stage = CrowdsaleStage.NotStarted;
+		s.stage = CrowdsaleStage.NotCreated;
 		s.uUsdPrice = 0;
 		s.totaluUSDTInvested = 0;
 		s.hardCapuUSD = 0;

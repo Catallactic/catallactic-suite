@@ -45,6 +45,14 @@ export const TIME: {[key: string]: number} = {
 	MILLIS_IN_YEAR  : 1000 * 60 * 60 * 24 * 365,
 }
 
+export const STAGE: {[key: string]: number} = {
+	NOT_CREATED: 0,
+	NOT_STARTED: 1,
+	ONGOING: 2,
+	ONHOLD: 3,
+	FINISHED: 4,
+}
+
 // currency conversions
 export let numUsdPerEther: number = 1100;
 

@@ -28,6 +28,7 @@ struct Contributions {
 }
 
 enum CrowdsaleStage {
+	NotCreated,
 	NotStarted,
 	Ongoing,
 	OnHold,
