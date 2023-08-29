@@ -111,7 +111,7 @@ describe("ico-114-diamond-all-token-ok-test", function () {
     vesting = await ethers.getContractAt('VestingFacet', diamond.address)
 		console.log("VestingFacet deployed: " + vestingFacet.address);
 
-		// attach Token facet ex Common
+		// attach Vesting facet ex Common
 		const vestingFacetExCommonFacetSelectors = helpers.removeSelectors(helpers.getSelectors(vestingFacet), helpers.getSelectors(commonFacet));
 		//console.log('attachig functions:', vestingFacetExCommonFacetSelectors)
 		_diamondCut = [{ facetAddress: vestingFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: vestingFacetExCommonFacetSelectors, }];

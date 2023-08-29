@@ -1,8 +1,3 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// When running the script with `npx hardhat run <script>` you'll find the Hardhat
-// Runtime Environment's members available in the global scope.
 import { ethers } from "hardhat";
 import hre from 'hardhat'
 import axios from 'axios';
@@ -54,7 +49,7 @@ async function main() {
 	console.log("CommonFacet deployed:" + commonFacet.address);
 
 	// attach Common facet *****************************************
-	//console.log('attachig functions:', getSelectors(commonFacet))
+	console.log('attachig functions:', helpers.getSelectors(commonFacet))
 	_diamondCut = [{ facetAddress: commonFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: helpers.getSelectors(commonFacet), }];
 	diamondCutContract.connect(owner).diamondCut(_diamondCut);
 	console.log("CommonFacet attached as " + common.address);
@@ -67,11 +62,26 @@ async function main() {
 	console.log("CrowdsaleFacet deployed:" + crowdsaleFacet.address);
 
 	// attach Crowdsale facet ex Common
-	const crowdsaleFacetExCommonFacetSelectors = helpers.removeSelectors(helpers.getSelectors(crowdsaleFacet), helpers.getSelectors(commonFacet));
-	//console.log('attachig functions:', crowdsaleFacetExCommonFacetSelectors)
+	const crowdsaleFacetExCommonFacetSelectors: Array<string> = helpers.removeSelectors(helpers.getSelectors(crowdsaleFacet), helpers.getSelectors(commonFacet));
+	//crowdsaleFacetExCommonFacetSelectors.push(commonFacet.interface.getSighash('receive()'))
+	console.log('attachig functions:', crowdsaleFacetExCommonFacetSelectors)
 	_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: crowdsaleFacetExCommonFacetSelectors, }];
 	diamondCutContract.connect(owner).diamondCut(_diamondCut);
 	console.log("CrowdsaleFacet attached as " + ico.address);
+
+	// deploy Vesting facet *****************************************
+	let VestingFacet = await ethers.getContractFactory("VestingFacet");
+	let vestingFacet = await VestingFacet.deploy();
+	await vestingFacet.deployed();
+	let vesting = await ethers.getContractAt('VestingFacet', diamond.address)
+	console.log("VestingFacet deployed: " + vestingFacet.address);
+
+	// attach Vesting facet ex Common
+	const vestingFacetExCommonFacetSelectors: Array<string> = helpers.removeSelectors(helpers.getSelectors(vestingFacet), helpers.getSelectors(commonFacet));
+	console.log('attachig functions:', vestingFacetExCommonFacetSelectors)
+	_diamondCut = [{ facetAddress: vestingFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: vestingFacetExCommonFacetSelectors, }];
+	diamondCutContract.connect(owner).diamondCut(_diamondCut);
+	console.log("VestingFacet attached as " + vesting.address);
 
 	// deploy Token facet *****************************************
 	let ERC20Facet = await ethers.getContractFactory("ERC20Facet");
@@ -81,18 +91,21 @@ async function main() {
 	console.log("ERC20Facet deployed:" + erc20Facet.address);
 
 	// attach Token facet ex Common
-	const erc20FacetExCommonFacetSelectors = helpers.removeSelectors(helpers.getSelectors(erc20Facet), helpers.getSelectors(commonFacet));
-	//console.log('attachig functions:', erc20FacetExCommonFacetSelectors)
+	const erc20FacetExCommonFacetSelectors: Array<string> = helpers.removeSelectors(helpers.getSelectors(erc20Facet), helpers.getSelectors(commonFacet));
+	console.log('attachig functions:', erc20FacetExCommonFacetSelectors)
 	_diamondCut = [{ facetAddress: erc20Facet.address, action: helpers.FacetCutAction.Add, functionSelectors: erc20FacetExCommonFacetSelectors, }];
 	diamondCutContract.connect(owner).diamondCut(_diamondCut);
 	console.log("ERC20Facet attached as " + token.address);
 
 	// initialize
 	console.log('initializing')
-	ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 0, 0);
+	console.log(await diamondLoupeContract.facetFunctionSelectors(erc20Facet.address));	 // fetching storage is needed before token.initialize. I do not know why				
+	token.initialize("CatallacticERC20", "CATA", 200_000_000);
+	vesting.createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12);
+	//ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 90, 0);
 	ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
 	diamond.setReceiveFacet(crowdsaleFacet.address);
-	console.log('initialized')
+	console.log('initialized');
 
 	// **********************************************************************************************************************************
 	// *************************************************** Configure Default prices *****************************************************
