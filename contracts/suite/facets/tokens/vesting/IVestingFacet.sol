@@ -7,8 +7,8 @@ pragma solidity 0.8.18;
  */
 interface IVestingFacet {
 
-	function createVesting(uint256 _start, uint256 _cliff, uint256 _duration, uint256 _slicePeriodSeconds) external;
+	function createVesting(string calldata vestingId, uint256 _start, uint256 _cliff, uint256 _duration, uint256 _slicePeriodSeconds) external;
 
-	function createVestingSchedule(address _beneficiary, uint256 _amount, uint256 vestingId) external;
+	function createVestingSchedule(address _beneficiary, uint256 _amount, string calldata vestingId) external;
 
 }

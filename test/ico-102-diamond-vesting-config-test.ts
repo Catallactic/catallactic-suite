@@ -141,13 +141,13 @@ describe("ico-102-diamond-vesting-config-test", function () {
 	it("Only Owner functions", async() => {
 
 		// vesting functions 
-		await expect(vesting.createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
-		await expect(vesting.connect(addr1).createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).to.be.revertedWith('ERRW_OWNR_NOT');
+		await expect(vesting.createVesting('abc', Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
+		await expect(vesting.connect(addr1).createVesting('abc', Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).to.be.revertedWith('ERRW_OWNR_NOT');
 
 		// vesting schedule functions
-		await expect(vesting.createVestingSchedule(addr1.address, 100_000_000, 0)).to.be.revertedWith('onlyGrantor');
+		await expect(vesting.createVestingSchedule(addr1.address, 100_000_000, 'abc')).to.be.revertedWith('onlyGrantor');
 		await expect(vesting.addGrantor(owner.address, true)).not.to.be.reverted;
-		await expect(vesting.createVestingSchedule(addr1.address, 100_000_000, 0)).not.to.be.reverted;
+		await expect(vesting.createVestingSchedule(addr1.address, 100_000_000, 'abc')).not.to.be.reverted;
 
 		// vesting release schedule functions
 		await expect(vesting.connect(addr1).setTokenAddress(token.address)).to.be.revertedWith('Ownable: caller is not the owner');
@@ -157,20 +157,20 @@ describe("ico-102-diamond-vesting-config-test", function () {
 	/************************************************** Vesting *********************************************/
 	/********************************************************************************************************/
 	it("Should be able to create vesting", async() => {
-		await expect(vesting.createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
+		await expect(vesting.createVesting('abc', Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
 		await expect((await vesting.getVestingIds()).length).to.equal(1);
-		await expect((await vesting.getVestingIds())[0]).to.equal(0);
-		let vestingItem = await vesting.getVesting(0);
+		await expect((await vesting.getVestingIds())[0]).to.equal('abc');
+		let vestingItem = await vesting.getVesting('abc');
 		expect(vestingItem[1]).to.equal(helpers.TIME.MILLIS_IN_MONTH);
 		expect(vestingItem[2]).to.equal(helpers.TIME.MILLIS_IN_YEAR);
 		expect(vestingItem[3]).to.equal(12);
 	});
 
 	it("Should be able to create vesting schedule", async() => {
-		await expect(vesting.createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
+		await expect(vesting.createVesting('abc', Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
 
 		await expect(vesting.addGrantor(owner.address, true)).not.to.be.reverted;
-		await expect(vesting.createVestingSchedule(addr1.address, 100_000_000, 0)).not.to.be.reverted;
+		await expect(vesting.createVestingSchedule(addr1.address, 100_000_000, 'abc')).not.to.be.reverted;
 
 		await expect(await vesting.getTotalVestableAmount()).to.equal(100_000_000);
 		await expect((await vesting.getVestingSchedulesIds()).length).to.equal(1);
@@ -178,15 +178,15 @@ describe("ico-102-diamond-vesting-config-test", function () {
 		let vestingScheduleItem = await vesting.getVestingSchedule(0);
 		expect(vestingScheduleItem[0]).to.equal(addr1.address);
 		expect(vestingScheduleItem[1]).to.equal(100_000_000);
-		expect(vestingScheduleItem[2]).to.equal(0);
+		expect(vestingScheduleItem[2]).to.equal('abc');
 	});
 
 	it("Should do correct vesting computations", async() => {
 
-		await expect(vesting.createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
+		await expect(vesting.createVesting('abc', Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
 
 		await expect(vesting.addGrantor(owner.address, true)).not.to.be.reverted;
-		await expect(vesting.createVestingSchedule(addr1.address, 120_000_000, 0)).not.to.be.reverted;
+		await expect(vesting.createVestingSchedule(addr1.address, 120_000_000, 'abc')).not.to.be.reverted;
 
 		// now
 		await expect(await vesting.computeReleasableAmount(0)).to.equal(0);
@@ -234,10 +234,10 @@ describe("ico-102-diamond-vesting-config-test", function () {
 	});
 
 	it("Should be able to release", async() => {
-		await expect(vesting.createVesting(Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
+		await expect(vesting.createVesting('abc', Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
 
 		await expect(vesting.addGrantor(owner.address, true)).not.to.be.reverted;
-		await expect(vesting.createVestingSchedule(addr1.address, 120_000_000, 0)).not.to.be.reverted;
+		await expect(vesting.createVestingSchedule(addr1.address, 120_000_000, 'abc')).not.to.be.reverted;
 		await expect(vesting.setTokenAddress(token.address)).not.to.be.reverted;
 		await expect(token.transfer(vesting.address, 120_000_000)).not.to.be.reverted;
 

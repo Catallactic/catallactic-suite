@@ -21,7 +21,7 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	/********************************************************************************************************/
 	/************************************************* Vestings *********************************************/
 	/********************************************************************************************************/
-	function createVesting(uint256 _start, uint256 _cliff, uint256 _duration, uint256 _numSlices) external {
+	function createVesting(string calldata vestingId, uint256 _start, uint256 _cliff, uint256 _duration, uint256 _numSlices) external {
 		require(owner() == address(0) || owner() == msg.sender, "ERRW_OWNR_NOT");
 		require(_duration > 0, "TokenVesting: duration must be > 0");
 		require(_numSlices >= 1, "TokenVesting: _numSlices must be >= 1");
@@ -29,15 +29,13 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 
     s._owner = msg.sender;
 
-		// bytes32 vestingId = keccak256(abi.encodePacked(_start, _cliff, _duration, _slicePeriodSeconds));
-		uint256 vestingId = s.vestingIds.length;
 		s.vestingIds.push(vestingId);
 		s.vestings[vestingId] = Vesting(_start, _cliff, _duration, _numSlices);
 	}
-	function getVestingIds() external view returns(uint256[] memory) {
+	function getVestingIds() external view returns(string[] memory) {
 		return s.vestingIds;
 	}
-	function getVesting(uint256 vestingId) external view returns(Vesting memory) {
+	function getVesting(string calldata vestingId) external view returns(Vesting memory) {
 		return s.vestings[vestingId];
 	}
 
@@ -49,7 +47,7 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	 * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
 	 * @param _amount total amount of tokens to be released at the end of the vesting
 	 */
-	function createVestingSchedule(address _beneficiary, uint256 _amount, uint256 vestingId) external onlyGrantor {
+	function createVestingSchedule(address _beneficiary, uint256 _amount, string calldata vestingId) external onlyGrantor {
 		require(_amount > 0, "TokenVesting: amount must be > 0");
 
 		//bytes32 vestingScheduleId = keccak256(abi.encodePacked(_beneficiary, s.holdersVestingCount[_beneficiary]));

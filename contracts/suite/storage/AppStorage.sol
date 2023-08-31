@@ -44,7 +44,7 @@ struct Vesting {
 struct VestingSchedule {
 	address beneficiary;																									// beneficiary of tokens after they are released
 	uint256 amountTotal;																									// total amount of tokens to be released at the end of the vesting
-	uint256 vestingId;																										// vesting id
+	string vestingId;																											// vesting id
 
 	uint256 released;																											// amount of tokens released
 }
@@ -86,11 +86,11 @@ struct AppStorage {
 	address payable targetWalletAddress;									// manual reset
 	address vestingAddress;																// manual reset
 	uint256 percentVested;																// manual reset
-	uint256 vestingId;																		// manual reset
+	string vestingId;																			// manual reset
 
 	// vesting
-	uint256[] vestingIds;
-	mapping(uint256 => Vesting) vestings;
+	string[] vestingIds;
+	mapping(string => Vesting) vestings;
 	uint256[] vestingSchedulesIds;
 	mapping(uint256 => VestingSchedule) vestingSchedules;
 

@@ -123,7 +123,7 @@ describe("ico-113-diamond-all-token-nok-test", function () {
 		console.log('initializing')
 		await expect(await common.owner()).to.equal('0x0000000000000000000000000000000000000000');
 		await expect(token.initialize("CatallacticERC20", "CATA", BigInt(200_000_000 * 10**18))).not.to.be.reverted;
-		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 0, 0)).not.to.be.reverted;
+		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 90, 'abc')).not.to.be.reverted;
 		await expect(ico.setPaymentToken("FOO", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18)).not.to.be.reverted;
 		await expect(diamond.setReceiveFacet(crowdsaleFacet.address)).to.not.be.reverted;
 		await expect(await common.owner()).to.equal(owner.address);
@@ -629,8 +629,8 @@ describe("ico-113-diamond-all-token-nok-test", function () {
 		expect(await ico.getHardCap()).to.equal(300000);
 		expect(await ico.getSoftCap()).to.equal(50000);
 		expect(await ico.getPriceuUSD()).to.equal(30_000);
-		expect(await ico.getPercentVested()).to.equal(0);
-		expect(await ico.getVestingId()).to.equal('0x0000000000000000000000000000000000000000000000000000000000000000');
+		expect(await ico.getPercentVested()).to.equal(90);
+		expect(await ico.getVestingId()).to.equal('abc');
 		expect(await ico.getInvestorsCount()).to.equal(3);
 		let investorsCount = await ico.getInvestorsCount();
 		let investors = await ico.getInvestors();
@@ -654,7 +654,7 @@ describe("ico-113-diamond-all-token-nok-test", function () {
 		expect(await ico.getSoftCap()).to.equal(0);
 		expect(await ico.getPriceuUSD()).to.equal(0);
 		expect(await ico.getPercentVested()).to.equal(0);
-		expect(await ico.getVestingId()).to.equal('0x0000000000000000000000000000000000000000000000000000000000000000');
+		expect(await ico.getVestingId()).to.equal('');
 		expect(await ico.getInvestorsCount()).to.equal(3);
 		investorsCount = await ico.getInvestorsCount();
 		investors = await ico.getInvestors();
