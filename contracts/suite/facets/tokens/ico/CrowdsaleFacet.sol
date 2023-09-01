@@ -64,16 +64,25 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	event UpdatedCrowdsaleStage(uint stage_);
 
 	function reset() external onlyOwner {
-		s.stage = CrowdsaleStage.NotCreated;
+				
 		s.uUsdPrice = 0;
-		s.totaluUSDTInvested = 0;
 		s.hardCapuUSD = 0;
 		s.softCapuUSD = 0;
+
+		s.stage = CrowdsaleStage.NotCreated;
+
+		s.totaluUSDTInvested = 0;
 		s.tokenAddress = payable(address(0x0));
 		s.targetWalletAddress = payable(address(0x0));
+
 		s.percentVested = 0;
 		s.vestingId = '';
 		s.vestingAddress = address(0x0);
+
+		s.whitelistuUSDThreshold = 0;
+		s.maxuUSDInvestment = 0;
+		s.maxuUSDTransfer = 0;
+		s.minuUSDTransfer = 0;
 	}
 
 	/********************************************************************************************************/
