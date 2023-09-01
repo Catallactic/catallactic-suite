@@ -386,6 +386,12 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	function getPercentVested() external view returns (uint256) {
 		return s.percentVested;
 	}
+	function setPercentVested(uint256 percentVested) external onlyOwner {
+		s.percentVested = percentVested;
+		emit UpdatedHardCap(percentVested);
+	}
+	event UpdatedPercentVested(uint256 percentVested);
+
 	function getVestingId() external view returns (string memory) {
 		return s.vestingId;
 	}
