@@ -102,7 +102,10 @@ async function main() {
 	console.log(await diamondLoupeContract.facetFunctionSelectors(erc20Facet.address));	 // fetching storage is needed before token.initialize. I do not know why				
 	token.initialize("CatallacticERC20", "CATA", 200_000_000);
 	ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
-	diamond.setReceiveFacet(crowdsaleFacet.address);
+	ico.setTokenAddress(diamond.address);
+	ico.setVestingAddress(diamond.address);
+	ico.setTargetWalletAddress(diamond.address);
+	diamond.setReceiveFacet(diamond.address);
 	console.log('initialized');
 
 	// **********************************************************************************************************************************
@@ -125,12 +128,14 @@ async function main() {
 		console.log("deploying to localhost");
 
 		// ChainLinkAggregator Token
+		console.log("ChainLinkAggregator deploying");
 		const ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		const chainLinkAggregator = await ChainLinkAggregator.deploy();
 		await chainLinkAggregator.deployed();
 		console.log("ChainLinkAggregator:" + chainLinkAggregator.address);
 
 		// deploy WBTC
+		console.log("WBTC deploying");
 		const WBTC = await ethers.getContractFactory("FOO");
 		const wbtc = await WBTC.deploy("WBTC", "WBTC");
 		await wbtc.deployed();
@@ -140,7 +145,8 @@ async function main() {
 		console.log("WBTC owner balance: " + await wbtc.balanceOf(owner.address));
 		console.log("WBTC 0x20caa5fa15c4177cd6946b8041ef40447db27539 balance: " + await wbtc.balanceOf('0x20caa5fa15c4177cd6946b8041ef40447db27539'));
 
-		// deploy ETH
+		// deploy COIN
+		console.log("COIN deploying");
 		await ico.setPaymentToken("COIN", ico.address, ZERO_ADDRESS, Math.floor(DEF_PRICE_ETH_IN_USD * 10**6), 18);
 		console.log("COIN installed");
 		await owner.sendTransaction({
@@ -151,6 +157,7 @@ async function main() {
 		});
 
 		// deploy MATIC
+		console.log("MATIC deploying");
 		const MATIC = await ethers.getContractFactory("FOO");
 		const matic = await MATIC.deploy("MATIC", "MATIC");
 		await matic.deployed();
@@ -161,6 +168,7 @@ async function main() {
 		console.log("MATIC 0x20caa5fa15c4177cd6946b8041ef40447db27539 balance: " + await matic.balanceOf('0x20caa5fa15c4177cd6946b8041ef40447db27539'));
 
 		// deploy BNB
+		console.log("BNB deploying");
 		const BNB = await ethers.getContractFactory("FOO");
 		const bnb = await BNB.deploy("BNB", "BNB");
 		await bnb.deployed();
@@ -171,6 +179,7 @@ async function main() {
 		console.log("BNB 0x20caa5fa15c4177cd6946b8041ef40447db27539 balance: " + await bnb.balanceOf('0x20caa5fa15c4177cd6946b8041ef40447db27539'));
 
 		// deploy USDT
+		console.log("USDT deploying");
 		const USDT = await ethers.getContractFactory("FOO");
 		const usdt = await USDT.deploy("USDT", "USDT");
 		await usdt.deployed();
@@ -189,12 +198,14 @@ async function main() {
 		console.log("deploying to sepolia");
 
 		// ChainLinkAggregator Token
+		console.log("ChainLinkAggregator deploying");
 		const ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		const chainLinkAggregator = await ChainLinkAggregator.deploy();
 		await chainLinkAggregator.deployed();
 		console.log("ChainLinkAggregator:" + chainLinkAggregator.address);
 
 		// deploy WBTC
+		console.log("WBTC deploying");
 		const WBTC = await ethers.getContractFactory("FOO");
 		const wbtc = await WBTC.deploy("WBTC", "WBTC");
 		await wbtc.deployed();
@@ -205,10 +216,12 @@ async function main() {
 		console.log("WBTC 0x20caa5fa15c4177cd6946b8041ef40447db27539 balance: " + await wbtc.balanceOf('0x20caa5fa15c4177cd6946b8041ef40447db27539'));
 
 		// deploy ETH
+		console.log("COIN deploying");
 		await ico.setPaymentToken("COIN", ico.address, "0x694AA1769357215DE4FAC081bf1f309aDC325306", Math.floor(DEF_PRICE_ETH_IN_USD * 10**6), 18);
 		console.log("COIN installed");
 
 		// deploy MATIC
+		console.log("MATIC deploying");
 		const MATIC = await ethers.getContractFactory("FOO");
 		const matic = await MATIC.deploy("MATIC", "MATIC");
 		await matic.deployed();
@@ -219,6 +232,7 @@ async function main() {
 		console.log("MATIC 0x20caa5fa15c4177cd6946b8041ef40447db27539 balance: " + await matic.balanceOf('0x20caa5fa15c4177cd6946b8041ef40447db27539'));
 
 		// deploy BNB
+		console.log("BNB deploying");
 		const BNB = await ethers.getContractFactory("FOO");
 		const bnb = await BNB.deploy("BNB", "BNB");
 		await bnb.deployed();
@@ -229,6 +243,7 @@ async function main() {
 		console.log("BNB 0x20caa5fa15c4177cd6946b8041ef40447db27539 balance: " + await bnb.balanceOf('0x20caa5fa15c4177cd6946b8041ef40447db27539'));
 
 		// deploy USDT
+		console.log("USDT deploying");
 		const USDT = await ethers.getContractFactory("FOO");
 		const usdt = await USDT.deploy("USDT", "USDT");
 		await usdt.deployed();
@@ -268,6 +283,7 @@ async function main() {
 		console.log("deploying to polygon_mumbai");
 
 		// ChainLinkAggregator Token
+		console.log("ChainLinkAggregator deploying");
 		const ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		const chainLinkAggregator = await ChainLinkAggregator.deploy();
 		await chainLinkAggregator.deployed();
@@ -293,6 +309,7 @@ async function main() {
 		console.log("COIN installed");
 
 		// deploy BNB
+		console.log("BNB deploying");
 		const BNB = await ethers.getContractFactory("FOO");
 		const bnb = await BNB.deploy("BNB", "BNB");
 		await bnb.deployed();
@@ -374,6 +391,7 @@ async function main() {
 	if (hre.network.name == 'bsc_testnet') {
 
 		// ChainLinkAggregator Token
+		console.log("ChainLinkAggregator deploying");
 		const ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		const chainLinkAggregator = await ChainLinkAggregator.deploy();
 		await chainLinkAggregator.deployed();
@@ -413,6 +431,7 @@ async function main() {
 	if (hre.network.name == 'optimism_goerly') {
 
 		// ChainLinkAggregator Token
+		console.log("ChainLinkAggregator deploying");
 		const ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		const chainLinkAggregator = await ChainLinkAggregator.deploy();
 		await chainLinkAggregator.deployed();

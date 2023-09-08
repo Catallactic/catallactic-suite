@@ -370,6 +370,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 
 	// tokenWalletAddress
 	function setTokenAddress(address payable add) external onlyOwner {
+		console.log('setTokenAddress', msg.sender);
 		require(add !=  address(0), "ERRW_INVA_ADD");
 
 		s.tokenAddress = add;
@@ -397,7 +398,8 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	}
 
 	// vesting Address
-	function setVestingAddress(address add) external onlyOwner {
+	function setVestingAddress(address payable add) external onlyOwner {
+		console.log('setVestingAddress', msg.sender);
 		require(add !=  address(0), "ERRW_INVA_ADD");
 
 		s.vestingAddress = add;
@@ -442,6 +444,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 
 	// targetWalletAddress
 	function setTargetWalletAddress(address payable add) external onlyOwner {
+		console.log('setTargetWalletAddress', msg.sender);
 		require(add !=  address(0), "ERRW_INVA_ADD");
 
 		s.targetWalletAddress = add;
