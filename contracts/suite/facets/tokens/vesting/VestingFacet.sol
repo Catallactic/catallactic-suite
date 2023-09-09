@@ -58,19 +58,19 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	}
 
 	/**
-	 * @dev Returns the number of vesting schedules managed by this contract.
-	 * @return the number of vesting schedules
-	 */
-	function getVestingSchedulesIds() external view returns (uint256[] memory) {
-		return s.vestingSchedulesIds;
-	}
-
-	/**
 	 * @notice Returns the vesting schedule information for a given identifier.
 	 * @return the vesting schedule structure information
 	 */
 	function getVestingSchedule(uint256 vestingScheduleId) external view returns (VestingSchedule memory) {
 		return s.vestingSchedules[vestingScheduleId];
+	}
+
+	/**
+	 * @dev Returns the number of vesting schedules managed by this contract.
+	 * @return the number of vesting schedules
+	 */
+	function getVestingSchedulesIds() external view returns (uint256[] memory) {
+		return s.vestingSchedulesIds;
 	}
 
 	/**
