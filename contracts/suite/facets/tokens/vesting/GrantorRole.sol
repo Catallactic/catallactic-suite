@@ -27,8 +27,6 @@ contract GrantorRole is Ownable2StepUpgradeableNoStorage {
     event GrantorAdded(address indexed account);
     event GrantorRemoved(address indexed account);
 
-    mapping(address => bool) private _isUniformGrantor;
-
     modifier onlyGrantor() {
         require(isGrantor(msg.sender), "onlyGrantor");
         _;
@@ -43,35 +41,16 @@ contract GrantorRole is Ownable2StepUpgradeableNoStorage {
         return s._grantors.has(account);
     }
 
-    function addGrantor(address account, bool isUniformGrantor) public onlyOwner {
-        _addGrantor(account, isUniformGrantor);
+    function addGrantor(address account) public onlyOwner {
+			require(account != address(0));
+			s._grantors.add(account);
+			emit GrantorAdded(account);
     }
 
     function removeGrantor(address account) public onlyOwner {
-        _removeGrantor(account);
-    }
-
-    function _addGrantor(address account, bool isUniformGrantor) private {
-        require(account != address(0));
-        s._grantors.add(account);
-        _isUniformGrantor[account] = isUniformGrantor;
-        emit GrantorAdded(account);
-    }
-
-    function _removeGrantor(address account) private {
-        require(account != address(0));
-        s._grantors.remove(account);
-        emit GrantorRemoved(account);
-    }
-
-    function isUniformGrantor(address account) public view returns (bool) {
-        return isGrantor(account) && _isUniformGrantor[account];
-    }
-
-    modifier onlyUniformGrantor() {
-        require(isUniformGrantor(msg.sender), "Only uniform grantor role can do this.");
-        // Only grantor role can do this.
-        _;
+			require(account != address(0));
+			s._grantors.remove(account);
+			emit GrantorRemoved(account);
     }
 
 }

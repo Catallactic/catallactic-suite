@@ -105,12 +105,13 @@ async function main() {
 	// initialize
 	console.log('initializing')
 	console.log(await diamondLoupeContract.facetFunctionSelectors(erc20Facet.address));	 // fetching storage is needed before token.initialize. I do not know why				
-	await token.initialize("CatallacticERC20", "CATA", 200_000_000);
+	await token.initialize("CatallacticERC20", "CATA", BigInt(200_000_000 * 10**18));
 	await ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
 	console.log('ico.owner()', await ico.owner());
 	await ico.setTokenAddress(diamond.address);
 	await ico.setVestingAddress(diamond.address);
 	await ico.setTargetWalletAddress(diamond.address);
+	await vesting.addGrantor(ico.address);
 	await diamond.setReceiveFacet(diamond.address);
 	console.log('initialized');
 

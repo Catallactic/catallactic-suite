@@ -354,7 +354,8 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 
 		emit FundsClaimed(investor, claimed);
 
-		console.log('msg.sender', msg.sender);
+		console.log('msg.sender: ', msg.sender);
+		console.log('claimed: ', claimed);
 
 		// unvested claim
 		if (s.percentVested < 100)

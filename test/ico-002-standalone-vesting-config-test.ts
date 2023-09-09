@@ -89,7 +89,7 @@ describe("ico-002-standalone-vesting-config-test", function () {
 
 		// vesting schedule functions
 		await expect(vesting.createVestingSchedule(addr1.address, 100_000_000, 'abc')).to.be.revertedWith('onlyGrantor');
-		await expect(vesting.addGrantor(owner.address, true)).not.to.be.reverted;
+		await expect(vesting.addGrantor(owner.address)).not.to.be.reverted;
 		await expect(vesting.createVestingSchedule(addr1.address, 100_000_000, 'abc')).not.to.be.reverted;
 
 		// vesting release schedule functions
@@ -112,7 +112,7 @@ describe("ico-002-standalone-vesting-config-test", function () {
 	it("Should be able to create vesting schedule", async() => {
 		await expect(vesting.createVesting('abc', Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
 
-		await expect(vesting.addGrantor(owner.address, true)).not.to.be.reverted;
+		await expect(vesting.addGrantor(owner.address)).not.to.be.reverted;
 		await expect(vesting.createVestingSchedule(addr1.address, 100_000_000, 'abc')).not.to.be.reverted;
 
 		await expect(await vesting.getTotalVestableAmount()).to.equal(100_000_000);
@@ -128,7 +128,7 @@ describe("ico-002-standalone-vesting-config-test", function () {
 
 		await expect(vesting.createVesting('abc', Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
 
-		await expect(vesting.addGrantor(owner.address, true)).not.to.be.reverted;
+		await expect(vesting.addGrantor(owner.address)).not.to.be.reverted;
 		await expect(vesting.createVestingSchedule(addr1.address, 120_000_000, 'abc')).not.to.be.reverted;
 
 		// now
@@ -179,7 +179,7 @@ describe("ico-002-standalone-vesting-config-test", function () {
 	it("Should be able to release", async() => {
 		await expect(vesting.createVesting('abc', Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
 
-		await expect(vesting.addGrantor(owner.address, true)).not.to.be.reverted;
+		await expect(vesting.addGrantor(owner.address)).not.to.be.reverted;
 		await expect(vesting.createVestingSchedule(addr1.address, 120_000_000, 'abc')).not.to.be.reverted;
 		await expect(vesting.setTokenAddress(token.address)).not.to.be.reverted;
 		await expect(token.transfer(vesting.address, 120_000_000)).not.to.be.reverted;

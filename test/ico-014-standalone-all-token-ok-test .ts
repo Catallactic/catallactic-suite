@@ -153,7 +153,7 @@ describe("ico-014-standalone-all-token-ok-test", function () {
 
 		await ico.setTokenAddress(token.address);
 		await ico.setVestingAddress(vesting.address);
-		await vesting.addGrantor(ico.address, true);
+		await vesting.addGrantor(ico.address);
 		await vesting.setTokenAddress(token.address);
 
 		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
@@ -249,7 +249,7 @@ describe("ico-014-standalone-all-token-ok-test", function () {
 
 		await ico.setTokenAddress(token.address);
 		await ico.setVestingAddress(vesting.address);
-		await vesting.addGrantor(ico.address, true);
+		await vesting.addGrantor(ico.address);
 		await vesting.setTokenAddress(token.address);
 
 		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);
@@ -346,7 +346,7 @@ describe("ico-014-standalone-all-token-ok-test", function () {
 
 		await ico.setTokenAddress(token.address);
 		await ico.setVestingAddress(vesting.address);
-		await vesting.addGrantor(ico.address, true);
+		await vesting.addGrantor(ico.address);
 		await vesting.setTokenAddress(token.address);
 
 		await ico.setCrowdsaleStage(helpers.STAGE.FINISHED);

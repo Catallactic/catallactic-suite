@@ -185,7 +185,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 
 		await ico.setTokenAddress(token.address);
 		await ico.setVestingAddress(vesting.address);
-		await vesting.addGrantor(ico.address, true);
+		await vesting.addGrantor(ico.address);
 		await vesting.setTokenAddress(token.address);
 
 		await expect(helpers.testTransferCoin(addr1, 19000, ico)).not.to.be.reverted;
@@ -271,7 +271,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 
 		await ico.setTokenAddress(token.address);
 		await ico.setVestingAddress(vesting.address);
-		await vesting.addGrantor(ico.address, true);
+		await vesting.addGrantor(ico.address);
 		await vesting.setTokenAddress(token.address);
 
 		await expect(helpers.testTransferCoin(addr1, 19000, ico)).not.to.be.reverted;
@@ -359,7 +359,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 
 		await ico.setTokenAddress(token.address);
 		await ico.setVestingAddress(vesting.address);
-		await vesting.addGrantor(ico.address, true);
+		await vesting.addGrantor(ico.address);
 		await vesting.setTokenAddress(token.address);
 
 		await expect(helpers.testTransferCoin(addr1, 19000, ico)).not.to.be.reverted;
