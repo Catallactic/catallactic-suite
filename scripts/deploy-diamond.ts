@@ -6,10 +6,15 @@ import * as helpers from "../test/_testhelper";
 async function main() {
 	await helpers.extractAbi();
 
-	// owner
-	const [owner] = await ethers.getSigners();
-	console.log("owner:", owner.address);
-	console.log("owner balance:", await owner.getBalance());
+	// accounts
+	const [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+	console.log('owner - address: %s ; balance: %s', 0, owner.address, await ethers.provider.getBalance(owner.address));
+	[owner, addr1, addr2, addr3, ...addrs].forEach(async(account, i) => {
+		let balance = await ethers.provider.getBalance(account.address);
+		console.log('addr%d - address: %s ; balance: %s', ++i, account.address, balance);
+	});
+
+	// network
 	const networkName = hre.network.name
 	console.log("network:", networkName);
 
@@ -38,7 +43,7 @@ async function main() {
 
 	// attach DiamondLoupeFacet
 	let _diamondCut = [{ facetAddress: diamondLoupeFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: helpers.getSelectors(diamondLoupeFacet), }];
-	diamondCutContract.connect(owner).diamondCut(_diamondCut);
+	await diamondCutContract.diamondCut(_diamondCut);
 	console.log("DiamondLoupeFacet attached as " + diamondCutContract.address);
 
 	// deploy Common facet
@@ -51,7 +56,7 @@ async function main() {
 	// attach Common facet *****************************************
 	console.log('attachig functions:', helpers.getSelectors(commonFacet))
 	_diamondCut = [{ facetAddress: commonFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: helpers.getSelectors(commonFacet), }];
-	diamondCutContract.connect(owner).diamondCut(_diamondCut);
+	await diamondCutContract.diamondCut(_diamondCut);
 	console.log("CommonFacet attached as " + common.address);
 
 	// deploy Crowdsale facet
@@ -66,7 +71,7 @@ async function main() {
 	//crowdsaleFacetExCommonFacetSelectors.push(commonFacet.interface.getSighash('receive()'))
 	console.log('attachig functions:', crowdsaleFacetExCommonFacetSelectors)
 	_diamondCut = [{ facetAddress: crowdsaleFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: crowdsaleFacetExCommonFacetSelectors, }];
-	diamondCutContract.connect(owner).diamondCut(_diamondCut);
+	await diamondCutContract.diamondCut(_diamondCut);
 	console.log("CrowdsaleFacet attached as " + ico.address);
 
 	// deploy Vesting facet *****************************************
@@ -80,7 +85,7 @@ async function main() {
 	const vestingFacetExCommonFacetSelectors: Array<string> = helpers.removeSelectors(helpers.getSelectors(vestingFacet), helpers.getSelectors(commonFacet));
 	console.log('attachig functions:', vestingFacetExCommonFacetSelectors)
 	_diamondCut = [{ facetAddress: vestingFacet.address, action: helpers.FacetCutAction.Add, functionSelectors: vestingFacetExCommonFacetSelectors, }];
-	diamondCutContract.connect(owner).diamondCut(_diamondCut);
+	await diamondCutContract.diamondCut(_diamondCut);
 	console.log("VestingFacet attached as " + vesting.address);
 
 	// deploy Token facet *****************************************
@@ -94,18 +99,19 @@ async function main() {
 	const erc20FacetExCommonFacetSelectors: Array<string> = helpers.removeSelectors(helpers.getSelectors(erc20Facet), helpers.getSelectors(commonFacet));
 	console.log('attachig functions:', erc20FacetExCommonFacetSelectors)
 	_diamondCut = [{ facetAddress: erc20Facet.address, action: helpers.FacetCutAction.Add, functionSelectors: erc20FacetExCommonFacetSelectors, }];
-	diamondCutContract.connect(owner).diamondCut(_diamondCut);
+	await diamondCutContract.diamondCut(_diamondCut);
 	console.log("ERC20Facet attached as " + token.address);
 
 	// initialize
 	console.log('initializing')
 	console.log(await diamondLoupeContract.facetFunctionSelectors(erc20Facet.address));	 // fetching storage is needed before token.initialize. I do not know why				
-	token.initialize("CatallacticERC20", "CATA", 200_000_000);
-	ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
-	ico.setTokenAddress(diamond.address);
-	ico.setVestingAddress(diamond.address);
-	ico.setTargetWalletAddress(diamond.address);
-	diamond.setReceiveFacet(diamond.address);
+	await token.initialize("CatallacticERC20", "CATA", 200_000_000);
+	await ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(1100*1e6), 18);
+	console.log('ico.owner()', await ico.owner());
+	await ico.setTokenAddress(diamond.address);
+	await ico.setVestingAddress(diamond.address);
+	await ico.setTargetWalletAddress(diamond.address);
+	await diamond.setReceiveFacet(diamond.address);
 	console.log('initialized');
 
 	// **********************************************************************************************************************************
