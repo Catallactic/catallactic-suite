@@ -3,7 +3,6 @@ pragma solidity 0.8.18;
 
 import "../../features/security/Ownable2StepUpgradeableNoStorage.sol";
 import "../../features/security/Roles.sol";
-import "../../../storage/AppStorage.sol";
 
 /**
  * @dev GrantorRole trait
