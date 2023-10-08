@@ -2,7 +2,6 @@
 pragma solidity 0.8.18;
 
 import "../../features/security/Ownable2StepUpgradeableNoStorage.sol";
-import "../../features/security/Roles.sol";
 
 /**
  * @dev GrantorRole trait
@@ -21,35 +20,33 @@ import "../../features/security/Roles.sol";
  */
 contract GrantorRole is Ownable2StepUpgradeableNoStorage {
 
-    using Roles for Role;
+	event GrantorAdded(address indexed account);
+	event GrantorRemoved(address indexed account);
 
-    event GrantorAdded(address indexed account);
-    event GrantorRemoved(address indexed account);
+	modifier onlyGrantor() {
+		require(isGrantor(msg.sender), "onlyGrantor");
+		_;
+	}
 
-    modifier onlyGrantor() {
-        require(isGrantor(msg.sender), "onlyGrantor");
-        _;
-    }
+	modifier onlyGrantorOrSelf(address account) {
+		require(isGrantor(msg.sender) || msg.sender == account, "onlyGrantorOrSelf");
+		_;
+	}
 
-    modifier onlyGrantorOrSelf(address account) {
-        require(isGrantor(msg.sender) || msg.sender == account, "onlyGrantorOrSelf");
-        _;
-    }
+	function isGrantor(address account) public view returns (bool) {
+		return s._grantors.bearer[account];
+	}
 
-    function isGrantor(address account) public view returns (bool) {
-        return s._grantors.has(account);
-    }
+	function addGrantor(address account) public onlyOwner {
+		require(account != address(0));
+		s._grantors.bearer[account] = true;
+		emit GrantorAdded(account);
+	}
 
-    function addGrantor(address account) public onlyOwner {
-			require(account != address(0));
-			s._grantors.add(account);
-			emit GrantorAdded(account);
-    }
-
-    function removeGrantor(address account) public onlyOwner {
-			require(account != address(0));
-			s._grantors.remove(account);
-			emit GrantorRemoved(account);
-    }
+	function removeGrantor(address account) public onlyOwner {
+		require(account != address(0));
+		s._grantors.bearer[account] = false;
+		emit GrantorRemoved(account);
+	}
 
 }
