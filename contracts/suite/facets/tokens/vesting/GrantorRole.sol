@@ -34,18 +34,18 @@ contract GrantorRole is Ownable2StepUpgradeableNoStorage {
 	}
 
 	function isGrantor(address account) public view returns (bool) {
-		return s._grantors.bearer[account];
+		return LibAppStorage.appStorage()._grantors.bearer[account];
 	}
 
 	function addGrantor(address account) public onlyOwner {
 		require(account != address(0));
-		s._grantors.bearer[account] = true;
+		LibAppStorage.appStorage()._grantors.bearer[account] = true;
 		emit GrantorAdded(account);
 	}
 
 	function removeGrantor(address account) public onlyOwner {
 		require(account != address(0));
-		s._grantors.bearer[account] = false;
+		LibAppStorage.appStorage()._grantors.bearer[account] = false;
 		emit GrantorRemoved(account);
 	}
 

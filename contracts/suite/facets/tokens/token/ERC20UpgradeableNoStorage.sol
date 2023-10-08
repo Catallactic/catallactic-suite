@@ -46,15 +46,15 @@ contract ERC20UpgradeableNoStorage is InitializableNoStorage, IERC20Upgradeable 
     }
 
     function __ERC20_init_unchained(string memory name_, string memory symbol_) internal onlyInitializing {
-        s._name = name_;
-        s._symbol = symbol_;
+        LibAppStorage.appStorage()._name = name_;
+        LibAppStorage.appStorage()._symbol = symbol_;
     }
 
     /**
      * @dev Returns the name of the token.
      */
     function name() public view virtual returns (string memory) {
-        return s._name;
+        return LibAppStorage.appStorage()._name;
     }
 
     /**
@@ -62,7 +62,7 @@ contract ERC20UpgradeableNoStorage is InitializableNoStorage, IERC20Upgradeable 
      * name.
      */
     function symbol() public view virtual returns (string memory) {
-        return s._symbol;
+        return LibAppStorage.appStorage()._symbol;
     }
 
     /**
@@ -86,14 +86,14 @@ contract ERC20UpgradeableNoStorage is InitializableNoStorage, IERC20Upgradeable 
      * @dev See {IERC20-totalSupply}.
      */
     function totalSupply() public view virtual override returns (uint256) {
-        return s._totalSupply;
+        return LibAppStorage.appStorage()._totalSupply;
     }
 
     /**
      * @dev See {IERC20-balanceOf}.
      */
     function balanceOf(address account) public view virtual override returns (uint256) {
-        return s._balances[account];
+        return LibAppStorage.appStorage()._balances[account];
     }
 
     /**
@@ -114,7 +114,7 @@ contract ERC20UpgradeableNoStorage is InitializableNoStorage, IERC20Upgradeable 
      * @dev See {IERC20-allowance}.
      */
     function allowance(address owner, address spender) public view virtual override returns (uint256) {
-        return s._allowances[owner][spender];
+        return LibAppStorage.appStorage()._allowances[owner][spender];
     }
 
     /**
@@ -219,13 +219,13 @@ contract ERC20UpgradeableNoStorage is InitializableNoStorage, IERC20Upgradeable 
 
         _beforeTokenTransfer(from, to, amount);
 
-        uint256 fromBalance = s._balances[from];
+        uint256 fromBalance = LibAppStorage.appStorage()._balances[from];
         require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
         unchecked {
-            s._balances[from] = fromBalance - amount;
+            LibAppStorage.appStorage()._balances[from] = fromBalance - amount;
             // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
             // decrementing then incrementing.
-            s._balances[to] += amount;
+            LibAppStorage.appStorage()._balances[to] += amount;
         }
 
         emit Transfer(from, to, amount);
@@ -247,10 +247,10 @@ contract ERC20UpgradeableNoStorage is InitializableNoStorage, IERC20Upgradeable 
 
         _beforeTokenTransfer(address(0), account, amount);
 
-        s._totalSupply += amount;
+        LibAppStorage.appStorage()._totalSupply += amount;
         unchecked {
             // Overflow not possible: balance + amount is at most totalSupply + amount, which is checked above.
-            s._balances[account] += amount;
+            LibAppStorage.appStorage()._balances[account] += amount;
         }
         emit Transfer(address(0), account, amount);
 
@@ -273,12 +273,12 @@ contract ERC20UpgradeableNoStorage is InitializableNoStorage, IERC20Upgradeable 
 
         _beforeTokenTransfer(account, address(0), amount);
 
-        uint256 accountBalance = s._balances[account];
+        uint256 accountBalance = LibAppStorage.appStorage()._balances[account];
         require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
         unchecked {
-            s._balances[account] = accountBalance - amount;
+            LibAppStorage.appStorage()._balances[account] = accountBalance - amount;
             // Overflow not possible: amount <= accountBalance <= totalSupply.
-            s._totalSupply -= amount;
+            LibAppStorage.appStorage()._totalSupply -= amount;
         }
 
         emit Transfer(account, address(0), amount);
@@ -303,7 +303,7 @@ contract ERC20UpgradeableNoStorage is InitializableNoStorage, IERC20Upgradeable 
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
 
-        s._allowances[owner][spender] = amount;
+        LibAppStorage.appStorage()._allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
     }
 
