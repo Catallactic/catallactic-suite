@@ -10,14 +10,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
-
-	let diamondCutContract: Contract, diamondLoupeContract: Contract;
-
-	let ChainLinkAggregator, chainLinkAggregator: Contract;
-	let CommonFacet, common: Contract;
-	let CrowdsaleFacet, ico: Contract;
-	let VestingFacet, vesting: Contract;
-	let ERC20Facet, token: Contract;
+	let chainLinkAggregator: Contract, common: Contract, ico: Contract, vesting: Contract, token: Contract;
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
@@ -40,7 +33,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 		});
 
 		// deploy ChainLinkAggregator mock
-		ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
+		const ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		chainLinkAggregator = await ChainLinkAggregator.deploy();
 		await chainLinkAggregator.deployed();
 		console.log("ChainLinkAggregator:" + chainLinkAggregator.address);
@@ -56,13 +49,13 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 		let diamond = await Diamond.deploy(diamondCutFacet.address)
 		await diamond.deployed()
 		console.log('Diamond deployed:', diamond.address)
-		diamondCutContract = await ethers.getContractAt('DiamondCutFacet', diamond.address)
+		const diamondCutContract = await ethers.getContractAt('DiamondCutFacet', diamond.address)
 
 		// deploy DiamondLoupeFacet
 		const DiamondLoupeFacet = await ethers.getContractFactory('DiamondLoupeFacet')
 		let diamondLoupeFacet = await DiamondLoupeFacet.deploy()
 		await diamondLoupeFacet.deployed()
-    diamondLoupeContract = await ethers.getContractAt('DiamondLoupeFacet', diamond.address)
+    const diamondLoupeContract = await ethers.getContractAt('DiamondLoupeFacet', diamond.address)
 		console.log('DiamondLoupeFacet deployed:', diamondLoupeFacet.address)
 
 		// attach DiamondLoupeFacet
@@ -71,7 +64,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 		console.log("DiamondLoupeFacet attached as " + diamondCutContract.address);
 
 		// deploy Common facet
-		CommonFacet = await ethers.getContractFactory("CommonFacet");
+		const CommonFacet = await ethers.getContractFactory("CommonFacet");
 		let commonFacet = await CommonFacet.deploy();
 		await commonFacet.deployed();
 		common = await ethers.getContractAt('CommonFacet', diamond.address)
@@ -84,7 +77,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 		console.log("CommonFacet attached as " + common.address);
 
 		// deploy Crowdsale facet
-		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
+		const CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
 		let crowdsaleFacet = await CrowdsaleFacet.deploy();
 		await crowdsaleFacet.deployed();
 		ico = await ethers.getContractAt('CrowdsaleFacet', diamond.address)
@@ -99,7 +92,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 		console.log("CrowdsaleFacet attached as " + ico.address);
 
 		// deploy Vesting facet
-		VestingFacet = await ethers.getContractFactory("VestingFacet");
+		const VestingFacet = await ethers.getContractFactory("VestingFacet");
 		let vestingFacet = await VestingFacet.deploy();
 		await vestingFacet.deployed();
     vesting = await ethers.getContractAt('VestingFacet', diamond.address)
@@ -113,7 +106,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 		console.log("VestingFacet attached as " + vesting.address);
 
 		// deploy Token facet
-		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
+		const ERC20Facet = await ethers.getContractFactory("ERC20Facet");
 		let erc20Facet = await ERC20Facet.deploy();
 		await erc20Facet.deployed();
     token = await ethers.getContractAt('ERC20Facet', diamond.address)

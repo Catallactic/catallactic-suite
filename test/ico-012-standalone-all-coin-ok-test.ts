@@ -10,12 +10,7 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
-
-	let ChainLinkAggregator, chainLinkAggregator: Contract;
-	let CrowdsaleFacet, ico: Contract;
-	let VestingFacet, vesting: Contract;
-	let ERC20Facet, token: Contract;
-
+	let chainLinkAggregator: Contract, ico: Contract, vesting: Contract, token: Contract;
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
@@ -37,25 +32,25 @@ describe("ico-012-standalone-all-coin-ok-test", function () {
 		});
 
 		// deploy oracle mock smart contract
-		ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
+		const ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		chainLinkAggregator = await ChainLinkAggregator.deploy();
 		await chainLinkAggregator.deployed();
 		console.log("ChainLinkAggregator:" + chainLinkAggregator.address);
 
 		// deploy ico smart contract
-		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
+		const CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
 		ico = await CrowdsaleFacet.deploy();
 		await ico.deployed();
 		console.log("deployed ICO:" + ico.address);
 
 		// deploy vesting smart contract
-		VestingFacet = await ethers.getContractFactory("VestingFacet");
+		const VestingFacet = await ethers.getContractFactory("VestingFacet");
 		vesting = await VestingFacet.deploy();
 		await vesting.deployed();
 		console.log("deployed Vesting:" + vesting.address);
 
 		// deploy token smart contract
-		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
+		const ERC20Facet = await ethers.getContractFactory("ERC20Facet");
 		token = await ERC20Facet.deploy();
 		await token.deployed();
 		console.log("deployed Token:" + token.address);

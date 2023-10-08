@@ -10,9 +10,7 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
-	
-	let CrowdsaleFacet, ico: Contract;
-	let ChainLinkAggregator, chainLinkAggregator: Contract;
+	let chainLinkAggregator: Contract, ico: Contract;
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
@@ -34,13 +32,13 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 		});
 
 		// deploy oracle mock smart contract
-		ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
+		const ChainLinkAggregator = await ethers.getContractFactory("DemoMockAggregator", owner);
 		chainLinkAggregator = await ChainLinkAggregator.deploy();
 		await chainLinkAggregator.deployed();
 		console.log("ChainLinkAggregator:" + chainLinkAggregator.address);
 
 		// deploy token smart contract
-		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
+		const CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
 		ico = await CrowdsaleFacet.deploy();
 		await ico.deployed();
 		console.log("deployed ICO:" + ico.address);

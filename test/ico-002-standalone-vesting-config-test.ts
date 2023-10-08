@@ -11,9 +11,7 @@ describe("ico-002-standalone-vesting-config-test", function () {
 
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
-
-	let VestingFacet, vesting: Contract;
-	let ERC20Facet, token: Contract;
+	let vesting: Contract, token: Contract;
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
@@ -35,13 +33,13 @@ describe("ico-002-standalone-vesting-config-test", function () {
 		});
 
 		// deploy vesting smart contract
-		VestingFacet = await ethers.getContractFactory("VestingFacet");
+		const VestingFacet = await ethers.getContractFactory("VestingFacet");
 		vesting = await VestingFacet.deploy();
 		await vesting.deployed();
 		console.log("deployed vesting: " + vesting.address);
 
 		// deploy token smart contract
-		ERC20Facet = await ethers.getContractFactory("ERC20Facet");
+		const ERC20Facet = await ethers.getContractFactory("ERC20Facet");
 		token = await ERC20Facet.deploy();
 		await token.deployed();
 		console.log("deployed Token:" + token.address);

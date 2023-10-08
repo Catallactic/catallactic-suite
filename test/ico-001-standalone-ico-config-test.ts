@@ -9,9 +9,9 @@ import * as helpers from "./_testhelper";
 describe("ico-001-standalone-ico-config-test", function () {
 	const hre = require("hardhat");
 
-	let CrowdsaleFacet, ico: Contract;
 	let owner: SignerWithAddress, project: SignerWithAddress, liquidity: SignerWithAddress;
 	let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress, addrs;
+	let ico: Contract;
 
 	/********************************************************************************************************/
 	/************************************************** hooks ***********************************************/
@@ -33,7 +33,7 @@ describe("ico-001-standalone-ico-config-test", function () {
 		});
 
 		// deploy ico smart contract
-		CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
+		const CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
 		ico = await CrowdsaleFacet.deploy();
 		await ico.deployed();
 		console.log("deployed ICO:" + ico.address);
