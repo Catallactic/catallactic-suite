@@ -46,8 +46,8 @@ describe("ico-002-standalone-vesting-config-test", function () {
 
 		// initialize
 		console.log('initializing')
-		await expect(vesting.setStorage()).not.to.be.reverted;
-		await expect(token.setStorage()).not.to.be.reverted;
+		await expect(vesting.setStorage(helpers.STORAGE1)).not.to.be.reverted;
+		await expect(token.setStorage(helpers.STORAGE1)).not.to.be.reverted;
 		await expect(await token.owner()).to.equal('0x0000000000000000000000000000000000000000');
 		await expect(token.initialize("CatallacticERC20", "CATA", BigInt(200_000_000 * 10**18))).not.to.be.reverted;
 		await expect(await token.owner()).to.equal(owner.address);

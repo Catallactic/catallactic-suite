@@ -132,9 +132,9 @@ abstract contract InitializableNoStorage {
 	}
 
 	// storage
-  function setStorage(/*bytes32 _nicknam*/) public {
+  function setStorage(bytes32 location) public {
 		require(loc.location ==  0x0, "ERRW_INVA_ADD");
-		loc.location = keccak256("diamond.standard.app.storage");
+		loc.location = location;
 	}
 
 	/**

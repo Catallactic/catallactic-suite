@@ -101,7 +101,7 @@ describe("ico-102-diamond-vesting-config-test", function () {
 
 		// initialize
 		console.log('initializing')
-		await expect(common.setStorage()).not.to.be.reverted;
+		await expect(common.setStorage(helpers.STORAGE1)).not.to.be.reverted;
 		await expect(await common.owner()).to.equal('0x0000000000000000000000000000000000000000');
 		await expect(token.initialize("CatallacticERC20", "CATA", BigInt(200_000_000 * 10**18))).not.to.be.reverted;
 		await expect(await common.owner()).to.equal(owner.address);

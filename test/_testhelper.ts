@@ -2,7 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { ethers } from 'hardhat';
 import { BigNumber, Contract } from 'ethers';
+import { keccak256 } from "@ethersproject/keccak256";
+import { toUtf8Bytes } from "@ethersproject/strings";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+// location
+export let STORAGE1 = keccak256(toUtf8Bytes("diamond.standard.app.storage"));
 
 // errors
 export const ERRORS: {[key: string]: string} = {

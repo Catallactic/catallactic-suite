@@ -45,7 +45,7 @@ describe("ico-011-standalone-all-coin-nok-test", function () {
 
 		// initialize
 		console.log('initializing')
-		await expect(ico.setStorage()).not.to.be.reverted;
+		await expect(ico.setStorage(helpers.STORAGE1)).not.to.be.reverted;
 		await expect(await ico.owner()).to.equal('0x0000000000000000000000000000000000000000');
 		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 90, 'abc')).not.to.be.reverted;
 		await expect(ico.setPaymentToken("COIN", ico.address, chainLinkAggregator.address, Math.floor(1100*1e6), 18)).not.to.be.reverted;
