@@ -4,6 +4,7 @@
 pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "../../../storage/LibAppStorageLocation.sol";
 import "../../../storage/LibAppStorage.sol";
 
 /**
@@ -57,6 +58,7 @@ import "../../../storage/LibAppStorage.sol";
  * ====
  */
 abstract contract InitializableNoStorage {
+	LibAppStorageLocation internal loc;
 
 	/**
 	 * @dev Triggered when the contract has been initialized or reinitialized.
@@ -73,7 +75,7 @@ abstract contract InitializableNoStorage {
 	 * Emits an {Initialized} event.
 	 */
 	modifier initializer() {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		bool isTopLevelCall = !s._initializing;
 		require(
@@ -110,7 +112,7 @@ abstract contract InitializableNoStorage {
 	 * Emits an {Initialized} event.
 	 */
 	modifier reinitializer(uint8 version) {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		require(!s._initializing && s._initialized < version, "Initializable: contract is already initialized");
 		s._initialized = version;
@@ -125,8 +127,14 @@ abstract contract InitializableNoStorage {
 	 * {initializer} and {reinitializer} modifiers, directly or indirectly.
 	 */
 	modifier onlyInitializing() {
-		require(LibAppStorage.appStorage()._initializing, "Initializable: contract is not initializing");
+		require(LibAppStorage.appStorage(loc.location)._initializing, "Initializable: contract is not initializing");
 		_;
+	}
+
+	// storage
+  function setStorage(/*bytes32 _nicknam*/) public {
+		require(loc.location ==  0x0, "ERRW_INVA_ADD");
+		loc.location = keccak256("diamond.standard.app.storage");
 	}
 
 	/**
@@ -138,7 +146,7 @@ abstract contract InitializableNoStorage {
 	 * Emits an {Initialized} event the first time it is successfully executed.
 	 */
 	function _disableInitializers() internal virtual {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		require(!s._initializing, "Initializable: contract is initializing");
 		if (s._initialized != type(uint8).max) {
@@ -151,13 +159,13 @@ abstract contract InitializableNoStorage {
 	 * @dev Returns the highest version that has been initialized. See {reinitializer}.
 	 */
 	function _getInitializedVersion() internal view returns (uint8) {
-			return LibAppStorage.appStorage()._initialized;
+			return LibAppStorage.appStorage(loc.location)._initialized;
 	}
 
 	/**
 	 * @dev Returns `true` if the contract is currently initializing. See {onlyInitializing}.
 	 */
 	function _isInitializing() internal view returns (bool) {
-			return LibAppStorage.appStorage()._initializing;
+			return LibAppStorage.appStorage(loc.location)._initializing;
 	}
 }

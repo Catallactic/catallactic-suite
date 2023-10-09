@@ -108,6 +108,7 @@ describe("ico-111-diamond-all-coin-nok-test", function () {
 
 		// initialize
 		console.log('initializing')
+		await expect(common.setStorage()).not.to.be.reverted;
 		await expect(await common.owner()).to.equal('0x0000000000000000000000000000000000000000');
 		await expect(token.initialize("CatallacticERC20", "CATA", BigInt(200_000_000 * 10**18))).not.to.be.reverted;
 		await expect(ico.createCrowdsale(30_000, 300_000_000_000, 50_000_000_000, 1_000_000_000, 100_000_000_000, 100_000_000_000, 9_999_999, 90, 'abc')).not.to.be.reverted;

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import "hardhat/console.sol";
+
 library LibAppStorage {
 
 	struct Role {
@@ -105,13 +107,10 @@ library LibAppStorage {
 
 	}
 
-	bytes32 constant APP_STORAGE_POSITION = keccak256("diamond.standard.app.storage");
-
-	function appStorage() internal pure returns (AppStorage storage ds) {
-			bytes32 position = APP_STORAGE_POSITION;
-			assembly {
-					ds.slot := position
-			}
+	function appStorage(bytes32 position) internal pure returns (AppStorage storage ds) {
+		assembly {
+			ds.slot := position
+		}
 	}
 
 }

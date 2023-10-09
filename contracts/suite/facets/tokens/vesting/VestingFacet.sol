@@ -22,7 +22,7 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	/************************************************* Vestings *********************************************/
 	/********************************************************************************************************/
 	function createVesting(string calldata vestingId, uint256 _start, uint256 _cliff, uint256 _duration, uint256 _numSlices) external {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		require(owner() == address(0) || owner() == msg.sender, "ERRW_OWNR_NOT");
 		require(_duration > 0, "TokenVesting: duration must be > 0");
@@ -35,10 +35,10 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 		s.vestings[vestingId] = LibAppStorage.Vesting(_start, _cliff, _duration, _numSlices);
 	}
 	function getVestingIds() external view returns(string[] memory) {
-		return LibAppStorage.appStorage().vestingIds;
+		return LibAppStorage.appStorage(loc.location).vestingIds;
 	}
 	function getVesting(string calldata vestingId) external view returns(LibAppStorage.Vesting memory) {
-		return LibAppStorage.appStorage().vestings[vestingId];
+		return LibAppStorage.appStorage(loc.location).vestings[vestingId];
 	}
 
 	/********************************************************************************************************/
@@ -50,7 +50,7 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	 * @param _amount total amount of tokens to be released at the end of the vesting
 	 */
 	function createVestingSchedule(address _beneficiary, uint256 _amount, string calldata vestingId) external onlyGrantor {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		require(_amount > 0, "TokenVesting: amount must be > 0");
 
@@ -66,7 +66,7 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	 * @return the vesting schedule structure information
 	 */
 	function getVestingSchedule(uint256 vestingScheduleId) external view returns (LibAppStorage.VestingSchedule memory) {
-		return LibAppStorage.appStorage().vestingSchedules[vestingScheduleId];
+		return LibAppStorage.appStorage(loc.location).vestingSchedules[vestingScheduleId];
 	}
 
 	/**
@@ -74,7 +74,7 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	 * @return the number of vesting schedules
 	 */
 	function getVestingSchedulesIds() external view returns (uint256[] memory) {
-		return LibAppStorage.appStorage().vestingSchedulesIds;
+		return LibAppStorage.appStorage(loc.location).vestingSchedulesIds;
 	}
 
 	/**
@@ -82,7 +82,7 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	 * @return the total amount of vesting schedules
 	 */
 	function getTotalVestableAmount() external view returns (uint256) {
-		return LibAppStorage.appStorage().totalVestableAmount;
+		return LibAppStorage.appStorage(loc.location).totalVestableAmount;
 	}
 
 	/********************************************************************************************************/
@@ -93,7 +93,7 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	 * @return the vested amount
 	 */
 	function computeReleasableAmount(uint256 vestingScheduleId) external view returns (uint256) {
-		LibAppStorage.VestingSchedule storage vestingSchedule = LibAppStorage.appStorage().vestingSchedules[vestingScheduleId];
+		LibAppStorage.VestingSchedule storage vestingSchedule = LibAppStorage.appStorage(loc.location).vestingSchedules[vestingScheduleId];
 		return _computeReleasableAmount(vestingSchedule);
 	}
 
@@ -102,7 +102,7 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	 * @return the amount of releasable tokens
 	 */
 	function _computeReleasableAmount(LibAppStorage.VestingSchedule memory vestingSchedule) internal view returns (uint256) {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		// Retrieve the current time.
 		uint256 currentTime = block.timestamp;
@@ -131,7 +131,7 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	 * @param vestingScheduleId the vesting schedule identifier
 	 */
 	function release(uint256 vestingScheduleId) public nonReentrant {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		LibAppStorage.VestingSchedule storage vestingSchedule = s.vestingSchedules[vestingScheduleId];
 		require(msg.sender == vestingSchedule.beneficiary || msg.sender == s._owner, "TokenVesting: only beneficiary and owner can release vested tokens");
@@ -149,14 +149,14 @@ contract VestingFacet is Ownable2StepUpgradeableNoStorage, ReentrancyGuardUpgrad
 	function setTokenAddress(address payable add) external onlyOwner {
 		require(add !=  address(0), "ERRW_INVA_ADD");
 
-		LibAppStorage.appStorage().tokenAddress = add;
+		LibAppStorage.appStorage(loc.location).tokenAddress = add;
 	
 		emit UpdatedTokenAddress(add);
 	}
 	event UpdatedTokenAddress(address payable add);
 
 	function getTokenAddress() external view returns (address) {
-		return LibAppStorage.appStorage().tokenAddress;
+		return LibAppStorage.appStorage(loc.location).tokenAddress;
 	}
 
 }

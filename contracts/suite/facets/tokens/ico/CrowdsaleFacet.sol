@@ -21,10 +21,10 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	/********************************************************************************************************/
 	// not initializer because should be able to create several crowdsales
 	function createCrowdsale(uint256 uUsdPrice_, uint256 hardCap_, uint256 softCap_, uint256 whitelistuUSDThreshold_, uint256 maxuUSDInvestment_, uint256 maxuUSDTransfer_, uint256 minuUSDTransfer_, uint256 percentVested_, string calldata vestingId_) public {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		require(owner() == address(0) || owner() == msg.sender, "ERRW_OWNR_NOT");
-		require(s.stage == LibAppStorage.CrowdsaleStage.NotCreated, "ERRD_MUST_ONG");																																						// ICO must be not started
+		require(s.stage == LibAppStorage.CrowdsaleStage.NotCreated, "ERRD_MUST_ONG");																															// ICO must be not started
 		require(s.totaluUSDTInvested == 0, "ERRD_MUST_ONG");																																											// ICO must not have investment
 		require(percentVested_ < 100, "ERRR_VEST_100");																																														// Vesting percentage smaller than 100
 
@@ -46,10 +46,10 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 
 	// Crowdsale Stage
 	function getCrowdsaleStage() external view returns (LibAppStorage.CrowdsaleStage) {
-		return LibAppStorage.appStorage().stage;
+		return LibAppStorage.appStorage(loc.location).stage;
 	}
 	function setCrowdsaleStage(uint stage_) external onlyOwner {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		if(uint(LibAppStorage.CrowdsaleStage.NotCreated) == stage_) {							// 0
 			s.stage = LibAppStorage.CrowdsaleStage.NotCreated;
@@ -68,7 +68,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	event UpdatedCrowdsaleStage(uint stage_);
 
 	function reset() external onlyOwner {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 				
 		s.uUsdPrice = 0;
 		s.hardCapuUSD = 0;
@@ -95,18 +95,18 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	/********************************************************************************************************/
 	// Payment Tokens
 	function getPaymentSymbols() external view returns (string[] memory) {
-		return LibAppStorage.appStorage().paymentSymbols;
+		return LibAppStorage.appStorage(loc.location).paymentSymbols;
 	}
 
 	function getPaymentToken(string calldata symbol) external view returns(LibAppStorage.PaymentToken memory) {
-		return LibAppStorage.appStorage().paymentTokens[symbol];
+		return LibAppStorage.appStorage(loc.location).paymentTokens[symbol];
 	}
 	function setPaymentToken(string calldata symbol, address tokenAdd, address priceFeed, uint256 uUSDPerTokens, uint8 decimals) external onlyOwner {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		require(tokenAdd !=  address(0), "ERRW_INVA_ADD");
 
-		if (LibAppStorage.appStorage().paymentTokens[symbol].ptDecimals == 0) {
+		if (LibAppStorage.appStorage(loc.location).paymentTokens[symbol].ptDecimals == 0) {
 			s.paymentSymbols.push(symbol);
 		}
 
@@ -124,7 +124,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	event AddedPaymentToken(string symbol);
 
 	function deletePaymentToken(string calldata symbol, uint8 index) external onlyOwner {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		require(keccak256(bytes(symbol)) == keccak256(bytes(s.paymentSymbols[index])), "ERRP_INDX_PAY");
 
@@ -141,7 +141,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 
 	// price update
 	function getUusdPerToken(string calldata symbol) external view returns (uint256) {
-		AggregatorV3Interface currencyToUsdPriceFeed = AggregatorV3Interface(LibAppStorage.appStorage().paymentTokens[symbol].ptPriceFeed);
+		AggregatorV3Interface currencyToUsdPriceFeed = AggregatorV3Interface(LibAppStorage.appStorage(loc.location).paymentTokens[symbol].ptPriceFeed);
 		(,int256 answer,,,) = currencyToUsdPriceFeed.latestRoundData();
 		return(uint256(answer) * 10**6 / 10**currencyToUsdPriceFeed.decimals());
 	}
@@ -150,7 +150,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	/*********************************************** Invested ***********************************************/
 	/********************************************************************************************************/
 	function getTotaluUSDInvested() external view returns (uint256) {
-		return LibAppStorage.appStorage().totaluUSDTInvested;
+		return LibAppStorage.appStorage(loc.location).totaluUSDTInvested;
 	}	
 
 	/**
@@ -160,10 +160,10 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	 * There is not a crosschain supply integrity solution in current state of arts
 	 */
 	function getHardCap() external view returns (uint256) {
-		return LibAppStorage.appStorage().hardCapuUSD / 10**6;
+		return LibAppStorage.appStorage(loc.location).hardCapuUSD / 10**6;
 	}
 	function setHardCapuUSD(uint256 hardCap) external onlyOwner {
-		LibAppStorage.appStorage().hardCapuUSD = hardCap;
+		LibAppStorage.appStorage(loc.location).hardCapuUSD = hardCap;
 		emit UpdatedHardCap(hardCap);
 	}
 	event UpdatedHardCap(uint256 hardCap);
@@ -175,24 +175,24 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	 * There is not a crosschain supply integrity solution in current state of arts
 	 */
 	function getSoftCap() external view returns (uint256) {
-		return LibAppStorage.appStorage().softCapuUSD / 10**6;
+		return LibAppStorage.appStorage(loc.location).softCapuUSD / 10**6;
 	}
 	function setSoftCapuUSD(uint256 softCap) external onlyOwner {
-		LibAppStorage.appStorage().softCapuUSD = softCap;
+		LibAppStorage.appStorage(loc.location).softCapuUSD = softCap;
 		emit UpdatedSoftCap(softCap);
 	}
 	event UpdatedSoftCap(uint256 hardCap);
 
 	// Crowdsale Price
 	function getPriceuUSD() external view returns (uint256) {
-		return LibAppStorage.appStorage().uUsdPrice;
+		return LibAppStorage.appStorage(loc.location).uUsdPrice;
 	}
 	
 	function gettDynamicPrice() external view returns(bool) {
-		return LibAppStorage.appStorage().dynamicPrice;
+		return LibAppStorage.appStorage(loc.location).dynamicPrice;
 	}
 	function setDynamicPrice(bool dynPrice) external onlyOwner {
-		LibAppStorage.appStorage().dynamicPrice = dynPrice;
+		LibAppStorage.appStorage(loc.location).dynamicPrice = dynPrice;
 		emit UpdatedDynamicPrice(dynPrice);
 	}
 	event UpdatedDynamicPrice(bool dynPrice);
@@ -202,29 +202,29 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	/********************************************************************************************************/
 	// Investors
 	function getInvestors() external view returns (address[] memory) {
-		return LibAppStorage.appStorage().investors;
+		return LibAppStorage.appStorage(loc.location).investors;
 	}
 	function getInvestorsCount() external view returns(uint) {  
-		return LibAppStorage.appStorage().investors.length;
+		return LibAppStorage.appStorage(loc.location).investors.length;
 	}
 
 	function getContribution(address investor, string calldata symbol) external view returns(uint256){
 		require(investor !=  address(0), "ERRW_INVA_ADD");
-		return LibAppStorage.appStorage().contributions[investor].conts[symbol].cAmountInvested;
+		return LibAppStorage.appStorage(loc.location).contributions[investor].conts[symbol].cAmountInvested;
 	}
 
 	function getuUSDContribution(address investor, string calldata symbol) external view returns(uint256){
 		require(investor !=  address(0), "ERRW_INVA_ADD");
-		return LibAppStorage.appStorage().contributions[investor].conts[symbol].cuUSDInvested;
+		return LibAppStorage.appStorage(loc.location).contributions[investor].conts[symbol].cuUSDInvested;
 	}
 
 	function getuUSDInvested(address investor) external view returns(uint256){
 		require(investor !=  address(0), "ERRW_INVA_ADD");
-		return LibAppStorage.appStorage().contributions[investor].uUSDInvested;
+		return LibAppStorage.appStorage(loc.location).contributions[investor].uUSDInvested;
 	}
 	function getuUSDToClaim(address investor) external view returns(uint256){
 		require(investor !=  address(0), "ERRW_INVA_ADD");
-		return LibAppStorage.appStorage().contributions[investor].uUSDToPay;
+		return LibAppStorage.appStorage(loc.location).contributions[investor].uUSDToPay;
 	}
 
 	/********************************************************************************************************/
@@ -241,7 +241,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 	}
 
 	function depositWithuUSD(string memory symbol, uint256 rawAmountWitDecimals) internal {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		// update price. Consider chainlink returning zero or negative
 		// stale case is ignored because investor is prompted a price in the UI, the difference can be minimal, and check would need using block.timestamp and higher gas consumption
@@ -259,7 +259,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 
 	// receive contribution
 	function deposit(string memory symbol, uint256 rawAmountWitDecimals, uint uUSDAmount) internal {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		require(s.stage == LibAppStorage.CrowdsaleStage.Ongoing, "ERRD_MUST_ONG");																																		// ICO must be ongoing
 		require(!s.useBlacklist || !s.blacklisted[msg.sender], 'ERRD_MUSN_BLK');																																			// must not be blacklisted
@@ -311,7 +311,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		refundInvestor(symbol, investor);
 	}
 	function refundInvestor(string calldata symbol, address investor) internal {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		require(s.stage == LibAppStorage.CrowdsaleStage.Finished, "ERRR_MUST_FIN");																																									// ICO must be finished
 		require(s.totaluUSDTInvested < s.softCapuUSD, "ERRR_PASS_SOF");																																									// Passed SoftCap. No refund
@@ -348,7 +348,7 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		claimInvestor(investor);
 	}
 	function claimInvestor(address investor) internal {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		require(s.stage == LibAppStorage.CrowdsaleStage.Finished, "ERRC_MUST_FIN");																																		// ICO must be finished
 		require(s.totaluUSDTInvested > s.softCapuUSD, "ERRC_NPAS_SOF");																																								// Not passed SoftCap
@@ -391,28 +391,28 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		console.log('setTokenAddress', msg.sender);
 		require(add !=  address(0), "ERRW_INVA_ADD");
 
-		LibAppStorage.appStorage().tokenAddress = add;
+		LibAppStorage.appStorage(loc.location).tokenAddress = add;
 	
 		emit UpdatedTokenAddress(add);
 	}
 	event UpdatedTokenAddress(address payable add);
 
 	function getTokenAddress() external view returns (address) {
-		return LibAppStorage.appStorage().tokenAddress;
+		return LibAppStorage.appStorage(loc.location).tokenAddress;
 	}
 
 	// vesting
 	function getPercentVested() external view returns (uint256) {
-		return LibAppStorage.appStorage().percentVested;
+		return LibAppStorage.appStorage(loc.location).percentVested;
 	}
 	function setPercentVested(uint256 percentVested) external onlyOwner {
-		LibAppStorage.appStorage().percentVested = percentVested;
+		LibAppStorage.appStorage(loc.location).percentVested = percentVested;
 		emit UpdatedHardCap(percentVested);
 	}
 	event UpdatedPercentVested(uint256 percentVested);
 
 	function getVestingId() external view returns (string memory) {
-		return LibAppStorage.appStorage().vestingId;
+		return LibAppStorage.appStorage(loc.location).vestingId;
 	}
 
 	// vesting Address
@@ -420,21 +420,21 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		console.log('setVestingAddress', msg.sender);
 		require(add !=  address(0), "ERRW_INVA_ADD");
 
-		LibAppStorage.appStorage().vestingAddress = add;
+		LibAppStorage.appStorage(loc.location).vestingAddress = add;
 	
 		emit UpdatedVestingAddress(add);
 	}
 	event UpdatedVestingAddress(address add);
 
 	function getVestingAddress() external view returns (address) {
-		return LibAppStorage.appStorage().vestingAddress;
+		return LibAppStorage.appStorage(loc.location).vestingAddress;
 	}
 
 	/********************************************************************************************************/
 	/*************************************************** Withdraw *******************************************/
 	/********************************************************************************************************/
 	function withdraw(string calldata symbol, uint8 percentage) external nonReentrant onlyOwner {
-		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage();
+		LibAppStorage.AppStorage storage s = LibAppStorage.appStorage(loc.location);
 
 		require(s.totaluUSDTInvested > s.softCapuUSD, "ERRW_NPAS_SOF");																																								// Not passed SoftCap
 		require(s.targetWalletAddress != address(0x0), "ERRW_MISS_WAL");																																							// Provide Wallet
@@ -467,14 +467,14 @@ contract CrowdsaleFacet is AntiWhaleNoStorage, ReentrancyGuardUpgradeableNoStora
 		console.log('setTargetWalletAddress', msg.sender);
 		require(add !=  address(0), "ERRW_INVA_ADD");
 
-		LibAppStorage.appStorage().targetWalletAddress = add;
+		LibAppStorage.appStorage(loc.location).targetWalletAddress = add;
 
 		emit UpdatedTargetWalletAddress(add);
 	}
 	event UpdatedTargetWalletAddress(address payable add);
 
 	function getTargetWalletAddress() external view returns (address) {
-		return LibAppStorage.appStorage().targetWalletAddress;
+		return LibAppStorage.appStorage(loc.location).targetWalletAddress;
 	}
 
 }

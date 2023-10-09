@@ -46,6 +46,8 @@ describe("ico-002-standalone-vesting-config-test", function () {
 
 		// initialize
 		console.log('initializing')
+		await expect(vesting.setStorage()).not.to.be.reverted;
+		await expect(token.setStorage()).not.to.be.reverted;
 		await expect(await token.owner()).to.equal('0x0000000000000000000000000000000000000000');
 		await expect(token.initialize("CatallacticERC20", "CATA", BigInt(200_000_000 * 10**18))).not.to.be.reverted;
 		await expect(await token.owner()).to.equal(owner.address);
@@ -81,9 +83,12 @@ describe("ico-002-standalone-vesting-config-test", function () {
 	/********************************************************************************************************/
 	it("Only Owner functions", async() => {
 
-		// vesting functions 
+		// vesting functions
+		console.log("Addresses1:");
 		await expect(vesting.createVesting('abc', Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
+		console.log("Addresses2:");
 		await expect(vesting.connect(addr1).createVesting('abc', Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).to.be.revertedWith('ERRW_OWNR_NOT');
+		console.log("Addresses3:");
 
 		// vesting schedule functions
 		await expect(vesting.createVestingSchedule(addr1.address, 100_000_000, 'abc')).to.be.revertedWith('onlyGrantor');

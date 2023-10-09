@@ -44,7 +44,7 @@ abstract contract OwnableUpgradeableNoStorage is InitializableNoStorage {
      * @dev Returns the address of the current owner.
      */
     function owner() public view virtual returns (address) {
-        return LibAppStorage.appStorage()._owner;
+        return LibAppStorage.appStorage(loc.location)._owner;
     }
 
     /**
@@ -79,8 +79,8 @@ abstract contract OwnableUpgradeableNoStorage is InitializableNoStorage {
      * Internal function without access restriction.
      */
     function _transferOwnership(address newOwner) internal virtual {
-        address oldOwner = LibAppStorage.appStorage()._owner;
-        LibAppStorage.appStorage()._owner = newOwner;
+        address oldOwner = LibAppStorage.appStorage(loc.location)._owner;
+        LibAppStorage.appStorage(loc.location)._owner = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
     }
 

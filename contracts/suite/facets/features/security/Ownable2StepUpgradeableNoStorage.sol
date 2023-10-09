@@ -32,7 +32,7 @@ abstract contract Ownable2StepUpgradeableNoStorage is InitializableNoStorage, Ow
      * @dev Returns the address of the pending owner.
      */
     function pendingOwner() public view virtual returns (address) {
-        return LibAppStorage.appStorage()._pendingOwner;
+        return LibAppStorage.appStorage(loc.location)._pendingOwner;
     }
 
     /**
@@ -40,7 +40,7 @@ abstract contract Ownable2StepUpgradeableNoStorage is InitializableNoStorage, Ow
      * Can only be called by the current owner.
      */
     function transferOwnership(address newOwner) public virtual override onlyOwner {
-        LibAppStorage.appStorage()._pendingOwner = newOwner;
+        LibAppStorage.appStorage(loc.location)._pendingOwner = newOwner;
         emit OwnershipTransferStarted(owner(), newOwner);
     }
 
@@ -49,7 +49,7 @@ abstract contract Ownable2StepUpgradeableNoStorage is InitializableNoStorage, Ow
      * Internal function without access restriction.
      */
     function _transferOwnership(address newOwner) internal virtual override {
-        delete LibAppStorage.appStorage()._pendingOwner;
+        delete LibAppStorage.appStorage(loc.location)._pendingOwner;
         super._transferOwnership(newOwner);
     }
 

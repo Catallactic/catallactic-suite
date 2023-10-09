@@ -13,14 +13,14 @@ contract CommonFacet is InitializableNoStorage, Ownable2StepUpgradeableNoStorage
 	function setTokenAddress(address payable add) external onlyOwner {
 		require(add !=  address(0), "ERRW_INVA_ADD");
 
-		LibAppStorage.appStorage().tokenAddress = add;
+		LibAppStorage.appStorage(loc.location).tokenAddress = add;
 	
 		emit UpdatedTokenAddress(add);
 	}
 	event UpdatedTokenAddress(address payable add);
 
 	function getTokenAddress() external view returns (address) {
-		return LibAppStorage.appStorage().tokenAddress;
+		return LibAppStorage.appStorage(loc.location).tokenAddress;
 	}
 
 }

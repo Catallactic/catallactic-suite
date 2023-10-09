@@ -121,6 +121,7 @@ describe("ico-112-diamond-all-coin-ok-test", function () {
 
 		// initialize
 		console.log('initializing')
+		await expect(common.setStorage()).not.to.be.reverted;
 		await expect(await common.owner()).to.equal('0x0000000000000000000000000000000000000000');
 		await expect(token.initialize("CatallacticERC20", "CATA", BigInt(200_000_000 * 10**18))).not.to.be.reverted;
 		await expect(vesting.createVesting('abc', Date.now(), helpers.TIME.MILLIS_IN_MONTH, helpers.TIME.MILLIS_IN_YEAR, 12)).not.to.be.reverted;
