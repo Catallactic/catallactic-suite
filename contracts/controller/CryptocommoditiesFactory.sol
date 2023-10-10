@@ -6,7 +6,10 @@ import "../suite/framework/DiamondCutFacet.sol";
 
 contract CryptocommoditiesFactory {
 
-	// facetsRegistry
+
+	/********************************************************************************************************/
+	/****************************************** Facets Registry *********************************************/
+	/********************************************************************************************************/
 	mapping(string => mapping(uint256 => address)) facetsRegistry;
 
 	function setFacet(string calldata facetType, uint256 facetVersion, address facetAddress) external {
@@ -17,7 +20,63 @@ contract CryptocommoditiesFactory {
 		return facetsRegistry[facetType][facetVersion];
 	}
 
-	// cryptocommodities
+	/********************************************************************************************************/
+	/******************************************* Payment Tokens *********************************************/
+	/********************************************************************************************************/
+	struct PaymentToken {
+		address ptTokenAddress;
+		address ptPriceFeed;
+		uint256 ptUUSD_PER_TOKEN;
+		uint8 ptDecimals;
+		uint256 ptuUSDInvested;
+		uint256 ptAmountInvested;
+	}
+	string[] paymentSymbols;															// no reset
+	mapping (string => PaymentToken) paymentTokens;				// no reset
+
+	// Payment Tokens
+	function getPaymentSymbols() external view returns (string[] memory) {
+		return paymentSymbols;
+	}
+
+	function getPaymentToken(string calldata symbol) external view returns(PaymentToken memory) {
+		return paymentTokens[symbol];
+	}
+	function setPaymentToken(string calldata symbol, address tokenAdd, address priceFeed, uint256 uUSDPerTokens, uint8 decimals) external /*onlyOwner*/ {
+		require(tokenAdd !=  address(0), "ERRW_INVA_ADD");
+
+		if (paymentTokens[symbol].ptDecimals == 0) {
+			paymentSymbols.push(symbol);
+		}
+
+		paymentTokens[symbol] = PaymentToken({
+      ptTokenAddress: tokenAdd,
+      ptPriceFeed: priceFeed,
+			ptUUSD_PER_TOKEN: uUSDPerTokens,
+			ptDecimals: decimals,
+			ptuUSDInvested: 0,
+			ptAmountInvested: 0
+    });
+
+		emit AddedPaymentToken(symbol);
+	}
+	event AddedPaymentToken(string symbol);
+
+	function deletePaymentToken(string calldata symbol, uint8 index) external /*onlyOwner*/ {
+		require(keccak256(bytes(symbol)) == keccak256(bytes(paymentSymbols[index])), "ERRP_INDX_PAY");
+
+		delete paymentTokens[symbol];
+
+		paymentSymbols[index] = paymentSymbols[paymentSymbols.length - 1];
+		paymentSymbols.pop();
+
+		emit DeletedPaymentToken(symbol);
+	}
+	event DeletedPaymentToken(string symbol);
+
+	/********************************************************************************************************/
+	/******************************************* Cryptocommodities ******************************************/
+	/********************************************************************************************************/
 	mapping(address => mapping(string => address)) cryptocommodities;
 
 	function createCryptocommodity(address crytocommodityOwner, string calldata crytocommodityName) external {
