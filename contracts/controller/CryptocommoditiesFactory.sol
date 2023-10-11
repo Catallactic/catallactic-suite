@@ -7,6 +7,14 @@ import "../suite/framework/DiamondCutFacet.sol";
 contract CryptocommoditiesFactory {
 
 
+	fallback() external payable {
+    console.log("----- fallback:", msg.value);
+  }
+
+	receive() external payable {
+		console.log("----- receive:", msg.value);
+	}
+
 	/********************************************************************************************************/
 	/****************************************** Facets Registry *********************************************/
 	/********************************************************************************************************/
@@ -77,18 +85,30 @@ contract CryptocommoditiesFactory {
 	/********************************************************************************************************/
 	/******************************************* Cryptocommodities ******************************************/
 	/********************************************************************************************************/
-	mapping(address => mapping(string => address)) cryptocommodities;
+	mapping(address => string[]) cryptocommoditiesByAccount;
 
-	function createCryptocommodity(address crytocommodityOwner, string calldata crytocommodityName) external {
-		require(cryptocommodities[crytocommodityOwner][crytocommodityName] == address(0), 'Existing cryptocommodity');
+	function getCryptocommodities() external view returns(string[] memory) {
+		return cryptocommoditiesByAccount[msg.sender];
+	}
+
+	function getCryptocommoditiesByAddress(address crytocommodityOwner) external view returns(string[] memory) {
+		return cryptocommoditiesByAccount[crytocommodityOwner];
+	}
+
+	mapping(string => address) cryptocommodities;
+
+	function createCryptocommodity(string calldata crytocommodityName) external {
+		require(cryptocommodities[crytocommodityName] == address(0), 'Existing cryptocommodity');
 
 		address diamondCutFacetAddress = facetsRegistry['DiamondCutFacet'][1];
 		Diamond diamond = new Diamond(diamondCutFacetAddress);
-		cryptocommodities[crytocommodityOwner][crytocommodityName] = address(diamond);
+
+		cryptocommoditiesByAccount[msg.sender].push(crytocommodityName);
+		cryptocommodities[crytocommodityName] = address(diamond);
 	}
 
-	function getCryptocommodity(address crytocommodityOwner, string calldata crytocommodityName) external view returns(address) {
-		return cryptocommodities[crytocommodityOwner][crytocommodityName];
+	function getCryptocommodity(string calldata crytocommodityName) external view returns(address) {
+		return cryptocommodities[crytocommodityName];
 	}
 
 }
