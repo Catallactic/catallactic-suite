@@ -18,14 +18,50 @@ contract CryptocommoditiesFactory {
 	/********************************************************************************************************/
 	/****************************************** Facets Registry *********************************************/
 	/********************************************************************************************************/
-	mapping(string => mapping(uint256 => address)) facetsRegistry;
+	string[] facetTypes;
 
-	function setFacet(string calldata facetType, uint256 facetVersion, address facetAddress) external {
+	mapping(string => string[]) facetVersions;
+
+	mapping(string => mapping(string => address)) facetsRegistry;
+
+	function getFacetTypes() external view returns(string[] memory) {
+		return facetTypes;
+	}
+
+	function getFacetAddress(string calldata facetType, string calldata facetVersion) external view returns(address) {
+		return facetsRegistry[facetType][facetVersion];
+	}
+
+	function setFacetVersion(string calldata facetType, string calldata facetVersion, address facetAddress) external {
+		require(facetsRegistry[facetType][facetVersion] == address(0), "ERRW_INVA_ADD");
+
+		if(facetVersions[facetType].length == 0)
+			facetTypes.push(facetType);
+
+		facetVersions[facetType].push(facetVersion);
+
 		facetsRegistry[facetType][facetVersion] = facetAddress;
 	}
 
-	function getFacet(string calldata facetType, uint256 facetVersion) external view returns(address) {
-		return facetsRegistry[facetType][facetVersion];
+	struct FacetVersion { 
+		string facetVersion;
+		address facetAddress;
+	}
+
+	function getFacetVersions(string calldata facetType) external view returns (FacetVersion[] memory) {
+		uint arrayLength = facetVersions[facetType].length;
+		FacetVersion[] memory response = new FacetVersion[](arrayLength);
+
+		for (uint i = 0; i < arrayLength; i++) {
+
+			response[i] = FacetVersion({
+											facetVersion: facetVersions[facetType][i],
+											facetAddress: facetsRegistry[facetType][facetVersions[facetType][i]]
+										});
+
+		}
+
+		return response;
 	}
 
 	/********************************************************************************************************/
@@ -100,7 +136,7 @@ contract CryptocommoditiesFactory {
 	function createCryptocommodity(string calldata crytocommodityName) external {
 		require(cryptocommodities[crytocommodityName] == address(0), 'Existing cryptocommodity');
 
-		address diamondCutFacetAddress = facetsRegistry['DiamondCutFacet'][1];
+		address diamondCutFacetAddress = facetsRegistry['DiamondCutFacet']['1.0'];
 		Diamond diamond = new Diamond(diamondCutFacetAddress);
 
 		cryptocommoditiesByAccount[msg.sender].push(crytocommodityName);

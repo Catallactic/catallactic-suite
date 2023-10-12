@@ -89,15 +89,15 @@ describe("ico-211-factory-all-coin-nok-test", function () {
 		// deploy Diamond Cryptocommodity
 
 		// populate factory
-		await expect(cryptocommoditiesFactory.setFacet('DiamondCutFacet', 1.0, diamondCutFacet.address)).to.not.be.reverted;
-		await expect(cryptocommoditiesFactory.setFacet('DiamondLoupeFacet', 1.0, diamondLoupeFacet.address)).to.not.be.reverted;
-		await expect(cryptocommoditiesFactory.setFacet('CommonFacet', 1.0, commonFacet.address)).to.not.be.reverted;
-		await expect(cryptocommoditiesFactory.setFacet('CrowdsaleFacet', 1.0, crowdsaleFacet.address)).to.not.be.reverted;
-		await expect(cryptocommoditiesFactory.setFacet('ERC20Facet', 1.0, erc20Facet.address)).to.not.be.reverted;
+		await expect(cryptocommoditiesFactory.setFacetVersion('DiamondCutFacet', '1.0', diamondCutFacet.address)).to.not.be.reverted;
+		await expect(cryptocommoditiesFactory.setFacetVersion('DiamondLoupeFacet', '1.0', diamondLoupeFacet.address)).to.not.be.reverted;
+		await expect(cryptocommoditiesFactory.setFacetVersion('CommonFacet', '1.0', commonFacet.address)).to.not.be.reverted;
+		await expect(cryptocommoditiesFactory.setFacetVersion('CrowdsaleFacet', '1.0', crowdsaleFacet.address)).to.not.be.reverted;
+		await expect(cryptocommoditiesFactory.setFacetVersion('ERC20Facet', '1.0', erc20Facet.address)).to.not.be.reverted;
 
 		// with factory
-		await expect(cryptocommoditiesFactory.createCryptocommodity(owner.address, 'TEST')).to.not.be.reverted;
-		let diamondAddress = await cryptocommoditiesFactory.getCryptocommodity(owner.address, 'TEST');
+		await expect(cryptocommoditiesFactory.createCryptocommodity('TEST')).to.not.be.reverted;
+		let diamondAddress = await cryptocommoditiesFactory.getCryptocommodity('TEST');
 		console.log('Diamond Address:', diamondAddress)
 		let diamond = await ethers.getContractAt('Diamond', diamondAddress);
 

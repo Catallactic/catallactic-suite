@@ -75,12 +75,12 @@ async function main() {
 	// deploy Diamond Cryptocommodity
 
 	// populate factory
-	cryptocommoditiesFactory.setFacet('DiamondCutFacet', 1.0, diamondCutFacet.address);
-	cryptocommoditiesFactory.setFacet('DiamondLoupeFacet', 1.0, diamondLoupeFacet.address);
-	cryptocommoditiesFactory.setFacet('CommonFacet', 1.0, commonFacet.address);
-	cryptocommoditiesFactory.setFacet('CrowdsaleFacet', 1.0, crowdsaleFacet.address);
-	cryptocommoditiesFactory.setFacet('VestingFacet', 1.0, vestingFacet.address);
-	cryptocommoditiesFactory.setFacet('ERC20Facet', 1.0, erc20Facet.address);
+	cryptocommoditiesFactory.setFacetVersion('DiamondCutFacet', '1.0', diamondCutFacet.address);
+	cryptocommoditiesFactory.setFacetVersion('DiamondLoupeFacet', '1.0', diamondLoupeFacet.address);
+	cryptocommoditiesFactory.setFacetVersion('CommonFacet', '1.0', commonFacet.address);
+	cryptocommoditiesFactory.setFacetVersion('CrowdsaleFacet', '1.0', crowdsaleFacet.address);
+	cryptocommoditiesFactory.setFacetVersion('VestingFacet', '1.0', vestingFacet.address);
+	cryptocommoditiesFactory.setFacetVersion('ERC20Facet', '1.0', erc20Facet.address);
 
 	// with factory
 	/*cryptocommoditiesFactory.createCryptocommodity(owner.address, 'TEST');
@@ -326,16 +326,19 @@ async function main() {
 		// deploy WBTC
 		// https://mumbai.polygonscan.com/address/0x0d787a4a1548f673ed375445535a6c7a1ee56180
 		// https://github.com/swaponline/MultiCurrencyWallet/blob/master/docs/FAUCETS.md
+		await cryptocommoditiesFactory.setPaymentToken("WBTC", '0x0d787a4a1548f673ed375445535a6c7A1EE56180', '0x007A22900a3B98143368Bd5906f8E17e9867581b', Math.floor(DEF_PRICE_BTC_IN_USD * 10**6), 8);
 		console.log("WBTC installed");
-
+1
 		// deploy ETH
 		// https://mumbai.polygonscan.com/token/0xa6fa4fb5f76172d178d61b04b0ecd319c5d1c0aa
 		// https://staging.aave.com/#/faucet
 		// https://faucet.paradigm.xyz/
+		await cryptocommoditiesFactory.setPaymentToken("WETH", '0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa', "0x0715A7794a1dc8e42615F059dD6e406A6594651A", Math.floor(DEF_PRICE_ETH_IN_USD * 10**6), 18);
 		console.log("WETH installed");
 
 		// deploy MATIC
 		// https://faucet.polygon.technology/
+		await cryptocommoditiesFactory.setPaymentToken("COIN", cryptocommoditiesFactory.address, "0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada", Math.floor(DEF_PRICE_MATIC_IN_USD * 10**6), 18);
 		console.log("COIN installed");
 
 		// deploy BNB
@@ -343,6 +346,7 @@ async function main() {
 		const BNB = await ethers.getContractFactory("FOO");
 		const bnb = await BNB.deploy("BNB", "BNB");
 		await bnb.deployed();
+		await cryptocommoditiesFactory.setPaymentToken("BNB", bnb.address, chainLinkAggregator.address, Math.floor(DEF_PRICE_BNB_IN_USD * 10**6), 18);
 		await bnb.transfer('0x20caa5fa15c4177cd6946b8041ef40447db27539', ethers.utils.parseUnits("1000000", 18).toString());
 		console.log("BNB deployed to:", bnb.address);
 		console.log("BNB owner balance: " + await bnb.balanceOf(owner.address));
@@ -352,14 +356,8 @@ async function main() {
 		// deploy USDT
 		// https://mumbai.polygonscan.com/address/0xa02f6adc7926efebbd59fd43a84f4e0c0c91e832
 		// https://calibration-faucet.filswan.com/#/dashboard
-		console.log("USDT installed");
-
-		// add Payment Tokens
-		await cryptocommoditiesFactory.setPaymentToken("WBTC", '0x0d787a4a1548f673ed375445535a6c7A1EE56180', '0x007A22900a3B98143368Bd5906f8E17e9867581b', Math.floor(DEF_PRICE_BTC_IN_USD * 10**6), 8);
-		await cryptocommoditiesFactory.setPaymentToken("WETH", '0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa', "0x0715A7794a1dc8e42615F059dD6e406A6594651A", Math.floor(DEF_PRICE_ETH_IN_USD * 10**6), 18);
-		await cryptocommoditiesFactory.setPaymentToken("COIN", cryptocommoditiesFactory.address, "0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada", Math.floor(DEF_PRICE_MATIC_IN_USD * 10**6), 18);
-		await cryptocommoditiesFactory.setPaymentToken("BNB", bnb.address, chainLinkAggregator.address, Math.floor(DEF_PRICE_BNB_IN_USD * 10**6), 18);
 		await cryptocommoditiesFactory.setPaymentToken("USDT", '0xa02f6adc7926efebbd59fd43a84f4e0c0c91e832', '0x92C09849638959196E976289418e5973CC96d645', Math.floor(DEF_PRICE_USDT_IN_USD * 10**6), 6);
+		console.log("USDT installed");
 
 	}
 

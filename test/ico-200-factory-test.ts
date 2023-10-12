@@ -100,16 +100,16 @@ describe("ico-200-factory-test", function () {
 		console.log('Diamond deployed:', diamond.address)*/
 
 		// populate factory
-		await expect(cryptocommoditiesFactory.setFacet('DiamondCutFacet', 1.0, diamondCutFacet.address)).to.not.be.reverted;
-		await expect(cryptocommoditiesFactory.setFacet('DiamondLoupeFacet', 1.0, diamondLoupeFacet.address)).to.not.be.reverted;
-		await expect(cryptocommoditiesFactory.setFacet('CommonFacet', 1.0, commonFacet.address)).to.not.be.reverted;
-		await expect(cryptocommoditiesFactory.setFacet('CrowdsaleFacet', 1.0, crowdsaleFacet.address)).to.not.be.reverted;
-		await expect(cryptocommoditiesFactory.setFacet('VestingFacet', 1.0, vestingFacet.address)).to.not.be.reverted;
-		await expect(cryptocommoditiesFactory.setFacet('ERC20Facet', 1.0, erc20Facet.address)).to.not.be.reverted;
+		await expect(cryptocommoditiesFactory.setFacetVersion('DiamondCutFacet', '1.0', diamondCutFacet.address)).to.not.be.reverted;
+		await expect(cryptocommoditiesFactory.setFacetVersion('DiamondLoupeFacet', '1.0', diamondLoupeFacet.address)).to.not.be.reverted;
+		await expect(cryptocommoditiesFactory.setFacetVersion('CommonFacet', '1.0', commonFacet.address)).to.not.be.reverted;
+		await expect(cryptocommoditiesFactory.setFacetVersion('CrowdsaleFacet', '1.0', crowdsaleFacet.address)).to.not.be.reverted;
+		await expect(cryptocommoditiesFactory.setFacetVersion('VestingFacet', '1.0', vestingFacet.address)).to.not.be.reverted;
+		await expect(cryptocommoditiesFactory.setFacetVersion('ERC20Facet', '1.0', erc20Facet.address)).to.not.be.reverted;
 
 		// with factory
-		await expect(cryptocommoditiesFactory.createCryptocommodity(owner.address, 'TEST')).to.not.be.reverted;
-		let diamondAddress = await cryptocommoditiesFactory.getCryptocommodity(owner.address, 'TEST');
+		await expect(cryptocommoditiesFactory.createCryptocommodity('TEST')).to.not.be.reverted;
+		let diamondAddress = await cryptocommoditiesFactory.getCryptocommodity('TEST');
 		console.log('Diamond Address:', diamondAddress)
 		let diamond = await ethers.getContractAt('Diamond', diamondAddress);
 
@@ -180,26 +180,23 @@ describe("ico-200-factory-test", function () {
 	});
 
 	/********************************************************************************************************/
-	/********************************************* supporting functions *************************************/
+	/****************************************** CryptocommoditiesFactory ************************************/
 	/********************************************************************************************************/
-	it("Initial Logs.", async() => {
+	it("Test Facets", async() => {
 
-		//console.log("\tgetMaxTransfer: " + weiToUsd(await ico.getMaxTransfer()) + " USD");
-		//console.log("\tgetMinTransfer: " + weiToUsd(await ico.getMinTransfer()) + " USD");
-		//console.log("\tgetMaxInvestment: " + weiToUsd(await ico.getMaxInvestment()) + " USD");
-		//console.log("\tgetHardCap: " + weiToUsd(await ico.getHardCap()) + " USD")
 
-		console.log("\n");
-		console.log("Addresses:");
-		console.log("\towner address: " + owner.address);
-		console.log("\tico address: " + ico.address);
-		console.log("\tico owner address: " + await ico.owner());
-		console.log("\ttoken address: " + token.address);
-		console.log("\ttoken owner address: " + await token.owner());
-		console.log("\ttoken owner balance: " + await token.balanceOf(await token.owner()));
-		console.log("\tproject address: " + project.address);
-		console.log("\tliquidity address: " + liquidity.address);
-		console.log("\n");
+
+	});
+
+	it("Test Payment Tokens", async() => {
+
+
+
+	});
+
+	it("Test Cryptocommodities", async() => {
+
+
 
 	});
 
