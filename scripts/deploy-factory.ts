@@ -31,41 +31,41 @@ async function main() {
 	// ***********************************************************************************************************************************************************
 	// ********************************************************* Install Versionable Facets and register in factory **********************************************
 	// ***********************************************************************************************************************************************************
-	// deploy DiamondCutFacet
-	const DiamondCutFacet = await ethers.getContractFactory('DiamondCutFacet')
-	let diamondCutFacet = await DiamondCutFacet.deploy()
-	await diamondCutFacet.deployed();
-	console.log('DiamondCutFacet deployed:', diamondCutFacet.address)
+	// deploy DiamondCutFacet (CUD)
+	const DiamondCutFacetFactory = await ethers.getContractFactory('DiamondCutFacet')
+	const diamondCutFacetStandalone = await DiamondCutFacetFactory.deploy();
+	await diamondCutFacetStandalone.deployed();
+	console.log('DiamondCutFacet deployed:', diamondCutFacetStandalone.address)
 
-	// deploy DiamondLoupeFacet *****************************************
-	const DiamondLoupeFacet = await ethers.getContractFactory('DiamondLoupeFacet')
-	let diamondLoupeFacet = await DiamondLoupeFacet.deploy()
-	await diamondLoupeFacet.deployed();
-	console.log('DiamondLoupeFacet deployed:', diamondLoupeFacet.address)
+	// deploy DiamondLoupeFacet (R)
+	const DiamondLoupeFacetFactory = await ethers.getContractFactory('DiamondLoupeFacet')
+	const diamondLoupeFacetStandalone = await DiamondLoupeFacetFactory.deploy();
+	await diamondLoupeFacetStandalone.deployed();
+	console.log('DiamondLoupeFacet deployed:', diamondLoupeFacetStandalone.address)
 
-	// deploy Common facet
-	let CommonFacet = await ethers.getContractFactory("CommonFacet");
-	let commonFacet = await CommonFacet.deploy();
-	await commonFacet.deployed();
-	console.log("CommonFacet deployed:" + commonFacet.address);
+	// deploy Common Facet
+	const CommonFacetFactory = await ethers.getContractFactory("CommonFacet");
+	const commonFacetStandalone = await CommonFacetFactory.deploy();
+	await commonFacetStandalone.deployed();
+	console.log("CommonFacet deployed:" + commonFacetStandalone.address);
 
-	// deploy Crowdsale facet
-	let CrowdsaleFacet = await ethers.getContractFactory("CrowdsaleFacet");
-	let crowdsaleFacet = await CrowdsaleFacet.deploy();
-	await crowdsaleFacet.deployed();
-	console.log("CrowdsaleFacet deployed:" + crowdsaleFacet.address);
+	// deploy Crowdsale Facet
+	const CrowdsaleFacetFactory = await ethers.getContractFactory("CrowdsaleFacet");
+	const crowdsaleFacetStandalone = await CrowdsaleFacetFactory.deploy();
+	await crowdsaleFacetStandalone.deployed();
+	console.log("CrowdsaleFacet deployed:" + crowdsaleFacetStandalone.address);
 
-	// deploy Vesting facet *****************************************
-	let VestingFacet = await ethers.getContractFactory("VestingFacet");
-	let vestingFacet = await VestingFacet.deploy();
-	await vestingFacet.deployed();
-	console.log("VestingFacet deployed: " + vestingFacet.address);
+	// deploy Vesting facet
+	const VestingFacetFactory = await ethers.getContractFactory("VestingFacet");
+	const vestingFacetStandalone = await VestingFacetFactory.deploy();
+	await vestingFacetStandalone.deployed();
+	console.log("VestingFacet deployed: " + vestingFacetStandalone.address);
 
-	// deploy Token facet *****************************************
-	let ERC20Facet = await ethers.getContractFactory("ERC20Facet");
-	let erc20Facet = await ERC20Facet.deploy();
-	await erc20Facet.deployed();
-	console.log("ERC20Facet deployed:" + erc20Facet.address);
+	// deploy Token Facet
+	const ERC20FacetFactory = await ethers.getContractFactory("ERC20Facet");
+	const erc20FacetStandalone = await ERC20FacetFactory.deploy();
+	await erc20FacetStandalone.deployed();
+	console.log("ERC20Facet deployed:" + erc20FacetStandalone.address);
 
 	// ***********************************************************************************************************************************************************
 	// *********************************************************  Create Cryptocommodity Contract ****************************************************************
@@ -75,17 +75,17 @@ async function main() {
 	// deploy Diamond Cryptocommodity
 
 	// populate factory
-	tx = await cryptocommoditiesFactory.setFacetVersion('DiamondCutFacet', '1.0', diamondCutFacet.address); tx.wait();
+	tx = await cryptocommoditiesFactory.setFacetVersion('DiamondCutFacet', '1.0', diamondCutFacetStandalone.address); tx.wait();
 	console.log("Installed DiamondCutFacet");
-	tx = await cryptocommoditiesFactory.setFacetVersion('DiamondLoupeFacet', '1.0', diamondLoupeFacet.address); tx.wait();
+	tx = await cryptocommoditiesFactory.setFacetVersion('DiamondLoupeFacet', '1.0', diamondLoupeFacetStandalone.address); tx.wait();
 	console.log("Installed DiamondLoupeFacet");
-	tx = await cryptocommoditiesFactory.setFacetVersion('CommonFacet', '1.0', commonFacet.address); tx.wait();
+	tx = await cryptocommoditiesFactory.setFacetVersion('CommonFacet', '1.0', commonFacetStandalone.address); tx.wait();
 	console.log("Installed CommonFacet");
-	tx = await cryptocommoditiesFactory.setFacetVersion('CrowdsaleFacet', '1.0', crowdsaleFacet.address); tx.wait();
+	tx = await cryptocommoditiesFactory.setFacetVersion('CrowdsaleFacet', '1.0', crowdsaleFacetStandalone.address); tx.wait();
 	console.log("Installed CrowdsaleFacet");
-	tx = await cryptocommoditiesFactory.setFacetVersion('VestingFacet', '1.0', vestingFacet.address); tx.wait();
+	tx = await cryptocommoditiesFactory.setFacetVersion('VestingFacet', '1.0', vestingFacetStandalone.address); tx.wait();
 	console.log("Installed VestingFacet");
-	tx = await cryptocommoditiesFactory.setFacetVersion('ERC20Facet', '1.0', erc20Facet.address); tx.wait();
+	tx = await cryptocommoditiesFactory.setFacetVersion('ERC20Facet', '1.0', erc20FacetStandalone.address); tx.wait();
 	console.log("Installed ERC20Facet");
 
 	// with factory
