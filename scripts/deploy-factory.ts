@@ -1,7 +1,6 @@
 import { ethers } from "hardhat";
 import hre from 'hardhat'
 import * as helpers from "../test/_testhelper";
-import * as deployhelpers from "../scripts/_deployhelper";
 
 async function main() {
 	await helpers.extractAbi();
@@ -68,22 +67,17 @@ async function main() {
 	// ************************************************************************* Register in factory *************************************************************
 	// ***********************************************************************************************************************************************************
 	// populate factory
-	let tx = await cryptocommoditiesFactory.setFacetVersion('DiamondCutFacet', '1.0', diamondCutFacetStandalone.address); tx.wait();
+	let tx = await cryptocommoditiesFactory.setFacetVersion('DiamondCutFacet', '1.0', diamondCutFacetStandalone.address); await tx.wait();
 	console.log("Installed DiamondCutFacet");
-	deployhelpers.sleep(30000);
-	tx = await cryptocommoditiesFactory.setFacetVersion('DiamondLoupeFacet', '1.0', diamondLoupeFacetStandalone.address); tx.wait();
+	tx = await cryptocommoditiesFactory.setFacetVersion('DiamondLoupeFacet', '1.0', diamondLoupeFacetStandalone.address); await tx.wait();
 	console.log("Installed DiamondLoupeFacet");
-	deployhelpers.sleep(30000);
-	tx = await cryptocommoditiesFactory.setFacetVersion('CommonFacet', '1.0', commonFacetStandalone.address); tx.wait();
+	tx = await cryptocommoditiesFactory.setFacetVersion('CommonFacet', '1.0', commonFacetStandalone.address); await tx.wait();
 	console.log("Installed CommonFacet");
-	deployhelpers.sleep(30000);
-	tx = await cryptocommoditiesFactory.setFacetVersion('CrowdsaleFacet', '1.0', crowdsaleFacetStandalone.address); tx.wait();
+	tx = await cryptocommoditiesFactory.setFacetVersion('CrowdsaleFacet', '1.0', crowdsaleFacetStandalone.address); await tx.wait();
 	console.log("Installed CrowdsaleFacet");
-	deployhelpers.sleep(30000);
-	tx = await cryptocommoditiesFactory.setFacetVersion('VestingFacet', '1.0', vestingFacetStandalone.address); tx.wait();
+	tx = await cryptocommoditiesFactory.setFacetVersion('VestingFacet', '1.0', vestingFacetStandalone.address); await tx.wait();
 	console.log("Installed VestingFacet");
-	deployhelpers.sleep(30000);
-	tx = await cryptocommoditiesFactory.setFacetVersion('ERC20Facet', '1.0', erc20FacetStandalone.address); tx.wait();
+	tx = await cryptocommoditiesFactory.setFacetVersion('ERC20Facet', '1.0', erc20FacetStandalone.address); await tx.wait();
 	console.log("Installed ERC20Facet");
 
 	console.log("Installed Factory Done.");

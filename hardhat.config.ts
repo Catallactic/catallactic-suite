@@ -171,7 +171,7 @@ const config: HardhatUserConfig = {
     citrea_devnet: {
 			url: "https://rpc.devnet.citrea.xyz",
 			chainId: 62298,
-			gasPrice: 10000000000,
+			gasPrice: 2000000000,
 			accounts: [process.env.PRIVATE_KEY_336A!]
 		},
 
