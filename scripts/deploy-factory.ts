@@ -489,6 +489,170 @@ async function main() {
 
 	}
 
+	// **********************************************************************************************************************************
+	// ************************************************ Configure Rootstock Tokens ******************************************************
+	// **********************************************************************************************************************************
+	if (hre.network.name == 'rootstock_testnet') {
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+	}
+
+	if (hre.network.name == 'rootstock') {
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+	}
+
+	// **********************************************************************************************************************************
+	// ************************************************ Configure Bitlayer Tokens *******************************************************
+	// **********************************************************************************************************************************
+	if (hre.network.name == 'bitlayer_testnet') {
+		console.log("deploying to bitlayer_testnet");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to bitlayer_testnet");
+	}
+
+	if (hre.network.name == 'bitlayer') {
+		console.log("deploying to bitlayer");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to bitlayer");
+	}
+
+	// **********************************************************************************************************************************
+	// ************************************************ Configure B2Network Tokens ******************************************************
+	// **********************************************************************************************************************************
+	if (hre.network.name == 'b2network_testnet') {
+		console.log("deploying to b2network_testnet");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to b2network_testnet");
+	}
+
+	if (hre.network.name == 'b2network') {
+		console.log("deploying to b2network");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to b2network");
+	}
+
+	// **********************************************************************************************************************************
+	// ************************************************ Configure Merlin Tokens *********************************************************
+	// **********************************************************************************************************************************
+	if (hre.network.name == 'merlin_testnet') {
+		console.log("deploying to merlin_testnet");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to merlin_testnet");
+	}
+
+	if (hre.network.name == 'merlin') {
+		console.log("deploying to merlin");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to merlin");
+	}
+
+	// **********************************************************************************************************************************
+	// ************************************************ Configure Citrea Tokens *********************************************************
+	// **********************************************************************************************************************************
+	if (hre.network.name == 'citrea_devnet') {
+		console.log("deploying to citrea_devnet");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to citrea_devnet");
+	}
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -181,7 +181,7 @@ async function main() {
 		console.log("deploying to ethereum");
 
 		// deploy WBTC
-		await ico.setPaymentToken("WBTC", '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', '0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c', Math.floor(DEF_PRICE_BTC_IN_USD * 10**6), 18);				
+		await ico.setPaymentToken("WBTC", '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', '0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c', Math.floor(DEF_PRICE_BTC_IN_USD * 10**6), 18);
 
 		// deploy ETH
 		await ico.setPaymentToken("COIN", ico.address, "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", Math.floor(DEF_PRICE_ETH_IN_USD * 10**6), 18);
@@ -300,21 +300,6 @@ async function main() {
 	// **********************************************************************************************************************************
 	// ***************************************************** Configure BSC Tokens *******************************************************
 	// **********************************************************************************************************************************
-	if (hre.network.name == 'bsc') {
-
-		// deploy WBTC
-		// N/A
-
-		// deploy ETH
-
-		// deploy MATIC
-
-		// deploy BNB
-
-		// deploy USDT
-
-	}
-
 	if (hre.network.name == 'bsc_testnet') {
 
 		// ChainLinkAggregator Token
@@ -343,10 +328,7 @@ async function main() {
 
 	}
 
-	// **********************************************************************************************************************************
-	// ************************************************ Configure Optimism Tokens *******************************************************
-	// **********************************************************************************************************************************
-	if (hre.network.name == 'optimism') {
+	if (hre.network.name == 'bsc') {
 
 		// deploy WBTC
 		// N/A
@@ -361,6 +343,9 @@ async function main() {
 
 	}
 
+	// **********************************************************************************************************************************
+	// ************************************************ Configure Optimism Tokens *******************************************************
+	// **********************************************************************************************************************************
 	if (hre.network.name == 'optimism_goerly') {
 
 		// ChainLinkAggregator Token
@@ -387,6 +372,185 @@ async function main() {
 
 		// deploy USDT
 
+	}
+
+	if (hre.network.name == 'optimism') {
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+	}
+
+	// **********************************************************************************************************************************
+	// ************************************************ Configure Rootstock Tokens ******************************************************
+	// **********************************************************************************************************************************
+	if (hre.network.name == 'rootstock_testnet') {
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+	}
+
+	if (hre.network.name == 'rootstock') {
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+	}
+
+	// **********************************************************************************************************************************
+	// ************************************************ Configure Bitlayer Tokens *******************************************************
+	// **********************************************************************************************************************************
+	if (hre.network.name == 'bitlayer_testnet') {
+		console.log("deploying to bitlayer_testnet");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to bitlayer_testnet");
+	}
+
+	if (hre.network.name == 'bitlayer') {
+		console.log("deploying to bitlayer");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to bitlayer");
+	}
+
+	// **********************************************************************************************************************************
+	// ************************************************ Configure B2Network Tokens ******************************************************
+	// **********************************************************************************************************************************
+	if (hre.network.name == 'b2network_testnet') {
+		console.log("deploying to b2network_testnet");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to b2network_testnet");
+	}
+
+	if (hre.network.name == 'b2network') {
+		console.log("deploying to b2network");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to b2network");
+	}
+
+	// **********************************************************************************************************************************
+	// ************************************************ Configure Merlin Tokens *********************************************************
+	// **********************************************************************************************************************************
+	if (hre.network.name == 'merlin_testnet') {
+		console.log("deploying to merlin_testnet");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to merlin_testnet");
+	}
+
+	if (hre.network.name == 'merlin') {
+		console.log("deploying to merlin");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to merlin");
+	}
+
+	// **********************************************************************************************************************************
+	// ************************************************ Configure Citrea Tokens *********************************************************
+	// **********************************************************************************************************************************
+	if (hre.network.name == 'citrea_devnet') {
+		console.log("deploying to citrea_devnet");
+
+		// deploy WBTC
+		// N/A
+
+		// deploy ETH
+
+		// deploy MATIC
+
+		// deploy BNB
+
+		// deploy USDT
+
+		console.log("deployed to citrea_devnet");
 	}
 
 }
