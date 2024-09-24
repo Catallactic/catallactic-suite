@@ -19,6 +19,7 @@
 pragma solidity 0.8.18;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "hardhat/console.sol";
 
 contract DemoMockAggregator is AggregatorV3Interface {
 
@@ -49,4 +50,12 @@ contract DemoMockAggregator is AggregatorV3Interface {
     function description() external view override returns (string memory) {}
 
     function version() external view override returns (uint256) {}
+
+		fallback() external payable {
+      console.log("----- fallback:", msg.value);
+    }
+
+    receive() external payable {
+      console.log("----- receive:", msg.value);
+    }
 }
