@@ -14,22 +14,21 @@ async function main() {
 	// network
 	const networkName = hre.network.name
 	console.log("network:", networkName);
+	console.log("deploying to localhost");
 
 	// factory
 	const cryptocommoditiesFactory = await ethers.getContractAt('CryptocommoditiesFactory', '0x5FbDB2315678afecb367f032d93F642f64180aa3');
-	console.log("used cryptocommoditiesFactory at: ", cryptocommoditiesFactory);
 	console.log("used cryptocommoditiesFactory at: ", cryptocommoditiesFactory.address);
-	console.log("deploying to localhost");
 
-	// Each created contracta address is assignated deterministicall from the nonce.
-	// As this script is run after the factory script and every time an script is run the nonce is reset, 
-	// we need to preset the nonce to prevent overriding contracts created by previous script 
-	console.log("Installing:", await owner.getTransactionCount());
+	// Each created contracta address is assignated deterministicall for the signer according to the nonce.
+	// As this script is run after the factory script, and every time an script is run the nonce is reset, 
+	// we need to preset the nonce to prevent overriding contracts created by previous script
+	console.log("Current Nonce:", await owner.getTransactionCount());
 	await hre.network.provider.send("hardhat_setNonce", [
 		owner.address,
-		"0xC",		// nonce = 12
+		"0xD",		// nonce = 13
 	]);
-	console.log("Installing:", await owner.getTransactionCount());
+	console.log("Current Nonce:", await owner.getTransactionCount());
 
 	// ChainLinkAggregator Token
 	// https://docs.chain.link/data-feeds/price-feeds/addresses?network=polygon
@@ -96,7 +95,10 @@ async function main() {
 	tx = await cryptocommoditiesFactory.setPaymentToken("MATIC", matic.address, deployhelpers.ZERO_ADDRESS, Math.floor(deployhelpers.DEF_PRICE_MATIC_IN_USD * 10**6), 18); await tx.wait();
 	tx = await cryptocommoditiesFactory.setPaymentToken("BNB", bnb.address, deployhelpers.ZERO_ADDRESS, Math.floor(deployhelpers.DEF_PRICE_BNB_IN_USD * 10**6), 18); await tx.wait();
 	tx = await cryptocommoditiesFactory.setPaymentToken("USDT", usdt.address, deployhelpers.ZERO_ADDRESS, Math.floor(deployhelpers.DEF_PRICE_USDT_IN_USD * 10**6), 18); await tx.wait();
-	console.log("Attached payment tokens to factory " , await cryptocommoditiesFactory.getPaymentSymbols());
+	console.log("Attached payment tokens to factory");
+
+	// not working!!!!! not wokring in this second script, working on the first one
+	//console.log("NOT WORKING", cryptocommoditiesFactory.getPaymentSymbols());
 
 	console.log("deployed payment tokens for localhost");
 
