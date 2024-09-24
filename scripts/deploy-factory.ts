@@ -82,6 +82,10 @@ async function main() {
 
 	console.log("Installed Factory Done.");
 
+	// nonce and getTransactionCount should match
+	console.log("getTransactionCount:", await owner.getTransactionCount());
+	console.log("nonce:", tx.nonce);
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere
