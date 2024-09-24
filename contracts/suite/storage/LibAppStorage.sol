@@ -41,7 +41,7 @@ library LibAppStorage {
 	struct Vesting {
 		uint256 start;																												// start time of the vesting period in seconds since the UNIX epoch
 		uint256 cliff;																												// cliff time of the vesting start in seconds since the UNIX epoch
-		uint256 duration;																											// duration of the vesting period in seconds
+		uint256 duration;																											// duration of the vesting period in millis
 		uint256 numSlides;																										// number of slides
 	}
 	struct VestingSchedule {
