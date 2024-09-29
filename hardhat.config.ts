@@ -174,6 +174,12 @@ const config: HardhatUserConfig = {
 			gasPrice: 2000000000,
 			accounts: [process.env.PRIVATE_KEY_336A!]
 		},
+    citrea_testnet: {
+			url: "https://rpc.testnet.citrea.xyz",
+			chainId: 5115,
+			gasPrice: 2000000000,
+			accounts: [process.env.PRIVATE_KEY_336A!]
+		},
 
 	},
 	etherscan: {
