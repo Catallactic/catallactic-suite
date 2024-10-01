@@ -16,7 +16,7 @@ async function main() {
 	console.log("network:", networkName);
 
 	// factory
-	const cryptocommoditiesFactory = await ethers.getContractAt('CryptocommoditiesFactory', '0x18e7a0071BABe0225d854Dd0116561AFe5fD0c98');
+	const cryptocommoditiesFactory = await ethers.getContractAt('CryptocommoditiesFactory', '0x8fa5a7953E12Ac9056864098d07014F6F433928b');
 	console.log("used cryptocommoditiesFactory at: ", cryptocommoditiesFactory.address);
 	console.log("deploying to citrea_devnet");
 
